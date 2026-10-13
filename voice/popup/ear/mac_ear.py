@@ -73,6 +73,7 @@ WAKE_WORD_S = 1.5            # the wake word itself, sent once cleared for the b
 # the brain skips the first 0.2 s it is sent as the click of a mic opening.
 LEAD_S = 0.8
 EAR_HANG_S = 1.0             # the open ear stays open this long after a reply ends, for a sentence he began over it
+FOLLOWUP_WAIT_S = 6.0        # a listen still open when a reply ends: its follow-up window waits this long for it to close
 # The plain microphone: his "Sunday, what time is it?" from across the room peaks 20 to 25 dB
 # over the room, about -40 dBFS, under what the brain's speech detector reliably calls speech.
 PLAIN_GAIN = 10 ** (float(os.environ.get("SUNDAY_EAR_PLAIN_GAIN_DB", "12")) / 20)
@@ -83,6 +84,14 @@ PLAIN_STALE_S = 0.5          # no plain audio this long: the voice-processed one
 # Its own ding reads as this Mac playing sound for about two seconds (the meter cannot leave out
 # an afplay started after it), which would put the rest of what he says through voice processing.
 DING_HOLD_S = 3.0
+# The wake word hears the plain microphone turned down until the room sits this low. The model
+# knows the cube's feed, denoised and quiet between words; with the room at the plain
+# microphone's own -65 dBFS, his three "Sunday, what time is it?" from across the room
+# (2026-10-13 12:41) woke it none of the times, and with the room put at -92 all three. His
+# coughs and two televisions, run the same way, woke it 14 times in 20 against 10: each is one
+# the brain drops without a sound. Set from the room's level, not fixed, so a new input volume
+# moves both alike.
+WAKE_ROOM_DB = float(os.environ.get("SUNDAY_EAR_WAKE_ROOM_DB", "-92"))
 TRIGGER_WORDS = re.compile(r"\b(sunday|stop)\b")
 
 
@@ -230,7 +239,12 @@ class Ear:
     def __init__(self):
         self.wake = MicroWakeWord.from_config(WAKE_DIR / "sunday.json")
         self.wake.probability_cutoff = WAKE_CUTOFF
+        # One front end per microphone, each fed every frame of its own: the front end learns its
+        # stream's room level, and one that had learned the plain microphone's room at -92 dBFS
+        # took the voice-processed residual of Sunday's own reply for speech and woke on it (four
+        # times in one minute, 2026-10-13 12:50).
         self.features = MicroWakeWordFeatures()
+        self.vp_features = MicroWakeWordFeatures()
         self.loop = None
         self.ws = None
         self.state = "idle"            # idle | pending | listening
@@ -255,7 +269,7 @@ class Ear:
         self.listen_since = 0.0
         self.ducked = False
         self.duck_since = 0.0
-        self.followup_gen = 0          # bumped by a wake or a stop: a follow-up window still waiting is dropped
+        self.followup_gen = 0          # bumped by a wake while quiet, his words taken, or a stop: a follow-up window still waiting is dropped
         self.audio = None
         self.lock = threading.Lock()   # the state and the held audio, shared with the mic thread
         self.ear_on = False            # the mic is going to the brain while a reply plays, with no wake word
@@ -266,6 +280,7 @@ class Ear:
         self.plain_at = 0.0            # the last plain microphone audio
         self.plain_gain = PLAIN_GAIN
         self.on_plain = None           # which microphone it listens to, for the log
+        self.room = None               # the plain microphone's room level, dBFS, for the wake word
 
     # ---- the microphone (reader thread)
 
@@ -287,19 +302,31 @@ class Ear:
         self.plain_gain = want if want < self.plain_gain else min(want, self.plain_gain * PLAIN_RELEASE)
         return np.clip(x * self.plain_gain, -32768, 32767).astype("<i2").tobytes()
 
+    def for_wake(self, pcm: bytes) -> bytes:
+        """The plain microphone as the wake word hears it: turned down so the room sits at
+        WAKE_ROOM_DB. The room is a slow floor over 10 ms pieces: falls fast, rises slowly."""
+        x = np.frombuffer(pcm, "<i2").astype(np.float32)
+        out = np.empty_like(x)
+        for i in range(0, len(x), 160):
+            c = x[i:i + 160]
+            db = max(-100.0, 10 * np.log10(float(np.square(c).mean()) / (32768 ** 2) + 1e-12))
+            self.room = db if self.room is None or db < self.room else self.room + 0.002 * (db - self.room)
+            out[i:i + 160] = c * 10 ** (min(0.0, max(-40.0, WAKE_ROOM_DB - self.room)) / 20)
+        return np.clip(out, -32768, 32767).astype("<i2").tobytes()
+
     def on_audio(self, pcm: bytes, plain: bool):
         now = time.monotonic()
         if plain:
             self.plain_at = now
+            feats_in = list(self.features.process_streaming(self.for_wake(pcm)))
+        else:
+            feats_in = list(self.vp_features.process_streaming(pcm))
         why = self.plain_wanted(now)
         if plain != (not why):
             return
         if plain != self.on_plain:
             self.on_plain = plain
             log("mic: plain" if plain else f"mic: voice-processed ({why})")
-        # The wake word hears the plain microphone as it is: turned up, its scores fall (his
-        # call from across the room, 0.97 as recorded and 0.82 at +21 dB).
-        heard = pcm
         if plain:
             pcm = self.turn_up(pcm)
         x = np.frombuffer(pcm, "<i2").astype(np.float32)
@@ -314,7 +341,7 @@ class Ear:
         talking = self.speaking or time.monotonic() < self.playing_until
         self.wake.probability_cutoff = (SPEAKING_CUTOFF if talking
                                         else PLAYING_CUTOFF if self.computer_playing else WAKE_CUTOFF)
-        for feats in self.features.process_streaming(heard):
+        for feats in feats_in:
             now = time.monotonic()
             if now < self.self_trigger_until:
                 self.wake.process_streaming(feats)
@@ -400,10 +427,13 @@ class Ear:
         if self.state != "pending":
             return
         waited = time.monotonic() - self.pending_since
-        self.followup_gen += 1
         if self.speaking or time.monotonic() < self.playing_until:
-            # Talking: carry on, quieter, while he speaks. The brain decides from his words.
+            # Talking: carry on, quieter, while he speaks. The brain decides from his words. The
+            # follow-up window after the reply stays, unless his words are taken ("speech") or
+            # the reply is stopped: most wakes here are its own voice, which the brain lets go.
             self.duck(True, "listening over its own reply")
+        else:
+            self.followup_gen += 1
         self.chime_pending = (not self.sure or hold) and not self.voice_muted
         if self.sure and not hold and not self.voice_muted:
             ding()
@@ -530,6 +560,7 @@ class Ear:
             if self.chime_pending and self.state == "listening" and not self.voice_muted:
                 ding()
             self.chime_pending = False
+            self.followup_gen += 1     # his words were taken: their answer brings its own window
         elif t == "stop_listening":
             if self.state == "listening":
                 log(f"mic closed: {self.sent_bytes} bytes sent")
@@ -569,8 +600,14 @@ class Ear:
         while self.speaking or time.monotonic() < self.playing_until:
             await asyncio.sleep(0.05)
         await asyncio.sleep(0.15)
+        until = time.monotonic() + FOLLOWUP_WAIT_S
+        while self.state != "idle" and gen == self.followup_gen and time.monotonic() < until:
+            await asyncio.sleep(0.05)
         if gen != self.followup_gen:
             log("follow-up window dropped: he spoke over the reply or stopped it")
+            return
+        if self.state != "idle":
+            log("follow-up window dropped: a listen over the reply was still open")
             return
         self.start_followup()
 

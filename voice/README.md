@@ -165,6 +165,18 @@ name alone is not enough, and a wake with none is never answered.
   there lets his words after it clear it; otherwise the mic closes then (`closing the mic on
   mac: no name in its first 4 s`), instead of staying open on a game show for a whole utterance
   while his own "Sunday" goes unheard (`VOICE_UNNAMED_CLOSE`, default 4.0).
+- **Its own reply at the Mac.** A Mac wake while the Mac itself is talking, with no name in its
+  wake word, closes as soon as that is read (about 0.4 s): every one in the log through
+  2026-10-13 was its own voice, and held open for four seconds it kept the reply turned down
+  and was still open when the reply ended and he went on without its name (`no wake word in
+  the wake on mac over its own reply`). Words of his over the reply are the open ear's to hear.
+- **After a reply.** Every reply opens a follow-up window, 5.5 s to start talking without its
+  name (`VOICE_FOLLOWUP_WINDOW`), and what it hears there is a decision: put to the judge with
+  what Sunday just said, an answer to it, or more for it, is answered as part of the
+  conversation, and him talking to someone else in the room or on a call, or the room itself,
+  is dropped without a sound (`discarded (not said to Sunday: the follow-up read as
+  overheard)`). Words the judge already read as said to Sunday while he spoke are not judged
+  again. Its answer opens the next window, so the conversation goes on until he stops.
 - **His name alone at the Mac.** His "Sunday" at the Mac reads back as "Hmm." or nothing more
   often than not (2026-10-08 evening: every attempt but one). So a Mac wake at least -22 dBFS
   whose next second, 0.45 to 1.05 s after the mic opened, is 12 dB quieter is its name said
@@ -336,9 +348,16 @@ to the plain microphone, turned up 12 dB for the brain's speech detector (`SUNDA
 and down at once for anything louder than -6 dBFS), and to the voice-processed one only while
 Sunday talks on the Mac and for a second after, or while the Mac plays anything else (its popup's
 meter, relayed by the brain as `computer_audio` with the machines playing). Its own ding is not
-counted as the Mac playing. The wake model hears the plain microphone before it is turned up,
-since turning it up lowers the scores. `mic: plain` and `mic: voice-processed (why)` in
-`ear.log` mark each switch.
+counted as the Mac playing. The wake model was trained on the cube's denoised feed, quiet
+between words, so it hears the plain microphone turned down until the room sits at -92 dBFS
+(`SUNDAY_EAR_WAKE_ROOM_DB`): at the microphone's own -65 dBFS his three calls from across the
+room at 12:41 that day woke it none of the times, and at -92 all three. Each microphone has its
+own front end for the wake model, so one never carries the other's sound into its next score.
+`mic: plain` and `mic: voice-processed (why)` in `ear.log` mark each switch.
+
+A wake while its reply plays on the Mac does not cost the follow-up window after the reply: the
+window is dropped only once his words are taken (the brain's "speech") or the reply is stopped,
+and a listen still open when the reply ends has the window open as soon as it closes.
 
 His "Sunday, what time is it?" in one breath is at "is it" by the time the wake word fires, so
 the Mac sends the 0.8 s before the wake at the head of what follows it (`"lead"` in the wake),

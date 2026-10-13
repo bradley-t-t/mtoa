@@ -975,14 +975,16 @@ class Gatekeeper(Acknowledger):
     a computer is playing sound, and before the words of a wake chime, light or show anything."""
 
     PROMPT = (
-        "You screen what a home voice assistant's microphone picked up while a nearby computer was "
-        "playing audio (videos, stories, music, calls). Answer DIRECTED if the transcript reads like a "
+        "You screen what a home voice assistant's microphone picked up without its name: right after it "
+        "spoke, or while a nearby computer was playing audio (videos, stories, music, calls). Answer "
+        "DIRECTED if the transcript reads like a "
         "person talking to their assistant: a question, a request, an instruction, an answer, or a "
         "correction in a conversation with it. A question or an instruction put to \"you\" about work "
         "being done, how far along it is, or what happens next is DIRECTED, however plain it sounds and "
         "with nothing shown before it: the assistant is the one being asked. Answer OVERHEARD when the "
-        "words have nobody in the room to be said to: narration, lyrics, a broadcast, a scripted line, "
-        "or two other people talking to each other. When you are shown what the assistant itself just "
+        "words have nobody in the room to be said to, or are said to someone else: narration, lyrics, a "
+        "broadcast, a scripted line, the person talking to someone else in the room or on a call, or two "
+        "other people talking to each other. When you are shown what the assistant itself just "
         "said, anything that answers it, accepts it, refuses it, repeats its own wording back or argues "
         "with it is DIRECTED, however short and blunt it sounds. Only the one word."
     )
@@ -1791,6 +1793,21 @@ class CubeSession:
             log.info("wake word heard on %s in %.0f ms: %s; nothing chimes until his words are in",
                      self.device, ms, text)
             self.named = True
+        elif self.ear and self.barge and self in self.barge["devices"]:
+            # Woken while it talks here, with no name in the wake word: its own reply, every time
+            # one has been read back. The mic closes now rather than holding the open ear off for
+            # seconds, or still being open when the reply ends and he goes on without its name.
+            # Words of his over the reply are the open ear's to hear.
+            log.info("no wake word in the wake on %s over its own reply (%.0f ms, %r): the mic closes",
+                     self.device, ms, text)
+            speech_log({"kind": "heard", "at": time.time(), "qid": qid, "device": self.device, "text": text,
+                        "discarded": "no words: no name in a wake over its own reply"})
+            self.vad = None
+            await self.release_barge(self.barge, {"decision": "continue", "reason": "no name over its own reply",
+                                                  "by": "code", "ms": 0}, "", qid)
+            await self.send(type="stop_listening")
+            await self.send(type="idle")
+            broadcast(type="idle", id=qid)
         else:
             # The cube's own second rarely holds its name even when he said it, so real words
             # after the wake are enough there; on the Mac its name has to turn up in them.
@@ -1855,6 +1872,7 @@ class CubeSession:
                 if self.qid != qid or self.vad is not vad or self.words_ok:
                     return
                 if ok:
+                    self.judged = by == "said to Sunday"
                     await self.heard_words(f"{why}; {by}")
                     return
                 log.info("words on %s read as overheard (voice %s): nothing shows yet: %s", self.device,
@@ -2355,6 +2373,7 @@ class CubeSession:
             own_after = None if barge else self.listen_started - (0.0 if self.followup else OWN_TAIL)
             wake = {"preroll": self.preroll, "info": self.wake_info, "hold": self.hold, "cleared": self.spk_ok,
                     "prob": (self.wake_info or {}).get("prob"), "words": self.words_ok, "by_word": self.by_word,
+                    "judged": getattr(self, "judged", False),
                     "named": getattr(self, "named", False), "lone": getattr(self, "lone", False)}
             task = asyncio.create_task(self.turn(segment, self.qid, self.followup, computer_playing(), barge,
                                                  began=began, own_after=own_after, wake=wake))
@@ -2399,6 +2418,7 @@ class CubeSession:
         self.by_word = not followup and not button
         self.words_ok, self.words_busy, self.duck_later = button, False, []
         self.said_busy, self.said_upto, self.said_next = False, 0, None   # words_for_sunday: asking now, how much it asked about, what is next
+        self.judged = False            # the judge read words of this listen as said to Sunday
         self.named = False             # "Sunday" itself was heard in this listen
         self.lone, self.lone_at = False, 0.0   # a Mac wake word said alone, then a pause (lone_word)
         self.last_said = None          # the newest running transcript, (text, scored)
@@ -3013,6 +3033,11 @@ class CubeSession:
         # the computer is playing.
         why = "" if ((wake or {}).get("named") and not followup) else \
             await not_for_sunday(heard, followup, playing or computer_playing())
+        if not why and followup and not (wake or {}).get("judged") and await directed(heard) is False:
+            # After a reply it listens without its name, so what it heard there is a decision: put
+            # to the judge with what it just said, an answer to it or more for it is answered, and
+            # him talking to someone else, or the room, is not.
+            why = "not said to Sunday: the follow-up read as overheard"
         if not why and not words and wake and wake.get("by_word") and not barge \
                 and spk.get("score") is not None and spk["score"] < SPEAKER_NOT_HIS \
                 and await directed(heard) is False:
@@ -3273,9 +3298,11 @@ class CubeSession:
                 passive["pending"] = {"answered_at": time.time(), "spk": spk,
                                       "meta": {"device": self.device, "seconds": spk.get("speech_s"), "text": heard,
                                                "score": spk.get("score")}}
-            if FOLLOWUP and reply and not (AUDIO_GATE and computer_playing()) \
-                    and not (self.turns - {me}) and self.vad is None:
-                # A short window to keep talking without the wake word, after every reply.
+            if FOLLOWUP and reply and not (AUDIO_GATE and computer_playing()) and not (self.turns - {me}) \
+                    and (self.vad is None or (self.ear and self.barge is not None and not self.words_ok)):
+                # A short window to keep talking without the wake word, after every reply. A Mac
+                # listen over the reply that no words have cleared does not cost it: the Mac opens
+                # the window once that listen closes, and drops it if his words were taken.
                 await self.send(type="listen")   # the cube answers with "wake" once it has finished speaking
         except asyncio.CancelledError:
             inflight.pop(heard, None)
