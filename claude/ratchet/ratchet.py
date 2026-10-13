@@ -834,26 +834,27 @@ def shape_hold(cfg, payload, transcript, text, turn):
             return False
         session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
         outcome = shape.decide(text, transcript, session, turn, cfg)
-        if outcome[0] == "show":
-            return False
-        if outcome[0] == "plain":
-            # Shown already, or the rest of the pipeline has its own reason to
-            # send it back: either way this check has nothing to add.
-            if outcome[1] or would_hold(payload, text, skip_shape=True):
+        if outcome[0] == "excused":
+            NOTES.append(("shape: out of shape on request - %s" % outcome[1], False))
+        if outcome[0] == "capped":
+            NOTES.append(("shape: let a reply through out of shape after %d holds" % outcome[1], False))
+        if outcome[0] != "hold":
+            # A reply this hook lets through may still be off the screen: the
+            # display hook keeps a plain answer off it until this hook has seen
+            # it end the turn, and keeps off any reply it could not clear inside
+            # the ten seconds the app gives it. Unseen, it is asked for again
+            # word for word and shown then. Shown already, or held by the rest of
+            # the pipeline, this check has nothing to add.
+            unseen = (outcome[0] == "plain" and not outcome[1]) or shape.withheld(session, turn, text)
+            if not unseen or shape.released(session, turn) or would_hold(payload, text, skip_shape=True):
                 return False
             if DRY:
                 return True
             if shape.approve(session, turn, text) > 3:
-                NOTES.append(("shape: a plain answer was resent three times and never matched", True))
-                return False
-            emit(decision="block", reason=shape.RESEND)
+                shape.release(session, turn)
+                NOTES.append(("shape: a reply was resent three times and never matched, so the next is shown as written", True))
+            emit(decision="block", reason=shape.RESEND if outcome[0] == "plain" else shape.RESEND_WITHHELD)
             return True
-        if outcome[0] == "excused":
-            NOTES.append(("shape: out of shape on request - %s" % outcome[1], False))
-            return False
-        if outcome[0] == "capped":
-            NOTES.append(("shape: let a reply through out of shape after %d holds" % outcome[1], False))
-            return False
         _, found, why = outcome
         if not DRY:
             shape.count_hold(session, turn)
@@ -892,6 +893,22 @@ def would_hold(payload, text, skip_shape=False):
 
 
 HIDDEN = "\u200b"
+
+# The desktop app gives a MessageDisplay hook ten seconds and then shows the
+# original text, and one judge call alone can take twenty. The hook stops itself
+# well inside that and keeps the reply off the screen; the stop hook, which has
+# no such limit, decides it and asks for it again if it passes.
+DISPLAY_BUDGET = 7.0
+START = time.time()
+
+
+class OutOfTime(BaseException):
+    """The display hook's budget ran out. A BaseException, so no check's own
+    `except Exception` can turn it into a pass."""
+
+
+def out_of_time(*_):
+    raise OutOfTime()
 
 
 def display():
@@ -938,18 +955,35 @@ def display():
             text = delta
         if not text.strip():
             return 0
-        turn = closing_message(transcript, False)[1] if transcript else None
-        outcome = shape.decide(text, transcript, session, turn, config(), body)
         hidden = HIDDEN if whole else ""
-        shown = text if outcome[0] != "hold" else hidden
-        if outcome[0] == "plain" and not outcome[1]:
-            shown = hidden
-        if outcome[0] == "show" and would_hold(payload, text):
-            shown = hidden
+        import signal
+        signal.signal(signal.SIGALRM, out_of_time)
+        signal.setitimer(signal.ITIMER_REAL, max(0.5, DISPLAY_BUDGET - (time.time() - START)))
+        turn = None
+        try:
+            turn = closing_message(transcript, False)[1] if transcript else None
+            if shape.approved(session, turn, text):
+                shown = text
+            else:
+                outcome = shape.decide(text, transcript, session, turn, config(), body)
+                shown = text if outcome[0] != "hold" else hidden
+                if outcome[0] == "plain" and not outcome[1]:
+                    shown = hidden
+                if outcome[0] == "show" and would_hold(payload, text):
+                    shown = hidden
+                if shown != text and outcome[0] != "hold" and shape.released(session, turn):
+                    shown = text
+        except OutOfTime:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            shown = text if shape.released(session, turn) else hidden
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+        if shown != text:
+            shape.withhold(session, turn, text)
         if whole and shown == text:
             return 0
         emit(hookSpecificOutput={"hookEventName": "MessageDisplay", "displayContent": shown})
-    except Exception:
+    except (Exception, OutOfTime):
         return 0
     return 0
 

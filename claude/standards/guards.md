@@ -117,6 +117,21 @@ right after one. `settings.json` turns it off with
 `CLAUDE_CODE_SILENT_TURN_REMINDER=0`. Run headless over twelve tool calls, the
 reminder fired twice and drew two progress lines; with it off, none.
 
+The desktop app also gives a display hook ten seconds (`Ho=1e4` in the CLI, apart
+from the hook's own `timeout`) and then shows the original text, and one judge
+call uncached takes up to thirty. A held draft whose excuse judge ran past ten
+seconds was shown, and its rewrite after it - a reply seen twice. So the display
+hook stops itself at `DISPLAY_BUDGET` (seven seconds, by `SIGALRM`, as
+`OutOfTime`, a BaseException no check's `except Exception` can swallow) and keeps
+the reply off the screen, noting it as withheld. The stop hook, which has no such
+limit, decides it: a reply it holds is rewritten as before, and one it lets
+through that is still withheld is asked for again word for word
+(`RESEND_WITHHELD`) and shown then, the way a plain answer is. After three
+resends that never match, a release shows the next reply as written. Replayed
+on the reply that showed twice, the draft was hidden at 7.1 seconds and held,
+and with the budget cut to 1.5 seconds the final reply was hidden, resent and
+shown once.
+
 Three stages, cheapest first. The layout is a parse - the verdict, one sentence
 after it, labelled lines of at most two sentences - and a reply in the shape is
 then read for asides - "by the way", "you'll need to", "left for later", "let me

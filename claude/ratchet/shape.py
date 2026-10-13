@@ -483,6 +483,36 @@ def approve(session, turn, text):
     return mark["resends"]
 
 
+def withhold(session, turn, text):
+    """Note a reply the display hook kept off the screen, so the stop hook knows
+    the user has not seen it."""
+    path = state(session)
+    mark = load(path, turn or "unknown")
+    mark["withheld"] = ((mark.get("withheld") or []) + [text])[-3:]
+    save(path, mark)
+
+
+def withheld(session, turn, text):
+    """Whether this reply is off the screen: kept off by the display hook, and
+    neither cleared since nor shown under a release."""
+    mark = load(state(session), turn or "unknown")
+    if mark.get("released") or any(same(text, seen) for seen in mark.get("approved") or []):
+        return False
+    return any(same(text, seen) for seen in mark.get("withheld") or [])
+
+
+def released(session, turn):
+    return bool(load(state(session), turn or "unknown").get("released"))
+
+
+def release(session, turn):
+    """After three resends that never matched, show the next reply as written."""
+    path = state(session)
+    mark = load(path, turn or "unknown")
+    mark["released"] = True
+    save(path, mark)
+
+
 def decide(text, transcript, session, turn, cfg, body=None):
     """What both hooks do with one reply, so the screen and the stop never disagree.
 
@@ -600,6 +630,11 @@ RESEND = """Shape: that reply is a plain answer, and it is confirmed as the turn
 Send the same reply again, word for word, with nothing before or after it. It will be shown this time."""
 
 
+RESEND_WITHHELD = """Shape: that reply is cleared as the turn's final reply, but it was kept off the screen while it was being checked, so the user has not seen it yet.
+
+Send the same reply again, word for word, with nothing before or after it. It will be shown this time."""
+
+
 UNFINISHED = """Shape: that reply reports unfinished work, so it was kept off the screen and the user has not seen it.
 
 %s
@@ -649,6 +684,19 @@ def decide_test(corpus, body):
                 continue
             if got[0] not in want:
                 bad.append("DECIDE %s (want %s): %s" % (got[0], want[0], clip(text, 60)))
+        # A reply the display hook kept off the screen stays unseen until it is
+        # cleared or a release lets the next one show as written.
+        reply = (corpus.get("pass") or ["**Done.** It works."])[0]
+        withhold("selftest", "u2", reply)
+        if not withheld("selftest", "u2", reply):
+            bad.append("WITHHELD lost a reply the display hook kept off the screen")
+        approve("selftest", "u2", reply)
+        if withheld("selftest", "u2", reply) or not approved("selftest", "u2", reply):
+            bad.append("WITHHELD still unseen after it was cleared for a resend")
+        withhold("selftest", "u3", reply)
+        release("selftest", "u3")
+        if withheld("selftest", "u3", reply) or not released("selftest", "u3"):
+            bad.append("WITHHELD still unseen after a release")
     finally:
         if old is None:
             os.environ.pop("RATCHET_STATE", None)
