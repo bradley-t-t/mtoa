@@ -1,0 +1,9 @@
+[Unit]
+Description=Certificate and registration expiry checks with Slack alerts
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=@USER@
+ExecStart=/usr/bin/python3 @HOME@/expiry-monitor/expiry_monitor.py

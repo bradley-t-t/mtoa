@@ -1,0 +1,190 @@
+{
+  "group": "Tables & Data Rows",
+  "prefix": "TBL",
+  "description": "A table is scanned, not read. These gates hold the scan: dense rows that stay legible, a header that survives scrolling, alignment that lets a column be compared down its length, and rows that answer the pointer. Patterns drawn from Smyrna Tools' asset list, which is the reference for this in practice.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "when": "table",
+    "severity": "required",
+    "source": "references/code/tables-and-headers.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "TBL-01",
+      "title": "Rows Are Dense And Single-Line",
+      "rule": "A list that runs to hundreds of rows is scanned, and anything taller than it needs turns scanning into scrolling. Padding, type size, and any pill or badge inside the row are tuned together - grow one and the row height goes with it.",
+      "fix": "Set one row height token and size everything inside the row against it."
+    },
+    {
+      "id": "TBL-02",
+      "title": "The Row Answers The Pointer",
+      "rule": "Hovering a row tints the whole row, applied through its cells rather than the row element, because cell backgrounds paint over a tr background and leave the hover half-applied.",
+      "severity": "blocker",
+      "check": {
+        "type": "row_hover"
+      },
+      "fix": "Tint the cells on row hover, in the pattern hover:[&>td]:bg-<surface>."
+    },
+    {
+      "id": "TBL-03",
+      "title": "A Clickable Row Says So",
+      "rule": "A row that navigates carries cursor: pointer, a hover state, a focus-visible ring, and keyboard reachability. A row that only responds to a mouse is invisible to half its users.",
+      "severity": "blocker",
+      "check": {
+        "type": "clickable_row"
+      },
+      "fix": "Give the row a real interactive element, or role, tabIndex, and key handling alongside the pointer cursor."
+    },
+    {
+      "id": "TBL-04",
+      "title": "Header Stays While The Body Scrolls",
+      "rule": "The header row is sticky at the top of its scroll container, on its own opaque surface and above the rows in the layer scale. A header that scrolls away leaves every column unlabelled by the second screen.",
+      "severity": "blocker",
+      "check": {
+        "type": "sticky_thead"
+      },
+      "fix": "Set position: sticky and top: 0 on the header cells with an opaque background and a z-index from the scale."
+    },
+    {
+      "id": "TBL-05",
+      "title": "Numbers Are Tabular And Right-Aligned",
+      "rule": "Numeric columns use tabular figures and align right so digits line up down the column. Proportional figures make a column of numbers impossible to compare at a glance and jitter as values change.",
+      "severity": "blocker",
+      "check": {
+        "type": "tabular_nums"
+      },
+      "fix": "Add font-variant-numeric: tabular-nums and right-align the numeric cells and their headers."
+    },
+    {
+      "id": "TBL-06",
+      "title": "Column Alignment Matches Content Type",
+      "rule": "Text left, numbers right, status and actions centred or right, and the header aligns with its column. A right-aligned header over left-aligned text reads as a mistake because it is one.",
+      "fix": "Align each header to its column's content."
+    },
+    {
+      "id": "TBL-07",
+      "title": "Row Separators Are One Hairline",
+      "rule": "One border token separating rows, or zebra striping, never both. A table carrying both is louder than its data. The same holds for a list that is a table in everything but its tag: a spec sheet with a hairline under all ten rows is held by TST-18.",
+      "check": {
+        "type": "row_separator"
+      },
+      "fix": "Pick the rule or the stripe and remove the other."
+    },
+    {
+      "id": "TBL-08",
+      "title": "Sortable Columns Announce Their Sort",
+      "rule": "A sortable header carries aria-sort reflecting the current direction, shows an indicator, and is operable by keyboard. An arrow with no aria-sort is a sort only sighted mouse users can follow.",
+      "severity": "blocker",
+      "when": "sortable",
+      "check": {
+        "type": "aria_sort"
+      },
+      "fix": "Add aria-sort to the sorted header and make the header a real button."
+    },
+    {
+      "id": "TBL-09",
+      "title": "Sort Indicator Space Is Always Reserved",
+      "rule": "The indicator's column is reserved on every sortable header whether or not it is the sorted one, so headers do not shift sideways as the sort moves.",
+      "when": "sortable",
+      "fix": "Render the indicator slot on every sortable header and toggle its visibility, not its presence."
+    },
+    {
+      "id": "TBL-10",
+      "title": "The Table Has A Small-Screen Answer",
+      "rule": "On a phone the table stacks into cards, scrolls inside its own container, or drops to the columns that matter. It never overflows the page, and a horizontally scrolling table declares its own overflow container.",
+      "severity": "blocker",
+      "check": {
+        "type": "table_overflow"
+      },
+      "fix": "Wrap the table in an overflow-x: auto container, or render a card layout below the breakpoint."
+    },
+    {
+      "id": "TBL-11",
+      "title": "Row Actions Are Reachable Without Hover",
+      "rule": "Actions that appear only on hover do not exist on touch and are hard to find with a keyboard. Keep them present at reduced emphasis, or put them behind a visible overflow control.",
+      "severity": "blocker",
+      "check": {
+        "type": "hover_only_actions"
+      },
+      "fix": "Render the actions at low emphasis by default and raise them on hover, rather than mounting them on hover."
+    },
+    {
+      "id": "TBL-12",
+      "title": "Icon-Only Row Actions Are Labelled",
+      "rule": "Every icon button in a row carries an aria-label and a title, so it is both announced and hoverable-to-identify.",
+      "severity": "blocker",
+      "check": {
+        "type": "icon_button_label"
+      },
+      "fix": "Add aria-label and title naming the action, not the icon."
+    },
+    {
+      "id": "TBL-13",
+      "title": "Empty, Loading, And Failed Tables Differ",
+      "rule": "No rows yet, no rows matching the filter, still loading, and the request failed are four different states with four different messages. A blank table body is none of them.",
+      "severity": "blocker",
+      "check": {
+        "type": "table_states"
+      },
+      "fix": "Branch the four states, with placeholder rows for loading and a retry on failure."
+    },
+    {
+      "id": "TBL-14",
+      "title": "Loading Rows Are The Row's Own Shape",
+      "rule": "Placeholder rows match the real row's height, column widths, and count, inside the same table. See the SKL gates for the measurement.",
+      "severity": "blocker",
+      "fix": "Render placeholder rows through the same row component."
+    },
+    {
+      "id": "TBL-15",
+      "title": "Row Entrance Decays Rather Than Crawling",
+      "rule": "Where rows animate in, the per-row delay decays so early rows cascade and later ones arrive almost together. A flat 80ms stagger over two hundred rows takes sixteen seconds.",
+      "severity": "advisory",
+      "fix": "Apply an exponential decay to the row delay with a floor of a few milliseconds, and stop it under reduced motion."
+    },
+    {
+      "id": "TBL-16",
+      "title": "Status Cells Use The Shared Badge Vocabulary",
+      "rule": "A status in a table reads identically to the same status in a detail panel or a card - one mapping from status to tone, one badge component, all three themes. Two spellings of the same state is the fastest way to make a product feel assembled from parts.",
+      "severity": "blocker",
+      "fix": "Map status to tone in one place and render through the shared badge."
+    },
+    {
+      "id": "TBL-17",
+      "title": "Selection Is Visible And Countable",
+      "rule": "Selected rows are marked beyond colour, the count is shown, and select-all states include the indeterminate one. Bulk actions appear only with a selection and say how many they will affect.",
+      "when": "selectable",
+      "fix": "Add the selected marker, the count, and the indeterminate header checkbox."
+    },
+    {
+      "id": "TBL-18",
+      "title": "Long Cell Content Truncates With A Way To Read It",
+      "rule": "Cells truncate to keep the row single-line, and the full value stays reachable through a title, a tooltip, or the row's detail view.",
+      "severity": "advisory",
+      "fix": "Truncate with an ellipsis and expose the full value."
+    },
+    {
+      "id": "TBL-19",
+      "title": "Large Tables Virtualise",
+      "rule": "Past roughly fifty rows the body virtualises, keeping scroll smooth and memory flat. The sticky header and column widths survive virtualisation.",
+      "when": "list",
+      "fix": "Virtualise the row list while keeping the header outside the virtual window."
+    },
+    {
+      "id": "TBL-20",
+      "title": "The Table Is A Table",
+      "rule": "Real table, thead, tbody, th with scope, and a caption or accessible name. A grid of divs is unreadable to a screen reader and unnavigable by table shortcuts.",
+      "severity": "blocker",
+      "check": {
+        "type": "semantic_table"
+      },
+      "fix": "Use the table elements, with scope on header cells and a caption or aria-label on the table."
+    }
+  ]
+}

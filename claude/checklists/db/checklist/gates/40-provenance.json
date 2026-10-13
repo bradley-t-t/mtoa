@@ -1,0 +1,35 @@
+{
+  "group": "Where The Schema Came From",
+  "prefix": "MIG",
+  "description": "A schema only stays reviewable if every change to it arrived as a file somebody read. Once a table exists that no migration creates, the repository has stopped describing the database, and the next person to trust it is working from fiction.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "probe",
+    "severity": "required",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "MIG-01",
+      "title": "Every Table Is Created By A Migration",
+      "rule": "Each table in the database is named by a file in supabase/migrations/. A table made in the dashboard works exactly as well until the schema has to be rebuilt, reviewed, or reasoned about.",
+      "check": {"type": "tables_in_migrations"},
+      "fix": "Write the migration that creates it, matching what the catalogue reports."
+    },
+    {
+      "id": "MIG-02",
+      "title": "Every Migration Has Been Applied",
+      "rule": "No migration file describes a table or function the database does not have. An unapplied migration in the tree reads as shipped and is the reason a fix lands green and changes nothing.",
+      "severity": "blocker",
+      "check": {"type": "migrations_applied"},
+      "fix": "Apply it, or delete it when it was superseded."
+    },
+    {
+      "id": "MIG-03",
+      "title": "Destructive Migrations Say Where The Backup Went",
+      "rule": "Every migration that drops a table names, in the file, where the rows were exported. Six months later the file is the only record anyone will find, and the question it has to answer is where the data went.",
+      "check": {"type": "drops_document_backup"},
+      "fix": "Add the location to the migration's header comment."
+    }
+  ]
+}

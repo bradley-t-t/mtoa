@@ -1,0 +1,554 @@
+{
+  "group": "Pointer & Press",
+  "prefix": "PTR",
+  "description": "What the interface does under a cursor and a finger. Every gate here is added when missing, not noted as absent - a control with no press feedback is unfinished, not a style choice.",
+  "gates": [
+    {
+      "id": "PTR-01",
+      "title": "Cursor Pointer On Every Clickable",
+      "rule": "Every element that responds to a click carries cursor: pointer - every button, card with an onClick, tab, custom control, clickable table row, and icon button, not one of them. A native <a href> has it already; a <button> and a <div> with a handler do not.",
+      "source": "references/intelligence.md#2-touch--interaction (cursor-pointer)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "interactive_coverage",
+        "state": "cursor"
+      },
+      "fix": "Add cursor: pointer to the control's base rule, or to the shared button/pressable primitive."
+    },
+    {
+      "id": "PTR-02",
+      "title": "Press Feedback On Every Pressable",
+      "rule": "Every pressable element scales down on :active - transform: scale(0.95-0.98) with a 100-160ms transform transition, or an equivalent press the design commits to. This is the click effect, and it is checked per element: one :active in a codebase of forty buttons means thirty-nine controls that do not answer the finger.",
+      "source": "references/polish.md#buttons-must-feel-responsive; slop gate 26",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "interactive_coverage",
+        "state": "active"
+      },
+      "fix": "Add :active { transform: scale(0.97) } plus transition: transform 160ms var(--ease-out) to the control primitive."
+    },
+    {
+      "id": "PTR-03",
+      "title": "Press Scale Is Subtle And In Range",
+      "rule": "The press scale sits between 0.95 and 0.98. Below 0.95 reads as a jolt; above 0.99 is invisible. scale(0) or a scale that changes layout bounds fails outright.",
+      "source": "references/polish.md#buttons-must-feel-responsive",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "active_scale_range",
+        "min": 0.94,
+        "max": 0.99
+      },
+      "fix": "Bring the scale into 0.95–0.98."
+    },
+    {
+      "id": "PTR-04",
+      "title": "Press Feedback Does Not Shift Layout",
+      "rule": "The pressed state changes transform, opacity, colour, or shadow — never padding, margin, width, height, or border-width. A press that reflows the row makes the whole page twitch.",
+      "source": "references/intelligence.md#stable-interaction-states; slop gate 14",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex_in_state",
+        "state": ":active",
+        "pattern": "(padding|margin|width|height|border-width|top|left)\\s*:",
+        "message": "Layout property changed on :active."
+      },
+      "fix": "Move the effect onto transform or opacity."
+    },
+    {
+      "id": "PTR-05",
+      "title": "Hover State On Every Interactive Element",
+      "rule": "Every interactive element has a distinct hover state, individually. The pointer needs to know what is live before it commits, on every control rather than on the ones that happened to get styled.",
+      "source": "references/intelligence.md#4-style-selection (state-clarity)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "interactive_coverage",
+        "state": "hover"
+      },
+      "fix": "Add the hover state to the control primitive."
+    },
+    {
+      "id": "PTR-06",
+      "title": "Hover Motion Gated Behind A Pointer Query",
+      "rule": "Any hover state that moves or scales sits inside @media (hover: hover) and (pointer: fine). Touch devices fire hover on tap, so an ungated hover-scale leaves a phone stuck in the hovered state after a tap.",
+      "source": "references/polish.md#touch-device-hover-states",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": ":hover[^{]*\\{[^}]*(transform|scale)",
+        "patterns": [
+          "@media\\s*\\(hover:\\s*hover\\)"
+        ],
+        "message": "Hover transform without a (hover: hover) and (pointer: fine) gate."
+      },
+      "fix": "Wrap the hover-motion rules in @media (hover: hover) and (pointer: fine)."
+    },
+    {
+      "id": "PTR-07",
+      "title": "One Hover Effect At A Time",
+      "rule": "No element stacks more than one hover effect. Translate plus scale plus shadow plus colour plus rotate on the same hover is the loudest AI tell in the set.",
+      "source": "slop gate 13",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "hover_effect_stack",
+        "max": 2
+      },
+      "fix": "Keep the one effect that carries the meaning; delete the rest."
+    },
+    {
+      "id": "PTR-08",
+      "title": "No Uniform hover:scale-105 Sprayed Across The Page",
+      "rule": "A single hover-scale applied to unrelated elements — cards, buttons, logos, images alike — is a template signature, not a design decision.",
+      "source": "slop gate 11",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "hover:scale-10[0-9]",
+        "min_count": 3,
+        "message": "The same hover-scale utility on three or more unrelated elements."
+      },
+      "fix": "Differentiate: lift the card, tint the button, do nothing to the logo."
+    },
+    {
+      "id": "PTR-09",
+      "title": "Focus-Visible Ring On Every Interactive Element",
+      "rule": "Every interactive element has a :focus-visible ring, 2-4px, clearing 3:1 against both the element and the page. Checked per element: an unscoped global rule covers everything, a per-component one covers only what it names.",
+      "source": "references/intelligence.md#1-accessibility (focus-states); slop gate 26",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "interactive_coverage",
+        "state": "focus-visible"
+      },
+      "fix": "Add the focus-visible ring to the control primitive using the focus token."
+    },
+    {
+      "id": "PTR-10",
+      "title": "Focus Ring Appears Instantly",
+      "rule": "The focus ring does not transition into existence. A ring that fades in leaves the keyboard user momentarily unsure where they are.",
+      "source": "slop gate 15",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex_in_state",
+        "state": ":focus-visible",
+        "pattern": "transition[^;]*(outline|box-shadow|border)",
+        "message": "Focus ring transitions in."
+      },
+      "fix": "Exclude outline and box-shadow from the transition property list on the focused element."
+    },
+    {
+      "id": "PTR-11",
+      "title": "Focus Never Removed Without Replacement",
+      "rule": "outline: none appears only where a replacement focus indicator is defined in the same rule set. A bare outline: none is an accessibility failure.",
+      "source": "references/intelligence.md#1-accessibility",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "outline_none_orphan"
+      },
+      "fix": "Pair it with a :focus-visible box-shadow or outline of your own."
+    },
+    {
+      "id": "PTR-12",
+      "title": "Disabled State Is Visible And Inert",
+      "rule": "Disabled controls carry reduced emphasis (0.38–0.5 opacity or a muted token), cursor: not-allowed, no hover effect, no press effect, and the real disabled attribute — not just a class. A control that looks pressable and does nothing is a bug the user blames on themselves.",
+      "source": "references/intelligence.md#8-forms--feedback (disabled-states); slop gate 26",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          ":disabled",
+          "disabled:",
+          "\\[disabled\\]",
+          "aria-disabled"
+        ],
+        "message": "No disabled state found."
+      },
+      "fix": "Add the disabled rule set with cursor: not-allowed, and set the real disabled attribute."
+    },
+    {
+      "id": "PTR-13",
+      "title": "Cursor Matches The Affordance",
+      "rule": "cursor: text on text inputs, not-allowed on disabled, grab and grabbing on draggables, col-resize on resizers, wait on blocking work, zoom-in on zoomable images. A default arrow over a specialised control tells the user nothing. What never appears is a replaced cursor: cursor: url() or a hidden native cursor with a drawn one following it, which TST-30 refuses.",
+      "source": "references/intelligence.md#2-touch--interaction",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Set the cursor that names the affordance on each control type, and remove any custom cursor layer."
+    },
+    {
+      "id": "PTR-14",
+      "title": "Tap Highlight And Selection Are Themed",
+      "rule": "-webkit-tap-highlight-color is set (usually transparent, with the press state doing the work) so mobile taps do not flash the default blue box. ::selection carries a themed background that reads in all three themes.",
+      "source": "references/polish.md#component-building-principles; references/code/shadcn-theming.md",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "-webkit-tap-highlight-color",
+          "::selection"
+        ],
+        "message": "No tap-highlight or ::selection styling.",
+        "mode": "all"
+      },
+      "fix": "Add -webkit-tap-highlight-color: transparent and a ::selection rule using theme tokens."
+    },
+    {
+      "id": "PTR-15",
+      "title": "touch-action: manipulation On Tappables",
+      "rule": "Tappable elements set touch-action: manipulation to drop the 300ms mobile click delay. Without it every tap on the site feels a third of a second late.",
+      "source": "references/intelligence.md#2-touch--interaction (tap-delay)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "interactive_coverage",
+        "state": "touch-action"
+      },
+      "fix": "Add touch-action: manipulation to the button/pressable primitive."
+    },
+    {
+      "id": "PTR-16",
+      "title": "Control Labels Are Not Selectable",
+      "rule": "user-select: none on button labels, tab labels, and nav items. Text that highlights when a user double-clicks a button reads as a bug.",
+      "source": "references/polish.md#component-building-principles",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "advisory",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "user-select:\\s*none",
+          "select-none"
+        ],
+        "message": "No user-select: none on control labels."
+      },
+      "fix": "Add user-select: none to the control primitive; leave body copy selectable."
+    },
+    {
+      "id": "PTR-17",
+      "title": "Touch Targets Clear 44px",
+      "rule": "Every interactive element has at least a 44x44pt hit area with 8px between neighbours, including icon-only buttons — extend the hit area past the visual bounds when the icon is smaller.",
+      "source": "references/intelligence.md#2-touch--interaction (touch-target-size)",
+      "kinds": [
+        "web-ui",
+        "component",
+        "banner"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pad the control or add a pseudo-element hit area; keep the visual size."
+    },
+    {
+      "id": "PTR-18",
+      "title": "Feedback Lands Within 100ms",
+      "rule": "Something visible happens within 100ms of the press — the press scale, a ripple, an opacity shift. Work that takes longer shows a loading state on the control itself, not a frozen button.",
+      "source": "references/intelligence.md#3-performance (tap-feedback-speed)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Keep the press transition at 100–160ms and put the async state on the control."
+    },
+    {
+      "id": "PTR-19",
+      "title": "Async Controls Disable And Show Progress",
+      "rule": "A control that fires async work disables itself for the duration and shows a spinner or progress, so a second click cannot double-submit.",
+      "source": "references/intelligence.md#2-touch--interaction (loading-buttons)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "form",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Wire the pending state to the control's disabled attribute and swap the label for a spinner."
+    },
+    {
+      "id": "PTR-20",
+      "title": "Scroll Containers Contain Their Scroll",
+      "rule": "Scrollable regions set overscroll-behavior: contain so a scroll that reaches the end does not chain to the page behind. Modals and drawers lock the body scroll while open.",
+      "source": "references/intelligence.md#5-layout--responsive (scroll-behavior)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "modal",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "overscroll-behavior"
+        ],
+        "message": "No overscroll-behavior on a deliverable with a modal or scroll region."
+      },
+      "fix": "Add overscroll-behavior: contain to the scroll container and lock body scroll while the overlay is open."
+    },
+    {
+      "id": "PTR-21",
+      "title": "Drag Has A Threshold And Live Response",
+      "rule": "Drag starts after a movement threshold so a slightly-moved click is still a click, and the dragged element tracks the pointer in real time with damping at the boundaries.",
+      "source": "references/polish.md#gesture-and-drag-interactions",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "drag",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Add the movement threshold and pointer capture; damp past the edges rather than hard-stopping."
+    },
+    {
+      "id": "PTR-22",
+      "title": "Interactive Elements Are Real Controls",
+      "rule": "Clickable things are <button>, <a>, or a native primitive with the right role, not a <div> with an onClick. Keyboard, screen reader, and focus behaviour come free from the real element and have to be rebuilt badly on the fake one.",
+      "source": "references/intelligence.md#interaction-app (semantic-native-controls)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "div_onclick"
+      },
+      "fix": "Swap the div for a button, or add role, tabindex, and key handlers."
+    },
+    {
+      "id": "PTR-23",
+      "title": "Rows And Cards Answer The Pointer",
+      "rule": "Any row, card, or tile that can be clicked tints on hover across its whole surface, not just its title. A hover that only lights the link inside makes the rest of the row look inert when it is not.",
+      "source": "references/code/tables-and-headers.md",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "surface_hover"
+      },
+      "fix": "Move the hover to the row or card container, applied through its cells where cell backgrounds would paint over it."
+    },
+    {
+      "id": "PTR-24",
+      "title": "Hover Uses One Vocabulary",
+      "rule": "One way of saying hovered across the product - a surface step, or a brightness shift, or a border change - not a different one per component. Mixed vocabularies read as different products stitched together.",
+      "source": "checklist/README.md#cohesion",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "check": {
+        "type": "cohesion_values",
+        "property": "hover-effect"
+      },
+      "fix": "Pick the hover vocabulary and move the outliers onto it."
+    },
+    {
+      "id": "PTR-25",
+      "title": "Hover Never Reveals Something Only Hover Can Reach",
+      "rule": "Actions, values, and controls that appear on hover do not exist on touch and are hard to find by keyboard. Keep them present at reduced emphasis and raise them on hover, rather than mounting them on it.",
+      "source": "references/intelligence.md#2-touch--interaction",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "hover_only_actions"
+      },
+      "fix": "Render at low opacity by default and raise on hover and focus-within."
+    },
+    {
+      "id": "PTR-26",
+      "title": "Hover Does Not Move The Layout",
+      "rule": "A hover state changes colour, shadow, or transform - never width, height, padding, margin, or border-width. A row that grows on hover pushes everything below it every time the pointer crosses the table.",
+      "source": "references/polish.md#performance-rules",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex_in_state",
+        "state": ":hover",
+        "pattern": "(?<!-)(padding|margin|width|height|border-width|top|left)\\s*:",
+        "message": "Layout property changed on :hover."
+      },
+      "fix": "Move the effect onto transform, colour, or shadow."
+    },
+    {
+      "id": "PTR-27",
+      "title": "Hover-Triggered Overlays Have Intent",
+      "rule": "Anything that opens on hover - a tooltip, a preview, a submenu - waits out an accidental pass and forgives the diagonal path toward it. Opening instantly on every crossing makes a dense list flicker.",
+      "source": "references/polish.md#tooltips-skip-delay-on-subsequent-hovers",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "tooltip",
+      "fix": "Add an open delay and a close grace period, and keep the submenu open along the pointer's path toward it."
+    },
+    {
+      "id": "PTR-28",
+      "title": "The Pointer Is Not Required To Discover Anything",
+      "rule": "Nothing essential is discoverable only by moving a mouse over it. Every hover affordance has a keyboard and touch equivalent that surfaces the same thing.",
+      "source": "references/intelligence.md#2-touch--interaction",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "fix": "Pair every hover reveal with focus-within and a tap or long-press path."
+    },
+    {
+      "id": "PTR-29",
+      "title": "Text Selection Works Where Text Is Read",
+      "rule": "Body copy, table cells, code, and values stay selectable; only control labels are not. A page that blocks selection wholesale stops readers copying the thing they came for.",
+      "source": "references/code/fields-and-dropdowns.md",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "check": {
+        "type": "global_user_select"
+      },
+      "fix": "Scope user-select: none to the control primitives rather than the page."
+    },
+    {
+      "id": "PTR-30",
+      "title": "Scroll Regions Say They Scroll",
+      "rule": "A container that scrolls shows it - a visible scrollbar, a fade at the edge, or content clipped mid-row. A scroll region whose content ends flush at the boundary reads as the end of the list.",
+      "source": "references/code/tables-and-headers.md",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "advisory",
+      "fix": "Keep the scrollbar visible, or add an edge fade that appears while there is more to reach."
+    },
+    {
+      "id": "PTR-31",
+      "title": "Click Effect At The Pointer",
+      "rule": "Clicking anywhere on a page produces something at the cursor - a ripple, a spark, a short wave from the click point. This is separate from the press feedback on the control that was hit: a site where every button scales on :active and nothing else answers still feels dead under the hand. Where a site has no click effect, add one; it is not a question to put to the brief.",
+      "source": "references/code/click-effect.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "click_effect"
+      },
+      "fix": "Mount one global pointerdown listener that draws a short-lived element at clientX/clientY on a fixed, pointer-events: none layer, and let it animate out. references/code/click-effect.md carries the implementation."
+    },
+    {
+      "id": "PTR-32",
+      "title": "Click Effect Does Not Block Or Insist",
+      "rule": "The layer a click effect draws on carries pointer-events: none, so it never swallows a click, and the effect stands down under prefers-reduced-motion. An effect that eats clicks is worse than no effect.",
+      "source": "references/code/click-effect.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "click_effect_safe"
+      },
+      "fix": "Give the overlay position: fixed; inset: 0; pointer-events: none, and skip the spawn when matchMedia('(prefers-reduced-motion: reduce)').matches."
+    }
+  ]
+}

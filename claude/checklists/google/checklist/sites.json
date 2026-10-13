@@ -1,0 +1,6 @@
+{
+  "example.com": {"kind": "local-business", "flags": ["forms"]},
+  "clienttwo.com": {"kind": "product", "flags": ["app"]},
+  "fleetapp.app": {"kind": "product", "flags": ["app"]},
+  "clientseven.com": {"kind": "product", "flags": []}
+}

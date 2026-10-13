@@ -1,0 +1,105 @@
+{
+  "group": "Tooling",
+  "prefix": "TLG",
+  "description": "The checks that run without being asked. A formatter nobody runs, a linter with no rules and a strict flag turned off are all the same failure: a control that exists to be pointed at rather than to catch anything.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "node",
+    "severity": "required",
+    "source": "references/tooling.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "TLG-01",
+      "title": "Prettier Is Configured",
+      "rule": "A Prettier configuration exists at the root and is not empty. Formatting settled once in a file is formatting nobody argues about in a review.",
+      "check": {"type": "prettier_config"},
+      "fix": "Add .prettierrc with the project's settings, and .prettierignore for the build output."
+    },
+    {
+      "id": "TLG-02",
+      "title": "A format:check Script Exists",
+      "rule": "The package exposes a script that checks formatting without writing. A formatter with only a write script cannot be a gate, because running it makes the check pass.",
+      "check": {"type": "npm_script", "script": "format:check"},
+      "fix": "Add \"format:check\": \"prettier --check .\" alongside the writing one."
+    },
+    {
+      "id": "TLG-03",
+      "title": "CI Runs The Formatter Check",
+      "rule": "The workflow calls format:check. A check that only runs when somebody remembers is a check that runs after the argument rather than before it.",
+      "check": {"type": "ci_runs", "script": "format:check"},
+      "fix": "Add the step to .github/workflows/ci.yml on both branches."
+    },
+    {
+      "id": "TLG-04",
+      "title": "ESLint Has A Config With Real Rules",
+      "rule": "A flat config exists and turns on rules beyond the framework's defaults. A config that extends one preset and adds nothing is a linter that agrees with everything.",
+      "check": {"type": "eslint_config"},
+      "fix": "Write eslint.config.js with the rule set the project actually wants."
+    },
+    {
+      "id": "TLG-05",
+      "title": "A lint Script Exists And CI Runs It",
+      "rule": "The package exposes lint and the workflow calls it. The standard ci.yml runs lint --if-present, which passes silently when the script is missing.",
+      "check": {"type": "lint_wired"},
+      "fix": "Add the script, and confirm the workflow reaches it."
+    },
+    {
+      "id": "TLG-06",
+      "title": "No Silent eslint-disable",
+      "rule": "Every disable comment names the rule and says why. A bare disable turns off everything on that line for whoever reads it next, and nothing records what it was for.",
+      "when": "always",
+      "check": {"type": "bare_disable"},
+      "fix": "Name the rule and add the reason, or fix the code the rule is pointing at."
+    },
+    {
+      "id": "TLG-07",
+      "title": "TypeScript Runs Strict",
+      "rule": "strict is on in the tsconfig, with noImplicitAny and strictNullChecks it implies. Strict off is a type checker that agrees with the code rather than checking it.",
+      "when": "typescript",
+      "check": {"type": "ts_strict"},
+      "fix": "Turn strict on and work through what it surfaces."
+    },
+    {
+      "id": "TLG-08",
+      "title": "No any Escape Hatches In What Changed",
+      "rule": "The files this run touched carry no explicit any and no ts-ignore. One any at a boundary spreads through everything it returns into.",
+      "when": "typescript",
+      "check": {"type": "any_in_touched"},
+      "fix": "Type the value, or use unknown and narrow it."
+    },
+    {
+      "id": "TLG-09",
+      "title": "The Type Check Runs In CI",
+      "rule": "The workflow runs tsc --noEmit. A build that transpiles without checking types ships type errors, because most bundlers do not check at all.",
+      "when": "typescript",
+      "check": {"type": "ci_typecheck"},
+      "fix": "Add a typecheck script and call it from ci.yml."
+    },
+    {
+      "id": "TLG-10",
+      "title": "One Lockfile, Committed",
+      "rule": "Exactly one lockfile exists and it is tracked. Two lockfiles mean two dependency trees and whichever tool ran last wins; none means CI resolves versions the developer never saw.",
+      "when": "always",
+      "severity": "blocker",
+      "check": {"type": "lockfile"},
+      "fix": "Delete the lockfiles for package managers this project does not use, and commit the one that is left."
+    },
+    {
+      "id": "TLG-11",
+      "title": "The Node Version Is Pinned And CI Agrees",
+      "rule": "engines.node names a version and the workflow's setup-node matches it. A project that builds locally on one major and in CI on another fails in exactly the places the two differ.",
+      "check": {"type": "node_pinned"},
+      "fix": "Set engines.node, and set node-version in ci.yml to the same major."
+    },
+    {
+      "id": "TLG-12",
+      "title": "Editor Configuration Is Ignored, Not Committed",
+      "rule": "gitignore covers .idea, .vscode, *.iml and the rest, and none of them is tracked. Editor settings are personal and belong in the machine, not handed to whoever clones next.",
+      "when": "always",
+      "check": {"type": "editor_ignored"},
+      "fix": "Add the entries and git rm --cached anything already tracked."
+    }
+  ]
+}

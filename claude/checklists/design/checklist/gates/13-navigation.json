@@ -1,0 +1,329 @@
+{
+  "group": "Navigation Bars",
+  "prefix": "NAV",
+  "description": "What the top bar and the footer of the reference sites agree on, plus the one thing no other group asks: which shape out of the catalog this chrome is, chosen on purpose rather than arrived at.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "when": "nav",
+    "severity": "required",
+    "source": "references/navigation-sites.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "NAV-01",
+      "title": "The Bar Has Two States And A Transition Between Them",
+      "rule": "A bar over a hero may start transparent or scrim-backed, but the moment content scrolls beneath it it carries the opaque or blurred surface HDR-02 requires, and the change is a transitioned background swap near 200ms, never a snap. Shield AI moves from gradient scrim to solid #050506 with transition: background-color ease-out 0.2s; Saronic holds a sticky bar on its body surface token and goes transparent only in its hero state; Apple keeps one alpha-plus-blur surface at all times, the one-state form that needs no swap.",
+      "source": "references/navigation-sites.md#two-surface-states",
+      "check": {
+        "type": "nav_two_states"
+      },
+      "fix": "Give the bar an explicit scrolled state that applies the opaque surface, and transition background-color between the two."
+    },
+    {
+      "id": "NAV-02",
+      "title": "Nav Motion Is Its Own Token Family",
+      "rule": "A bar with a real disclosure panel - a flyout, popover, mega-menu, or full-nav dropdown - names its timings as tokens referenced from every nav transition, in the 240-300ms band with the easing declared beside them, and zeros them under reduced motion at the token so one media query stills the whole bar. Ramp ships --nav-desktop-popup-duration: .3s, --nav-mobile-duration: .24s, and --nav-hamburger-duration: .25s beside --nav-mobile-easing; Stripe ships --navigation-duration: 240ms, -slow: 300ms, and hamburger 0.25s, all set to 0s under prefers-reduced-motion. Both ship the identical curve cubic-bezier(.45, .05, .55, .95). POL-04 and POL-06 gate easing tokens and duration caps in general; this requires the nav family exist by name once the bar owns a panel worth naming.",
+      "source": "references/navigation-sites.md#nav-motion-tokens",
+      "severity": "advisory",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "(nav|header)[a-zA-Z_-]*(flyout|popover|mega-?menu|dropdown-panel)|mega-?menu[a-zA-Z_-]*(open|panel|surface)",
+        "patterns": [
+          "--[a-z0-9-]*(nav|menu|header|global)[a-z0-9-]*(duration|easing|ease|speed)[a-z0-9-]*:",
+          "(NAV|MENU|HEADER)_?(DURATION|EASING)",
+          "\\$(nav|menu|header)[a-z-]*(duration|easing):",
+          "theme:\\s*\\{[^}]*(transition|animation|duration)"
+        ],
+        "message": "A nav disclosure panel animates with no named nav motion token anywhere in the deliverable."
+      },
+      "fix": "Define the nav duration and easing tokens once and reference them from every transition the bar owns."
+    },
+    {
+      "id": "NAV-03",
+      "title": "A Trigger That Opens A Panel Is A Disclosure Button",
+      "rule": "A top-level item that opens a panel rather than navigating is a button carrying aria-expanded that mirrors the panel's visibility, never an anchor with a dead href; the items that navigate stay anchors. Ramp renders its five group triggers as buttons with aria-expanded beside seven true links, and Stripe's five and Mercury's four do the same. Escape closes the panel and returns focus to the trigger, as FLD-08 requires of every menu.",
+      "source": "references/navigation-sites.md#disclosure-triggers",
+      "severity": "blocker",
+      "check": {
+        "type": "nav_disclosure_trigger"
+      },
+      "fix": "Swap panel triggers to buttons, mirror the open state onto aria-expanded, and wire Escape to close and refocus."
+    },
+    {
+      "id": "NAV-04",
+      "title": "Past Six Destinations The Panel Is A Directory",
+      "rule": "A panel holding more than six destinations groups them under quiet headings, and each item carries its name plus a one-line description of where it leads - a column of bare anchors is a sitemap, not navigation. Mercury ships the structure server-rendered: 54 destinations grouped under four triggers, nineteen with descriptions beneath the label. Stripe's Products panel groups Payments, Billing, Connect, and Issuing under headings; Ramp's panels group the same way.",
+      "source": "references/navigation-sites.md#structured-panels",
+      "check": {
+        "type": "nav_panel_directory"
+      },
+      "fix": "Group the panel's links under headings and give each destination a one-line description."
+    },
+    {
+      "id": "NAV-05",
+      "title": "The Bar Ends In One Loud Action",
+      "rule": "At most one filled button closes the bar, with sign-in and everything else sitting as quiet links beside it; two competing filled buttons split the one decision the bar is allowed to push. Stripe closes with Sign in beside Contact sales, Ramp with Sign in beside Get started, Mercury with Log in beside Open Account, Shield AI with a lone Schedule a Demonstration.",
+      "source": "references/navigation-sites.md#one-loud-action",
+      "check": {
+        "type": "nav_primary_action"
+      },
+      "fix": "Keep one primary button at the trailing edge and demote the rest of the cluster to quiet links."
+    },
+    {
+      "id": "NAV-06",
+      "title": "Uppercase Micro-Labels Are Tracked Wide",
+      "rule": "Uppercase at small sizes - eyebrows, nav micro-labels, spec callouts - carries positive letter-spacing in the 0.03em to 0.12em band; capitals at default tracking read cramped. Anduril tracks 86 of its 109 uppercase rules at .03rem, Shield AI's run .07em to .11em, and the lowercase-first sites barely use the transform at all - Stripe once, Apple never - which is the other honest answer: track capitals wide, or do not set capitals.",
+      "source": "references/navigation-sites.md#tracked-micro-labels",
+      "when": "css",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "text-transform:\\s*['\"]?uppercase|textTransform:\\s*['\"]uppercase|class(Name)?=[\"'][^\"']*\\buppercase\\b",
+        "patterns": [
+          "letter-spacing:\\s*(0?\\.[0-9]+|[1-9][0-9]*(\\.[0-9]+)?)(px|r?em)",
+          "letterSpacing:\\s*['\"]?(0?\\.[0-9]+|[1-9])",
+          "tracking-(wide|wider|widest)",
+          "letter-spacing:\\s*var\\("
+        ],
+        "message": "Uppercase text is set with no positive letter-spacing anywhere in the deliverable."
+      },
+      "fix": "Add positive letter-spacing between 0.03em and 0.12em wherever text-transform: uppercase applies, or drop the transform."
+    },
+    {
+      "id": "NAV-07",
+      "title": "A Bar That Hides Comes Back On The First Upward Scroll",
+      "rule": "Hide-on-scroll moves the bar away by exactly its own height with a transition, returns it on the first upward scroll, and never hides while a panel is open or focus is inside it. Saronic slides its 64px bar under a data-hidden attribute to top: calc(var(--announcement-bar-height) - var(--height)), so the tokens that place the bar are the tokens that remove it.",
+      "source": "references/navigation-sites.md#hide-on-scroll",
+      "check": {
+        "type": "nav_hide_on_scroll"
+      },
+      "fix": "Drive the hidden state from the bar's own height token, return on upward scroll, and suppress hiding while the menu is open."
+    },
+    {
+      "id": "NAV-08",
+      "title": "The Open Panel And The Bar Are One Surface",
+      "rule": "An open panel continues the bar - the same surface token and no seam or gap at the join - and the page behind acknowledges it with a scrim, a dim, or a blur. Apple's globalnav drops its own backdrop blur the moment the flyout opens because the flyout brings the full-width surface with it. A panel floating a visible gap below a bar it does not touch reads as a tooltip, not navigation.",
+      "source": "references/navigation-sites.md#one-panel-that-travels",
+      "check": {
+        "type": "nav_panel_seam"
+      },
+      "fix": "Share the surface token between bar and panel, remove the gap at the join, and put a scrim over the page while open."
+    },
+    {
+      "id": "NAV-09",
+      "title": "Between Triggers The Panel Travels",
+      "rule": "With a panel open, moving to the next trigger morphs the one panel - position, size, and a content crossfade - rather than closing and replaying the open animation, and the diagonal path from trigger to panel never closes it. This is the shipped behavior of Stripe's bar and the first thing its imitations drop: the open animation plays once, and travel between siblings does not re-enter it.",
+      "source": "references/navigation-sites.md#one-panel-that-travels",
+      "fix": "Keep one panel mounted across triggers, animate its position and size to the active item, and crossfade the content."
+    },
+    {
+      "id": "NAV-10",
+      "title": "The Top Level Holds Four To Seven Destinations",
+      "rule": "Four to seven top-level items, each labeled in one or two words, with everything else living inside panels or in the footer. Stripe holds five named groups, Ramp six, Mercury four beside Pricing, Shield AI six, and Saronic collapses to a single Menu button rather than crowd the bar; Apple runs twelve only because every label is one word. No measured bar wraps a label.",
+      "source": "references/navigation-sites.md#top-level-restraint",
+      "check": {
+        "type": "nav_top_level_count"
+      },
+      "fix": "Fold overflow destinations into the panels or the footer until the bar holds seven or fewer one-or-two-word items."
+    },
+    {
+      "id": "NAV-11",
+      "title": "The Bar Declares Which Shape It Is",
+      "rule": "A stamp at the top of the navigation stylesheet names the archetype the bar is, out of the catalog in references/hallmark/references/components. Every other gate measures whether the bar is free of defects; this one asks whether its shape was chosen. A bar can pass every other rule in the set and still be the shape a generated page reaches for first, and nothing else in the run can tell.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "archetype_stamp",
+        "surface": "nav"
+      },
+      "fix": "Read the N-archetypes in references/hallmark/references/components, pick the one this brief calls for, build it, and stamp it: /* nav: n5-floating-pill */"
+    },
+    {
+      "id": "NAV-12",
+      "title": "The Bar Is Not The Shape Every Generated Page Lands On",
+      "rule": "Wordmark hard-left, a row of text links, one filled call to action at the trailing edge: n1b-saas-three-section and n1-wordmark-2-links are where a page goes when nobody decided. Polish does not rescue the shape - a blur, a scroll-state swap and a dark ground sit just as happily on the default as on anything else, which is why the surface gates pass it.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "archetype_not_default",
+        "surface": "nav"
+      },
+      "fix": "Move to an archetype with a point of view - a floating pill, an edge-aligned minimal, a side rail, a masthead, a command bar - or dispute this gate with the reason the default shape is right for this brief."
+    },
+    {
+      "id": "NAV-13",
+      "title": "The Bar Differs From The Last Page Of Its Kind",
+      "rule": "Two landing pages that share a nav archetype are one template wearing two palettes. The choice is recorded when a run closes and compared on the next run of the same page kind.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": [
+        "marketing",
+        "nav"
+      ],
+      "check": {
+        "type": "archetype_rotation",
+        "surface": "nav"
+      },
+      "fix": "Pick a different archetype from the catalog, or dispute this with the reason this brief needs the same shape as the last one."
+    },
+    {
+      "id": "FTR-01",
+      "title": "The Footer Declares Which Shape It Is",
+      "rule": "A stamp names the footer archetype out of the Ft catalog. The four-column link grid with a social row and a tiny copyright is what a page produces when the footer was filled in rather than designed, and only a declared shape makes the difference visible.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "footer",
+      "severity": "blocker",
+      "check": {
+        "type": "archetype_stamp",
+        "surface": "footer"
+      },
+      "fix": "Pick an Ft archetype, build it, and stamp it: /* footer: ft5-statement */"
+    },
+    {
+      "id": "FTR-02",
+      "title": "The Footer Is Not The Default Index Grid",
+      "rule": "Product, Company, Resources, Legal in four columns under a hairline is the shape to move away from unless the page is a genuine docs root or hub.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "footer",
+      "check": {
+        "type": "archetype_not_default",
+        "surface": "footer"
+      },
+      "fix": "Move to a statement, a mast-headed, a dense-typographic, or an inline-rule footer, or dispute this with the reason a link index is right here."
+    },
+    {
+      "id": "NAV-14",
+      "title": "The Bar Opens Something",
+      "rule": "At least one top-level destination opens a panel, with a trigger carrying aria-expanded or aria-haspopup and a real panel body behind it. apple.com puts a full-width panel under every top-level word; anduril.com and stripe.com do the same. A flat row of links is a link list, and no amount of blur, scroll-state or dark ground turns it into navigation - which is why the surface gates pass a bar that has none.",
+      "source": "references/navigation-sites.md#two-surface-states",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": [
+        "marketing",
+        "nav"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "nav_has_panel",
+        "min_items": 3
+      },
+      "fix": "Give the top-level destinations that have children a disclosure that opens a panel: a trigger with aria-expanded and a panel body holding the sections beneath it. NAV-03 then governs the trigger and NAV-04 the panel's shape."
+    },
+    {
+      "id": "NAV-15",
+      "title": "The Panel Names Its Own Shape",
+      "rule": "The mega menu declares which catalogue shape it is, stamped as /* panel: <slug> */ beside the nav and footer stamps. Without it every panel is built the way the last one was built, which is how a row of icon tiles over a one-line summary ends up under every bar on every site: nobody chose it, it was simply what the previous file did. The bar archetype does not answer for this. It describes the bar's own shape and says nothing about what opens beneath it.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": [
+        "nav",
+        "panel"
+      ],
+      "severity": "required",
+      "check": {
+        "type": "archetype_stamp",
+        "surface": "panel"
+      },
+      "fix": "Pick a panel shape and stamp it: mm1-icon-row-list, mm2-two-column-split, mm3-grouped-columns, mm4-full-bleed-canvas, mm5-preview-on-hover, mm6-inline-expand-row. Build what the entry describes rather than stamping the name over what is already there."
+    },
+    {
+      "id": "NAV-16",
+      "title": "The Panel Is Not The Last One Again",
+      "rule": "The panel shape differs from the one the last run of this page kind used. Twelve sites whose bars each picked a different archetype still read as one template when every bar opens the same panel, because the panel is the part a visitor actually reads. Rotating the bar and repeating the panel is the shape of that failure.",
+      "source": "references/hallmark/references/components",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": [
+        "nav",
+        "panel"
+      ],
+      "severity": "required",
+      "check": {
+        "type": "archetype_rotation",
+        "surface": "panel"
+      },
+      "fix": "Take a different entry from the panel catalogue and build it. Dispute this only where the repeat is the point, and say which brief makes it so."
+    },
+    {
+      "id": "NAV-17",
+      "title": "The Scrolled Bar Is Still Opaque",
+      "rule": "A bar that changes on scroll paints in two states and only one of them gets looked at. The scrolled state is where it fails: a ground kept translucent because a backdrop filter was doing the work, and a backdrop filter on the outer bar wrapping the one on the inner pill. A zero blur is still a backdrop filter, so blur(0) on the outer nests a second layer around the inner one, and WebKit composites the inner against the outer rather than the page: the page's own headings paint over the bar. It renders correctly in Chromium, which is why it ships.",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": [
+        "nav",
+        "css"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "scrolled_bar"
+      },
+      "fix": "Set backdrop-filter: none on the outer bar in its scrolled state rather than blur(0), so nothing nests, and give the detached bar an opaque ground rather than a wash. Detached from the edge it reads as an object, and nothing behind it can show through where the blur is dropped."
+    },
+    {
+      "id": "NAV-18",
+      "title": "Nothing Hangs Out Of A Rounded Container",
+      "rule": "A square child against a rounded container's corner sits outside the arc unless the row is inset by what the radius needs at that height. A pill bar with a 999px radius and no inline padding puts its call to action flush with the container edge, and the button's corners then hang off the end of the bar. Nothing in source shows it: the radius is a correct number and the padding is a correct number, and only their ratio at the rendered height decides it. For a corner of radius r, a child whose edge is dy from the container's other edge needs r minus the square root of r squared less dy squared.",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "layout_probe",
+        "dimension": "rounded-fit"
+      },
+      "fix": "Inset the container's row by at least what the corner needs, and transition the inset alongside the radius where the shape morphs, so the two never disagree mid-animation."
+    },
+    {
+      "id": "NAV-19",
+      "title": "The Open Panel Is A Surface, Not A Filter",
+      "rule": "A mega-menu panel is opaque. Whatever alpha or blur the bar carries over a hero, the panel behind it does not: it covers a page of type with a page of type, and anything showing through puts the two on top of each other at exactly the moment a visitor is reading to choose where to go. Stripe's panel is solid #fff over a blurred bar; Apple's global nav goes opaque the moment a panel opens. A backdrop-filter also costs a compositor pass on every scroll frame behind the largest element on the page.",
+      "source": "references/navigation-sites.md#panel-surface",
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "panel_opaque"
+      },
+      "fix": "Give the panel the bar's own solid surface token with no alpha modifier and no backdrop-blur, and let its border and shadow do the separating."
+    },
+    {
+      "id": "NAV-20",
+      "title": "The Strip Above The Bar Was Decided",
+      "rule": "A rail above the navigation is not owed by every site, and it is owed by more of them than have one. The test is what the bar is carrying that does not belong to it: a phone number, opening hours, a second office, a locale or currency switch, a store locator, an order tracker, an account link, a parent brand. Where that exists, it goes in a strip above the bar so the bar itself holds destinations and one action; where it does not, a rail is a bar of filler and the run says so. Either answer is fine. Never having asked is the defect.",
+      "source": "references/navigation-sites.md#utility-strip",
+      "when": "nav",
+      "severity": "required",
+      "check": {
+        "type": "top_rail"
+      },
+      "fix": "Lift the utility content into a strip above the bar at the width that has room for it, or record what this bar carries that would have gone there and why it is better placed where it is."
+    }
+  ]
+}

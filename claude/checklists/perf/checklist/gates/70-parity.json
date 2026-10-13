@@ -1,0 +1,71 @@
+{
+  "group": "Parity - Nothing A Reader Can See Changed",
+  "prefix": "PAR",
+  "description": "Every rule in this checklist is a change to how bytes reach the browser, never to what those bytes describe. That invariant is the point of the skill and it is the easiest thing in it to break by accident, so it is measured rather than promised: the rendered page is captured before the work and again after, and any difference in geometry, computed style, route inventory or console output holds the run open.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "source": "references/invariants.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PAR-01",
+      "title": "A Before Capture Exists",
+      "rule": "The rendered page was captured before anything was edited, at every viewport the run answers for. A capture taken afterwards proves nothing: it records the state the work already produced.",
+      "check": {"type": "parity_before"},
+      "fix": "Serve the current build, run scripts/parity-probe.js in the page, and file it with perf-pass.py parity --phase before --file <capture.json>."
+    },
+    {
+      "id": "PAR-02",
+      "title": "Rendered Geometry Is Unchanged",
+      "rule": "Every element that was on the page is still there, at the same position and the same size, at every viewport. Position is what a reader means by layout, so a box that moved is a design change however it was caused.",
+      "check": {"type": "parity_geometry"},
+      "fix": "perf-pass.py parity --diff names each element that moved. Revert the change that moved it, or reserve the space the deferred content used to occupy."
+    },
+    {
+      "id": "PAR-03",
+      "title": "Computed Style Is Unchanged",
+      "rule": "Colour, type, weight, spacing, radius, shadow and transform of every captured element still compute to the same values. A font swapped for a system stack and a shadow dropped with a stylesheet both pass a geometry check and both are visible.",
+      "check": {"type": "parity_style"},
+      "fix": "perf-pass.py parity --diff names each property that changed. Put it back; find the loading win somewhere it does not cost the appearance."
+    },
+    {
+      "id": "PAR-04",
+      "title": "Every Route Still Exists And Still Renders",
+      "rule": "The route inventory after the work matches the one before, and each route still reaches a rendered state. Splitting a bundle wrongly turns a route into a blank frame, which no metric on the home page will ever show.",
+      "check": {"type": "parity_routes"},
+      "fix": "Load each route from the captured inventory. A route that fails is a broken import boundary, not a slow one."
+    },
+    {
+      "id": "PAR-05",
+      "title": "Interactive Controls Still Respond",
+      "rule": "The controls the capture recorded - links, buttons, inputs, menus, forms - still respond to input. Deferring a script is invisible until the thing it powers is the thing a visitor came to use.",
+      "check": {"type": "parity_interactive"},
+      "fix": "Exercise each control the capture listed. A control that went inert has lost the module it was waiting on; import it at the point of use rather than dropping it."
+    },
+    {
+      "id": "PAR-06",
+      "title": "No Console Error Was Introduced",
+      "rule": "The page throws nothing it did not already throw. A dynamic import that fails is silent to every loading metric and fatal to the feature behind it.",
+      "check": {"type": "parity_console"},
+      "fix": "Read the after capture's console entries against the before. Fix the import, do not catch and swallow it."
+    },
+    {
+      "id": "PAR-07",
+      "title": "Motion Behaves As It Did",
+      "rule": "Animations, transitions and scroll effects still run, at the same durations and the same triggers. Moving an animation onto the compositor is invisible; removing it is not, and the two are one line apart.",
+      "when": "animation",
+      "check": {"type": "parity_motion"},
+      "fix": "Compare the captured animation inventory. A transform-and-opacity rewrite keeps the motion; deleting the library ends it."
+    },
+    {
+      "id": "PAR-08",
+      "title": "The After Capture Was Taken On The Built Output",
+      "rule": "Parity is measured on the production build, not the dev server. Dev serves unminified modules with no splitting, so it renders a page the visitor never receives and hides every defect the build introduces.",
+      "check": {"type": "parity_built"},
+      "fix": "Build, serve the build, and capture from that."
+    }
+  ]
+}

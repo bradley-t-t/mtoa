@@ -1,0 +1,101 @@
+{
+  "group": "Spacing Relationships",
+  "prefix": "SPC",
+  "description": "Not whether a value is on the scale - the other gates cover that - but whether the space between two things is right. Two bordered panels sharing an edge, a stack whose gaps drift, a group spaced the same as the gap around it: each value passes review on its own, and the arrangement is still wrong. Measured from a rendered capture, because none of it is visible in source.",
+  "defaults": {
+    "kinds": ["web-ui", "component", "slides"],
+    "when": "css",
+    "severity": "required",
+    "source": "references/code/tables-and-headers.md#spacing-relationships",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "SPC-01",
+      "title": "Adjacent Panels Do Not Share An Edge",
+      "rule": "Two bordered or surfaced blocks stacked one after another always have space between them. At zero gap their borders meet and read as one double-ruled box, or as a rendering fault - and it is the single most common spacing defect in a generated form, because each panel is correct on its own.",
+      "severity": "blocker",
+      "check": {"type": "spacing_probe", "dimension": "adjacent"},
+      "fix": "Put the gap on the parent stack rather than on either panel, so it cannot be lost when one panel is reordered or removed."
+    },
+    {
+      "id": "SPC-02",
+      "title": "Stacks Declare Their Gap",
+      "rule": "A column of blocks takes its spacing from the container's gap, not from margins on its children. Margins collapse, differ between the first and last child, and go missing the moment a child is conditionally rendered.",
+      "severity": "blocker",
+      "check": {"type": "stack_gap"},
+      "fix": "Set gap on the flex or grid container and remove the vertical margins from its children."
+    },
+    {
+      "id": "SPC-03",
+      "title": "Gaps Within A Stack Are Equal",
+      "rule": "Every gap between siblings in one stack is the same, unless a deliberate group break says otherwise. One gap wider than its neighbours reads as a missing element.",
+      "severity": "blocker",
+      "check": {"type": "spacing_probe", "dimension": "uniform"},
+      "fix": "Move the odd gap onto the container's gap, or make the break explicit with a rule or a heading."
+    },
+    {
+      "id": "SPC-04",
+      "title": "Grouping Is Carried By Space",
+      "rule": "Related things sit closer together than unrelated ones: the gap between groups is at least one scale step larger than the gap inside a group. Equal spacing throughout leaves the reader to work out the structure from the words alone.",
+      "severity": "blocker",
+      "check": {"type": "spacing_probe", "dimension": "grouping"},
+      "fix": "Step the between-group gap up, or the within-group gap down, until the grouping is visible without reading."
+    },
+    {
+      "id": "SPC-05",
+      "title": "Nothing Touches Its Container's Edge",
+      "rule": "Content keeps the container's padding from every edge. A field, a table row, or a heading flush against the panel border reads as clipped.",
+      "severity": "blocker",
+      "check": {"type": "spacing_probe", "dimension": "inset"},
+      "fix": "Add the padding to the container rather than margins to the first and last child."
+    },
+    {
+      "id": "SPC-06",
+      "title": "The Last Child Has Space Beneath It",
+      "rule": "A stack's final element is not flush with the bottom of its container, and the page's last section is not flush with the viewport bottom. Both read as the content having been cut off.",
+      "check": {"type": "spacing_probe", "dimension": "tail"},
+      "fix": "Use container padding rather than child margins, so the bottom survives whatever renders last."
+    },
+    {
+      "id": "SPC-07",
+      "title": "Label, Control, And Helper Use One Rhythm",
+      "rule": "The distance from a label to its control, and from a control to its helper or error text, is the same for every field in the deliverable. Two field groups with different internal spacing make a form look assembled rather than designed.",
+      "when": "form",
+      "severity": "blocker",
+      "check": {"type": "spacing_probe", "dimension": "field-rhythm"},
+      "fix": "Extract one field group component and render every field through it."
+    },
+    {
+      "id": "SPC-08",
+      "title": "Section Rhythm Has Distinct Tiers",
+      "rule": "Spacing between components, between groups, and between page sections comes from clearly different steps - something like 16, 24, 32, 48 - not three values a few pixels apart. Tiers that nearly match read as inconsistency rather than hierarchy.",
+      "check": {"type": "spacing_tiers"},
+      "fix": "Collapse near-identical steps into one and space the remaining tiers apart."
+    },
+    {
+      "id": "SPC-09",
+      "title": "Adjacent Borders Are Not Doubled",
+      "rule": "Where bordered blocks do sit flush by design - a list, a table, a segmented control - the shared edge is one line, not two. Collapse the border or drop it from one side.",
+      "check": {"type": "spacing_probe", "dimension": "double-border"},
+      "fix": "Use border-collapse, a divide utility, or remove the border from one of the two touching sides."
+    },
+    {
+      "id": "SPC-10",
+      "title": "Optional Blocks Do Not Leave Holes",
+      "rule": "A conditionally rendered block takes its gap with it when it goes. A gap that lives on the surviving sibling's margin leaves a hole where the optional block used to be.",
+      "severity": "blocker",
+      "check": {"type": "conditional_margin"},
+      "fix": "Move the spacing to the container's gap so it disappears with the child."
+    },
+    {
+      "id": "SPC-11",
+      "title": "The Spacing Capture Was Taken",
+      "rule": "The rendered spacing sweep ran over the deliverable. Every gate in this group judges an arrangement, and an arrangement is not in the source.",
+      "when": "renderable",
+      "severity": "blocker",
+      "check": {"type": "spacing_probe", "dimension": "captured"},
+      "fix": "Run scripts/code/spacing-probe.js in the page, then design-pass.py spacing-probe --file capture.json"
+    }
+  ]
+}

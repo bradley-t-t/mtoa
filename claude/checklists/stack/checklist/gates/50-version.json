@@ -1,0 +1,45 @@
+{
+  "group": "Versioning",
+  "prefix": "VER",
+  "description": "One scheme, moved once per change, agreed across every place it is written down. A version that disagrees with itself is worse than no version, because a support conversation starts from whichever copy the reporter happened to see.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "node",
+    "severity": "blocker",
+    "source": "references/versioning.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "VER-01",
+      "title": "The Version Is CalVer",
+      "rule": "The version is a calendar version, not a semantic one. Every project here is a service that ships continuously rather than a library somebody depends on a major of, so the useful question is when a build is from, and CalVer answers it in the number itself.",
+      "check": {"type": "calver"},
+      "fix": "Move the project onto CalVer with bump-version.py, which uses the project's own release tool where it has one."
+    },
+    {
+      "id": "VER-02",
+      "title": "Every Copy Of The Version Agrees",
+      "rule": "package.json, public/release.json and the README badge carry the same version. Each is written by a different step, so they drift apart quietly and the application ends up reporting a version older than the manifest it shipped with.",
+      "check": {"type": "version_agreement"},
+      "fix": "bump-version.py brings all three into step. Never hand-edit one of them."
+    },
+    {
+      "id": "VER-03",
+      "title": "The Version Moved For This Change",
+      "rule": "The version on this branch is strictly ahead of the one on develop. A change that lands without moving the version is a change nobody can point at afterwards.",
+      "when": "branch_work",
+      "check": {"type": "version_moved"},
+      "fix": "bump-version.py, in the same commit as the change."
+    },
+    {
+      "id": "VER-04",
+      "title": "The Project's Own Release Tool Moved It",
+      "rule": "Where a project has a release script, that script is what wrote the version. A hand-bump into a manifest a project has a tool for is exactly the drift VER-02 exists to catch, one step earlier.",
+      "when": "release_tool",
+      "severity": "required",
+      "check": {"type": "release_tool_used"},
+      "fix": "Run bump-version.py, which delegates to the project's script when one exists."
+    }
+  ]
+}

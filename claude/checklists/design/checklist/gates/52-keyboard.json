@@ -1,0 +1,65 @@
+{
+  "group": "Keyboard",
+  "prefix": "KBD",
+  "description": "An application surface owes a keyboard, and owes it to be small. A dashboard is operated for twenty minutes at a stretch by somebody who already knows where everything is, and the actions worth a key are the ones where reaching for the pointer costs more than the action itself: opening a search that reaches the whole product, and changing the shape of the screen. A key that saves one click on a control already visible is a key nobody remembers, and a list of fifty is a second navigation to learn on top of the one already on screen.",
+  "defaults": {
+    "kinds": ["web-ui", "component"],
+    "when": "app",
+    "severity": "required",
+    "source": "references/intelligence.md#quick-reference",
+    "check": { "type": "manual" }
+  },
+  "gates": [
+    {
+      "id": "KBD-01",
+      "title": "An App Surface Has A Keyboard",
+      "rule": "A surface a person works in rather than reads through binds keyboard shortcuts. The two that nearly always earn one are a search or command palette reaching every destination the product has, on the modifier every other application uses for it, and a toggle for the navigation rail, on the modifier every other application uses for that. A surface with no keyboard at all is one where every action costs a trip to the pointer, including the ones taken forty times an hour.",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["addEventListener\\(\\s*['\"]keydown", "onKeyDown", "useHotkeys", "hotkey"],
+        "message": "no keyboard handler found on an app surface - at minimum a search palette and a rail toggle earn one"
+      },
+      "fix": "Bind a small set of shortcuts. Start with the search palette and the navigation toggle, both on the platform modifier, and add a third only where it clears the same bar."
+    },
+    {
+      "id": "KBD-02",
+      "title": "The Set Is Three Keys Or Fewer",
+      "severity": "blocker",
+      "rule": "Three shortcuts across the whole surface, and a fourth has to be argued for. The failure this catches is the shortcut list written for its own sake: a digit per filter, a letter per section, a chord per panel, none of which is remembered and all of which have to be documented. Anything already sitting on screen as a control does not get a key as well.",
+      "check": {
+        "type": "forbid_regex",
+        "patterns": [
+          "(?i)const\\s+\\w*(WINDOW|RANGE|TAB|SECTION|NAV|VIEW)_?KEYS\\s*=\\s*\\{",
+          "(?i)\\bkey\\s*===?\\s*['\"][1-9]['\"]",
+          "(?i)case\\s*['\"][1-9]['\"]\\s*:"
+        ],
+        "message": "a key per filter or per section - the control for it is already on screen, and the key is one nobody remembers"
+      },
+      "fix": "Delete every shortcut standing in for a control the reader can already see, and keep the ones that change where they are or what the screen looks like."
+    },
+    {
+      "id": "KBD-03",
+      "title": "The Keyboard Says What It Is",
+      "rule": "A modified shortcut is invisible until something states it, so the surface carries a list a reader can open and a visible way to open it. The list is itself the third shortcut worth having, on `?`. A set of keys with nothing that enumerates them is a set only its author knows.",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "(metaKey|ctrlKey)",
+        "patterns": ["(?i)(shortcut|keyboard|hotkey)"],
+        "message": "modified shortcuts are bound with nothing naming them - a reader has no way to discover a chord"
+      },
+      "fix": "Add a shortcut list opened by `?` and by a visible control, and print the key on the control it belongs to where there is room for it."
+    },
+    {
+      "id": "KBD-04",
+      "title": "The Modifier Is The One The Reader Has",
+      "rule": "Where a key is drawn on screen it is drawn as the key that reader's own keyboard carries. A Mac shown Ctrl and a PC shown Command are each being told to press something they do not have, which is worse than printing nothing.",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "(\\u2318|<kbd|Ctrl\\s*[+ ]?K|Cmd\\s*[+ ]?K)",
+        "patterns": ["(?i)(navigator\\.(platform|userAgentData)|isMac|APPLE|/Mac\\|)"],
+        "message": "a modifier is printed without testing which platform is reading it"
+      },
+      "fix": "Pick the glyph from the platform once, and render that everywhere a key is drawn."
+    }
+  ]
+}

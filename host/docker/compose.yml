@@ -1,0 +1,20 @@
+# Run from the repository root:
+#
+#   mkdir -p mtoa-home
+#   docker compose -f host/docker/compose.yml up -d --build
+#
+# Everything the services keep lives in ./mtoa-home: put each service's
+# config.json at mtoa-home/<service>/config.json (start from its
+# config.example.json), the notifier at mtoa-home/lib/slack.json, and the
+# profile at mtoa-home/.claude/profile/mtoa.json. A service with no config.json
+# is skipped and says so in the log.
+services:
+  mtoa-host:
+    build:
+      context: ../..
+      dockerfile: host/docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8791:8791"
+    volumes:
+      - ../../mtoa-home:/home/mtoa

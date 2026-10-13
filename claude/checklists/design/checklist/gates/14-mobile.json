@@ -1,0 +1,176 @@
+{
+  "group": "The Phone",
+  "prefix": "MOB",
+  "description": "What a phone decides, and what a review at a desktop width cannot see. Every rule here fails against something that is not in the page: the browser's own retracting toolbar, the home indicator under it, the width of a thumb. A bar that scrolls away, a menu measured against the layout viewport, and a rail with nothing reserving its height all read as correct at every width a reviewer uses, and all three are broken on the device most visitors arrive on.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "when": "html",
+    "severity": "required",
+    "source": "references/navigation-sites.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "MOB-01",
+      "title": "The Bar Is Reachable Without Scrolling Back Up",
+      "rule": "Navigation is reachable from wherever the visitor is, not from the top of the document. A bar in normal flow leaves a reader three screens down with one way to change pages: scroll all the way back. Pin the bar to the top edge (fixed or sticky), or pin the actions to the bottom edge, or both. Apple, Stripe and Shopify all keep the bar at the top edge on a phone; the retail pattern keeps a bottom rail instead and lets the bar go.",
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "mobile_nav_reach"
+      },
+      "fix": "Give the header position: fixed or sticky with top: 0, or pin the page's primary actions to the bottom edge, and reserve the height it takes out of flow."
+    },
+    {
+      "id": "MOB-02",
+      "title": "The Menu Is Measured Against The Visible Viewport",
+      "rule": "A phone's toolbar is inside 100vh and outside 100dvh. A menu capped in vh therefore extends under the browser's own controls, and the rows at the bottom of it are unreachable until the visitor scrolls the page - which is the thing they opened the menu instead of doing. Every viewport measure on a surface a phone sees is dvh or svh, never vh, and a menu that caps its height at a fixed pixel value is guessing at a screen it has not measured.",
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "menu_viewport_unit"
+      },
+      "fix": "Replace every vh with dvh (or svh where the smallest state is the safe one), and cap the open menu at calc(100dvh - <the bar's height>) rather than at a pixel figure."
+    },
+    {
+      "id": "MOB-03",
+      "title": "A Menu Taller Than The Screen Scrolls Inside Itself",
+      "rule": "A menu with more rows than the screen holds needs its own scroll, and needs it to stop at its own edge. Without overflow-y: auto the last rows are simply gone; without overscroll-behavior: contain, reaching the end of the list drags the page behind it, so the menu appears to slide off its own bar.",
+      "when": "nav",
+      "severity": "required",
+      "check": {
+        "type": "menu_scrolls"
+      },
+      "fix": "Put overflow-y: auto and overscroll-behavior: contain on the open menu's own container, inside whatever animates its height."
+    },
+    {
+      "id": "MOB-04",
+      "title": "Chrome On A Viewport Edge Clears The Device Inset",
+      "rule": "A bar pinned to the bottom edge lands under the home indicator on every phone that has one, and a bar pinned to the top lands under the notch on a landscape device. The inset the device reserves is published as env(safe-area-inset-*), and chrome on an edge reads it - as padding on the bar, so the bar's ground still reaches the edge and only its content stands off it.",
+      "when": "sticky",
+      "severity": "blocker",
+      "check": {
+        "type": "safe_area"
+      },
+      "fix": "Add padding-bottom: env(safe-area-inset-bottom, 0px) to the pinned bar, and fold the same env() into whatever token reserves its height."
+    },
+    {
+      "id": "MOB-05",
+      "title": "The Main Action Is Under A Thumb",
+      "rule": "A page whose primary action is a call, a booking, an order, or an application puts that action where a thumb already is: a bar pinned to the bottom edge on small screens, carrying one or two actions and nothing else. This is not owed by every site - an editorial page or an app shell has no such action, and a rail there is a bar of filler. It is owed by the page that publishes a number and then asks a visitor to scroll back to the header to use it.",
+      "when": "nav",
+      "severity": "required",
+      "check": {
+        "type": "bottom_rail"
+      },
+      "fix": "Add a fixed bottom bar below the lg breakpoint carrying the page's one or two real actions, or record why this page's primary action is not one a thumb needs from anywhere."
+    },
+    {
+      "id": "MOB-06",
+      "title": "Fixed Chrome Reserves Its Own Height",
+      "rule": "A bar out of flow takes no height, so the end of the document finishes underneath it - the footer, the last field of a form, the attribution line. The height is reserved in flow: a spacer element, or padding on the page, sized from the same token the bar reads, so moving one moves both.",
+      "when": "sticky",
+      "severity": "required",
+      "check": {
+        "type": "rail_reserve"
+      },
+      "fix": "Declare the bar's height as a token, render a spacer of that height at the end of the page (or pad the page by it), and have both read the token."
+    },
+    {
+      "id": "MOB-07",
+      "title": "The Small-Screen Menu Reaches What The Panel Reaches",
+      "rule": "A bar whose desktop panels reach the sections inside a page, and whose phone menu reaches only the pages, is two different sites. Whatever a panel promotes - a section anchor, a featured destination, the phone number - the small-screen menu carries too, in the same order and under the same words. The shape differs; the reachable set does not.",
+      "when": "panel",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Render the small-screen menu from the same nav data the panels read, nesting each page's sections under it, so a destination cannot exist on one and not the other."
+    },
+    {
+      "id": "MOB-08",
+      "title": "The Page Holds Still Under A Thumb",
+      "rule": "Nothing on a phone moves that the reader did not move. Three things break this and all three read as correct at a desktop width. A panel that swaps itself on a clock with both copies still in the flow: the row holds the taller of the two for the length of the fade and drops back on the last frame, so the whole page below it goes down and comes back up while somebody is reading three screens further on. A reveal whose trigger sits inside the viewport rather than outside it: its travel is watched instead of being over before it was seen, and in one column that is every section on the way down. And scroll-bound drift with no width below which it stops: a wide layout sets its columns beside each other and the drift reads as depth because something next to it is holding still, while the same layout on a phone is one column, so the drifting block sits between copy that is not moving and the travel reads as the page sliding under a thumb.",
+      "severity": "required",
+      "check": {
+        "type": "unprompted_motion"
+      },
+      "fix": "Give a timed swap mode=\"wait\" or mode=\"popLayout\" so the outgoing copy leaves the flow, and hold it while it is off screen. Put a reveal's viewport margin outside the viewport - a positive bottom margin - so it is settled before it arrives. Collapse every scroll-bound range to zero below the width at which the columns stack."
+    },
+    {
+      "id": "MOB-10",
+      "title": "The Bar Was Still There A Screen Down",
+      "rule": "Measured rather than asserted: at a phone width, scrolled as far as the page goes or 2000px, either the bar is still on screen or a bar pinned to the bottom edge is.",
+      "when": "nav",
+      "severity": "required",
+      "check": {
+        "type": "mobile_probe",
+        "dimension": "nav-reach"
+      },
+      "fix": "Pin the bar or the actions to a viewport edge; MOB-01 says how."
+    },
+    {
+      "id": "MOB-11",
+      "title": "Every Row Of The Open Menu Can Be Reached",
+      "rule": "Measured with the menu actually open at a phone width: no row of it falls below the visible viewport unless the menu scrolls inside itself to reach that row. A row below the fold with no scroll is a destination that does not exist on a phone.",
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "mobile_probe",
+        "dimension": "menu-fit"
+      },
+      "fix": "Cap the menu against the visible viewport and give it its own scroll: MOB-02 and MOB-03."
+    },
+    {
+      "id": "MOB-12",
+      "title": "Pinned Chrome Does Not Cover The End Of The Page",
+      "rule": "Measured at the bottom of the document: nothing pinned to the viewport's bottom edge overlaps the last of what the page laid out.",
+      "when": "sticky",
+      "severity": "required",
+      "check": {
+        "type": "mobile_probe",
+        "dimension": "rail-clearance"
+      },
+      "fix": "Reserve the pinned bar's height in flow: MOB-06."
+    },
+    {
+      "id": "MOB-13",
+      "title": "The Page Does Not Scroll Sideways On A Phone",
+      "rule": "Measured: the document's scroll width is the viewport's width. A page that scrolls sideways on a phone reads as broken before a visitor has read a word of it, and the cause is almost always one element - a wide table, an unwrapped row of chips, a negative margin, a fixed pixel width.",
+      "severity": "blocker",
+      "check": {
+        "type": "mobile_probe",
+        "dimension": "side-scroll"
+      },
+      "fix": "The capture names the elements that overhang. Wrap, scroll them in their own container, or drop the fixed width."
+    },
+    {
+      "id": "MOB-14",
+      "title": "Every Control Is A Target A Thumb Can Hit",
+      "rule": "Measured at a phone width, including inside the open menu: every link, button, and field is at least 44px on both axes. A link inside a sentence is read rather than aimed at and is not counted.",
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "mobile_probe",
+        "dimension": "tap-size"
+      },
+      "fix": "Give the control the project's control-height token, or pad it until the box reaches 44px; do not enlarge the label to get there."
+    },
+    {
+      "id": "MOB-15",
+      "title": "The Phone Capture Was Taken",
+      "rule": "Every measured gate above answers to one reading, taken at 390x844 with the menu opened. A run that never took it has answered none of them, and the four unread gates are the four that only a phone decides.",
+      "severity": "required",
+      "check": {
+        "type": "mobile_probe",
+        "dimension": "capture"
+      },
+      "fix": "Render the page at 390x844, run scripts/code/mobile-probe.js, await mobileProbe.scan(), and record it with design-pass.py mobile-probe --file <capture.json>."
+    }
+  ]
+}

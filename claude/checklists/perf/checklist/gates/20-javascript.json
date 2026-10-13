@@ -1,0 +1,78 @@
+{
+  "group": "JavaScript Delivery",
+  "prefix": "JSB",
+  "description": "On a single-page app the bundle is the page: nothing is on screen until it has been downloaded, parsed and run. Every rule here changes which bytes arrive first and which arrive when they are needed, and none of them changes what the code does once it runs.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "js",
+    "severity": "required",
+    "source": "references/javascript-delivery.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "JSB-01",
+      "title": "Routes Are Split From Each Other",
+      "rule": "Each route loads its own code. Statically importing every page into the entry means a visitor to the home page downloads the checkout, the admin panel and the legal text before anything is drawn.",
+      "when": "router",
+      "check": {"type": "route_splitting"},
+      "fix": "Load route components through a dynamic import behind the router's own lazy boundary, with a fallback that occupies the same space the route will."
+    },
+    {
+      "id": "JSB-02",
+      "title": "No Dependency Ships Twice",
+      "rule": "No two packages in the bundle do the same job, and no package appears at two versions. Two animation libraries, two date libraries, or one library reached through both its own name and a fork are all paid for in full and used once.",
+      "check": {"type": "duplicate_deps"},
+      "fix": "Pick one, change the imports to it, and remove the other from the manifest. The library that stays is the one already used on the first screen."
+    },
+    {
+      "id": "JSB-03",
+      "title": "Heavy Optional Work Is Imported Where It Is Used",
+      "rule": "A library only some visitors need is imported at the point of need rather than at the top of the entry. Payment SDKs, WebGL, editors, chart engines, PDF and video tooling belong behind the interaction that opens them.",
+      "check": {"type": "heavy_static_import"},
+      "fix": "Move the import inside the handler or effect that first needs it, and await it there."
+    },
+    {
+      "id": "JSB-04",
+      "title": "No Server-Only SDK Is In The Browser Bundle",
+      "rule": "No package built for a server is imported into client code. Beyond the weight, an SDK that expects a secret in the environment either ships one or fails at runtime, and both are worse than the size.",
+      "check": {"type": "server_sdk_in_client"},
+      "fix": "Move the call behind an endpoint. The browser talks to your own route; the SDK stays where its credentials are."
+    },
+    {
+      "id": "JSB-05",
+      "title": "Dependencies Are Split From Application Code",
+      "rule": "Framework and vendor code sits in its own chunk. Application code changes far more often than its dependencies, so a single chunk throws away a returning visitor's cache on every deploy.",
+      "check": {"type": "vendor_chunk"},
+      "fix": "Declare a manual chunk for the framework and the large stable dependencies."
+    },
+    {
+      "id": "JSB-06",
+      "title": "First-Load JavaScript Is Under Budget",
+      "rule": "The JavaScript the first screen needs stays under 200KB compressed. Past that the cost is not the download but the parse and execute, which happens on the main thread while nothing else can.",
+      "check": {"type": "js_budget", "max": 200},
+      "fix": "Split routes, defer optional libraries, and remove what nothing imports. Measure with scripts/bundle-probe.py."
+    },
+    {
+      "id": "JSB-07",
+      "title": "No Module Is Kept Alive By A Barrel",
+      "rule": "No index file re-exports a directory that the entry then imports from. A barrel defeats tree shaking wherever anything in it has a side effect, so one named import pulls the whole directory in.",
+      "check": {"type": "barrel_import"},
+      "fix": "Import from the module itself rather than through the barrel, or mark the package side-effect free where it truly is."
+    },
+    {
+      "id": "JSB-08",
+      "title": "The Chunk Graph Is Preloaded",
+      "rule": "Chunks the entry will certainly need are declared with modulepreload rather than discovered one import at a time. Each undeclared level of the graph is a serial round trip.",
+      "check": {"type": "modulepreload"},
+      "fix": "Emit modulepreload links for the entry graph. Most bundlers do this when asked; confirm the tags are in the built HTML."
+    },
+    {
+      "id": "JSB-09",
+      "title": "Polyfills Are Not Shipped To Browsers That Have The Feature",
+      "rule": "The build targets what the site's visitors actually run. A default target from years ago transpiles working syntax into more code that does the same thing more slowly.",
+      "check": {"type": "build_target"},
+      "fix": "Set an explicit browser target on the build. Anything supporting modules needs almost none of it."
+    }
+  ]
+}

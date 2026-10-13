@@ -1,0 +1,978 @@
+{
+  "group": "Slop Test",
+  "prefix": "SLP",
+  "description": "The 58 structural gates plus the six-axis pre-emit critique. Every answer must be no. Genre notes are in references/hallmark/references/genres/.",
+  "gates": [
+    {
+      "id": "SLP-00",
+      "title": "Pre-Emit Critique Scored And Stamped",
+      "rule": "Before the gate sweep, score the planned output 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Anything under 3 triggers a revision pass first. Stamp the six scores at the top of the file.",
+      "source": "slop-test.md#pre-emit-self-critique",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "macrostructure",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "pre-emit critique"
+        ],
+        "message": "No pre-emit critique stamp in the artifact."
+      },
+      "fix": "Score the six axes, revise anything under 3, then stamp: /* pre-emit critique: P5 H4 E5 S4 R5 V5 */"
+    },
+    {
+      "id": "SLP-01",
+      "title": "Display Font Is Not A Default",
+      "rule": "The display font is not Inter, Roboto, Open Sans, Poppins, Lato, or a system default, and it is not a serif reached for because the brief felt creative. Serif is justified only when the brief names one, or when the family is genuinely editorial, luxury, publication, manuscript, heritage, or vintage and the choice of that face can be argued for that brand. Fraunces and Instrument Serif are banned outright as defaults and are held by TST-33.",
+      "source": "slop gate 1",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "font-family:[^;]*(Inter|Roboto|Open Sans|Poppins|Lato)",
+        "message": "Default display font."
+      },
+      "fix": "Pick a display face with a point of view from the theme's pairing. If it is a serif, record why that face fits this brand."
+    },
+    {
+      "id": "SLP-02",
+      "title": "No Purple-To-Blue Gradient",
+      "rule": "No purple-to-blue or cyan-to-magenta gradient anywhere, including a background-clip: text gradient headline. No genre allows gradient text.",
+      "source": "slop gate 2",
+      "kinds": [
+        "web-ui",
+        "component",
+        "banner",
+        "social",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "background-clip:\\s*text|bg-clip-text",
+        "message": "Gradient text."
+      },
+      "fix": "Solid colour on the headline; move any gradient to a background, one accent hue only."
+    },
+    {
+      "id": "SLP-03",
+      "title": "No Three-Column Icon-Above-Heading Card Grid",
+      "rule": "The 3-equal-column card grid with icon-above-heading tiles is the single most recognisable generated layout.",
+      "source": "slop gate 3",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "html",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pick a different feature archetype from the component cookbook - bento, spec sheet, step sequence, sticky stack."
+    },
+    {
+      "id": "SLP-04",
+      "title": "No Card Inside A Card",
+      "rule": "Nested cards double the border, double the padding, and halve the hierarchy.",
+      "source": "slop gate 4",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "html",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Flatten to one surface and separate with space or a rule."
+    },
+    {
+      "id": "SLP-05",
+      "title": "No Thick Coloured Side-Stripe On Cards",
+      "rule": "The thick coloured left or right border on a card is a template signature.",
+      "source": "slop gate 5",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Drop the stripe; carry the category in a label or the surface tint."
+    },
+    {
+      "id": "SLP-06",
+      "title": "Hero Is Not Centred-Everything",
+      "rule": "Fail if the hero is min-height: 100vh with everything centred, or if eyebrow, title, lede, and CTA all sit on the same centred vertical axis. At most two centred elements; the eyebrow or CTA sits off-axis.",
+      "source": "slop gate 6",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "hero",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Break the axis: margin-align the eyebrow, right-flush the CTA, or anchor to a numeral."
+    },
+    {
+      "id": "SLP-07",
+      "title": "No Pure Black Or Pure White Base",
+      "rule": "#000 and #fff as base colours read as unconsidered. Modern-minimal alone may use pure #fff paper.",
+      "source": "slop gate 7",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(background|--color-paper|--color-bg)[^;]*:\\s*(#000000|#000\\b|#ffffff|#fff\\b)",
+        "message": "Pure black or white base colour."
+      },
+      "fix": "Tint the base toward the anchor hue - minimum 0.005 chroma."
+    },
+    {
+      "id": "SLP-08",
+      "title": "Structure Is Not Reused",
+      "rule": "Not the generic AI template (hero, 3 features, CTA, footer), and not the same structural fingerprint as a previous output in this project. Check .macrostructure/log.json or the CSS macrostructure stamp. The countable half of this is TST-11 and TST-12: no more than two consecutive image-and-text splits, and at least four layout families across eight sections.",
+      "source": "slop gate 8",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "macrostructure",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pick a macrostructure that differs from the last build in this project, and settle TST-11 and TST-12 as the evidence that the sections themselves differ."
+    },
+    {
+      "id": "SLP-09",
+      "title": "Sections Are Separated By More Than Whitespace",
+      "rule": "Equal whitespace between every section, no rule, no ornament, no colour shift, identical rhythm throughout - the page reads as a list of boxes.",
+      "source": "slop gate 9",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "html",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Vary section rhythm; introduce a rule, a surface shift, or a full-bleed break."
+    },
+    {
+      "id": "SLP-10",
+      "title": "No transition: all",
+      "rule": "Named properties only. Duplicate of POL-01, checked here for macrostructure builds.",
+      "source": "slop gate 10",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "transition:\\s*all|transition-all",
+        "message": "transition: all"
+      },
+      "fix": "Name the properties."
+    },
+    {
+      "id": "SLP-11",
+      "title": "No Uniform Hover-Scale",
+      "rule": "The same hover-scale across unrelated elements.",
+      "source": "slop gate 11",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "hover:scale-10[0-9]",
+        "min_count": 3,
+        "message": "Uniform hover-scale across elements."
+      },
+      "fix": "Differentiate the hover per element type."
+    },
+    {
+      "id": "SLP-12",
+      "title": "No Overshoot Easing On UI State",
+      "rule": "Bouncy cubic-beziers on buttons, modals, or tooltips. Reserve overshoot for physical interactions.",
+      "source": "slop gate 12",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "overshoot_bezier"
+      },
+      "fix": "Use the standard ease-out token."
+    },
+    {
+      "id": "SLP-13",
+      "title": "One Hover Effect Per Element",
+      "rule": "Translate plus scale plus shadow plus colour plus rotate on the same hover.",
+      "source": "slop gate 13",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "hover_effect_stack",
+        "max": 2
+      },
+      "fix": "Keep one effect."
+    },
+    {
+      "id": "SLP-14",
+      "title": "No Layout Property Animated",
+      "rule": "width, height, top, left, margin, padding.",
+      "source": "slop gate 14",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "blocker",
+      "check": {
+        "type": "animated_layout_property"
+      },
+      "fix": "Move to transform."
+    },
+    {
+      "id": "SLP-15",
+      "title": "Focus Ring Does Not Fade In",
+      "rule": "Focus rings appear instantly.",
+      "source": "slop gate 15",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex_in_state",
+        "state": ":focus-visible",
+        "pattern": "transition[^;]*(outline|box-shadow|border)",
+        "message": "Focus ring transitions in."
+      },
+      "fix": "Exclude the ring properties from the transition."
+    },
+    {
+      "id": "SLP-16",
+      "title": "No Toast For A Visible Success",
+      "rule": "Silent success is taste; toasts are for failures and invisible effects.",
+      "source": "slop gate 16",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "toast",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Delete the toast."
+    },
+    {
+      "id": "SLP-17",
+      "title": "Tooltip Hover And Focus Delays Differ",
+      "rule": "Hover 800-1000ms; focus 0ms.",
+      "source": "slop gate 17",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "tooltip",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Split the delays."
+    },
+    {
+      "id": "SLP-18",
+      "title": "Auto-Rotating Content Pauses",
+      "rule": "Pause on hover and focus. WCAG 2.2.2.",
+      "source": "slop gate 18",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "carousel",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pause on mouseenter and focusin."
+    },
+    {
+      "id": "SLP-19",
+      "title": "No Placeholder Names Or Startup Cliches",
+      "rule": "No Jane Doe, John Smith, Acme, Nexus, Seamless, or Unleash.",
+      "source": "slop gate 19",
+      "kinds": [
+        "web-ui",
+        "slides",
+        "banner",
+        "social"
+      ],
+      "when": "copy",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "\\b(Jane Doe|John Smith|Acme|Nexus|Seamless|Unleash)\\b",
+        "message": "Placeholder name or startup cliche."
+      },
+      "fix": "Use the real name, or a name that belongs to the brief."
+    },
+    {
+      "id": "SLP-20",
+      "title": "Macrostructure Stamp Present",
+      "rule": "The /* macrostructure: <name> ... */ stamp sits at the top of the CSS.",
+      "source": "slop gate 20",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "macrostructure",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "macrostructure:"
+        ],
+        "message": "No macrostructure stamp."
+      },
+      "fix": "Add the stamp with the macrostructure, theme, and knob deltas."
+    },
+    {
+      "id": "SLP-21",
+      "title": "No Specimen Fall-Through",
+      "rule": "Specimen (numbered left-margin labels, huge serif, asymmetric spans, typographic-only CTA) is not the default. It is picked only when the brief signals editorial, foundry, or specimen energy.",
+      "source": "slop gate 21",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "macrostructure",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Re-pick the macrostructure from the brief's genre."
+    },
+    {
+      "id": "SLP-22",
+      "title": "Neutrals Are Tinted, Not Zero-Chroma",
+      "rule": "Every neutral and surface carries at least 0.005 chroma toward the anchor hue. Pure greys read flat. Modern-minimal is exempt.",
+      "source": "slop gate 22",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Tint the neutrals toward the accent hue."
+    },
+    {
+      "id": "SLP-23",
+      "title": "Accent Covers Under 5% Of The Viewport",
+      "rule": "Count by area: solid fills, large headings in accent, full-bleed accent backgrounds. Accent is for emphasis, not filling. Atmospheric allows accent blooms to 20%.",
+      "source": "slop gate 23",
+      "kinds": [
+        "web-ui",
+        "banner",
+        "social",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Retreat the accent to the elements that need to be found first."
+    },
+    {
+      "id": "SLP-24",
+      "title": "Spacing Is On The Named Scale",
+      "rule": "Every padding, gap, and margin is a named step (--space-3xs through --space-5xl, multiples of 4px). padding: 17px is a tell.",
+      "source": "slop gate 24",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "spacing_scale"
+      },
+      "fix": "Round to the scale."
+    },
+    {
+      "id": "SLP-25",
+      "title": "Prose Measure Is 45-75ch",
+      "rule": "Under 45ch is choppy; over 75ch loses the eye.",
+      "source": "slop gate 25",
+      "kinds": [
+        "web-ui",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "measure_range",
+        "min": 45,
+        "max": 75
+      },
+      "fix": "Set max-width in ch within the range."
+    },
+    {
+      "id": "SLP-26",
+      "title": "Every Interactive Element Has Five States",
+      "rule": "Default, hover, focus-visible, active, and disabled are all present in code. Two states is not a state system.",
+      "source": "slop gate 26",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "state_coverage",
+        "states": [
+          ":hover",
+          ":focus-visible",
+          ":active",
+          ":disabled"
+        ]
+      },
+      "fix": "Add the missing states to the control primitive."
+    },
+    {
+      "id": "SLP-27",
+      "title": "Every Motion Has A Reduced-Motion Fallback",
+      "rule": "No transform or keyframe is left uncovered by @media (prefers-reduced-motion: reduce).",
+      "source": "slop gate 27",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "blocker",
+      "check": {
+        "type": "motion_coverage"
+      },
+      "fix": "Add the reduced-motion block."
+    },
+    {
+      "id": "SLP-28",
+      "title": "Hero Video Is Not An LCP Killer",
+      "rule": "No autoplay with sound, no missing poster, no missing fetchpriority=\"high\", no loading=\"lazy\" on the LCP element.",
+      "source": "slop gate 28",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "video",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Add poster and fetchpriority; mute autoplay; drop lazy from the LCP element."
+    },
+    {
+      "id": "SLP-29",
+      "title": "Abstract Background Stays Within Budget",
+      "rule": "One accent colour, under 5% footprint, no animating mesh gradient across the page. Aurora blobs fail. Atmospheric allows two warm radial blooms at 20-30%, fixed, unanimated.",
+      "source": "slop gate 29",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Cut to one bloom within budget, or remove it."
+    },
+    {
+      "id": "SLP-30",
+      "title": "One Icon Library, No Emoji Icons",
+      "rule": "No mixing Material with Heroicons with Lucide, and no emoji glyph as a feature, value-prop, step, or pricing-tier icon.",
+      "source": "slop gate 30",
+      "kinds": [
+        "web-ui",
+        "slides"
+      ],
+      "when": "html",
+      "severity": "blocker",
+      "check": {
+        "type": "icon_library_mix"
+      },
+      "fix": "Pick one library, or build the SVG, or drop the icon and lead with type."
+    },
+    {
+      "id": "SLP-31",
+      "title": "Illustration Is Not Reflexively Lottie",
+      "rule": "A hand-built SVG or pure-CSS shape comes first; Lottie is the last resort. The preference has a ceiling: a hand-built SVG stops being the first choice where the subject needs a scene rather than a shape, and past forty drawn elements that are mostly boxes and straight segments the answer is a photograph or a generated still. PLT-07 measures it.",
+      "source": "slop gate 31",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "html",
+      "severity": "advisory",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Build the shape, or use a licensed illustration source from assets.md, or use a photograph where the subject is past what a hand-built shape reaches."
+    },
+    {
+      "id": "SLP-32",
+      "title": "Repeated Archetype Turns A Variation Knob",
+      "rule": "Reusing an archetype from a previous build in the project requires at least one different variation knob, stated in the stamp. Two bento grids with identical knobs are the same bento.",
+      "source": "slop gate 32",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "macrostructure",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Change a knob and record the delta in the stamp."
+    },
+    {
+      "id": "SLP-33",
+      "title": "Decorative SVG And Canvas Are Labelled Or Hidden",
+      "rule": "Every visual-only svg, custom-art div, canvas, or decorative figure carries aria-label or aria-hidden=\"true\".",
+      "source": "slop gate 33",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "svg",
+      "severity": "blocker",
+      "check": {
+        "type": "svg_aria"
+      },
+      "fix": "Add aria-hidden=\"true\" to decoration, aria-label to anything meaningful."
+    },
+    {
+      "id": "SLP-34",
+      "title": "No Horizontal Scroll, 320px To 1920px",
+      "rule": "Drag the width across the range; a horizontal scrollbar at any width fails. The fix is overflow-x: clip on both html and body - clip, not hidden, which preserves sticky and fixed descendants. Required on every emitted page, not only when scroll is observed.",
+      "source": "slop gate 34",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "overflow_clip"
+      },
+      "fix": "Set overflow-x: clip on html and body, then find what is overflowing."
+    },
+    {
+      "id": "SLP-35",
+      "title": "Text Decoration Sits Where It Should",
+      "rule": "A highlighter band sits behind the x-height, not at the baseline. Underlines are 1-2px, offset 1-2px, never 5+. Decorative strokes stay inside the accent budget. The check is visual.",
+      "source": "slop gate 35",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Re-position the gradient stops so the band lands on the x-height."
+    },
+    {
+      "id": "SLP-36",
+      "title": "Interactive Bars Are Vertically Centred",
+      "rule": "Nav, toolbar, command bar, hero CTA row, and footer link strip declare align-items: center, with line-height: 1 on items with intrinsic height. Default flex stretch makes a button taller than its sibling text.",
+      "source": "slop gate 36",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "nav",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Set align-items: center on the row and line-height: 1 on its items."
+    },
+    {
+      "id": "SLP-37",
+      "title": "At Most Three Font Families",
+      "rule": "Display, body, and at most one outlier. Same family at different weights counts once. Mono counts as a family if used outside code.",
+      "source": "slop gate 37",
+      "kinds": [
+        "web-ui",
+        "slides",
+        "banner",
+        "social"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "font_family_count",
+        "max": 3
+      },
+      "fix": "Drop one back to the body or display face."
+    },
+    {
+      "id": "SLP-38",
+      "title": "Outlier Face Used In At Most Two Slots",
+      "rule": "Wordmark plus hero stat, or wordmark plus masthead, or hero stat plus pull quote. Three slots means it is now a third body font.",
+      "source": "slop gate 38",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Collapse the third use back to the body face."
+    },
+    {
+      "id": "SLP-38a",
+      "title": "No Italic Headings Or Display Type",
+      "rule": "No font-style: italic on h1-h6, a title class, a wordmark, a stat figure, or a footer statement - and no em or i inside a heading. The single italicised emphasis word in an upright headline is a top AI tell. Emphasis comes from weight, accent colour, or a drawn underline. Italic survives only as body-copy emphasis.",
+      "source": "slop gate 38a",
+      "kinds": [
+        "web-ui",
+        "slides",
+        "banner",
+        "social"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "italic_heading"
+      },
+      "fix": "Set font-style: normal on the heading and carry emphasis another way."
+    },
+    {
+      "id": "SLP-39",
+      "title": "Input Fields Handle Every State",
+      "rule": "Fail on any of five: border-width shifts between states; focus ring built from border instead of outline (must be outline: 2px with outline-offset: 1px, reserved transparent at rest); input height differs from adjacent button height (share one 44px floor); helper-text slot collapses when empty (reserve min-height: 1lh); disabled signalled by opacity alone (needs opacity, cursor: not-allowed, and the native disabled attribute).",
+      "source": "slop gate 39",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "form",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Work the five sub-checks one at a time against interaction-and-states.md."
+    },
+    {
+      "id": "SLP-40",
+      "title": "Contrast Thresholds Met Against Computed Backgrounds",
+      "rule": "Body text (under 24px regular or under 18px bold) needs 4.5:1 or APCA Lc 60. Large text, icons, and focus rings need 3:1 or Lc 45. Pair every colour declaration with its effective background. Most-missed: text in a card that switched surface, muted on tinted, a focus ring that clears the element but not the page.",
+      "source": "slop gate 40",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Compute each pair and fix the failures."
+    },
+    {
+      "id": "SLP-41",
+      "title": "The Three Contrast Failures That Ship Most",
+      "rule": "Fail on any: button text within 5% lightness and 0.05 chroma of its fill (the black-on-black bug); --color-accent-ink missing, unverified, or unapplied wherever accent fills a surface carrying text; a section darker than 50% lightness that does not swap its text colour in the same rule.",
+      "source": "slop gate 41",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Define and apply the ink token for every filled surface; swap text colour in the same rule that darkens a section."
+    },
+    {
+      "id": "SLP-42",
+      "title": "Nav Is Not The AI Default",
+      "rule": "Wordmark left plus three to eight inline links plus one button at the trailing edge, on a light opaque surface with a 1px hairline and nothing else, is the shape the reference sites are not. A bar earns its shape through surface polish and through depth, and depth means a panel: a longer row of flat links is a longer link list. Whether the bar's shape was chosen at all is NAV-11 and NAV-12, and whether it opens anything is NAV-14.",
+      "source": "references/navigation-sites.md",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "nav",
+      "severity": "blocker",
+      "check": {
+        "type": "nav_ai_default"
+      },
+      "fix": "Give the bar a see-through surface (drop the token's alpha below 0.9 and pair it with backdrop-blur) or wire a scroll-state swap that darkens it over content, or move the surface to a distinctive dark ground."
+    },
+    {
+      "id": "SLP-43",
+      "title": "Footer Is Not The AI Default",
+      "rule": "Four columns of links (Product, Company, Resources, Legal) plus a social row plus tiny copyright under a hairline fails unless the page is a genuine docs root or hub. Default to Ft1, Ft2, Ft4, Ft5, Ft6, Ft7, or Ft8. The mechanical half is FTR-01 and FTR-02, which require the archetype to be declared and refuse the index grid.",
+      "source": "slop gate 43",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "footer",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pick a footer archetype that closes the page rather than listing an absent sitemap."
+    },
+    {
+      "id": "SLP-44",
+      "title": "Hero Sits Into The Page And Fits The Fold",
+      "rule": "padding-block-end is at least 1.3x padding-block-start, and at 1280x800 the eyebrow, headline, lede, primary CTA, and any hero visual's focal point are all visible without scrolling. Usual culprits: oversized display clamp, loose display line-height, a three-line lede, bloated padding. The measured form of this is TST-01 through TST-04, which count the headline's lines, the lede's words, the top padding, and the hero's text elements from the rendered page.",
+      "source": "slop gate 44",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "hero",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pull the clamp max down, set display line-height 1.0-1.1, hold the lede to two lines, trim padding, then take a layout capture so TST-01 through TST-04 answer from measurement."
+    },
+    {
+      "id": "SLP-45",
+      "title": "Decoration Has A Semantic Anchor",
+      "rule": "A cursor, scanline, gradient blob, abstract shape, ornament, badge, or sticker in the hero needs a reason in the content - a cursor inside a typed command, a numeral that names an issue or version, a stamp that names a date. A floating 42 with no edition meaning is slop.",
+      "source": "slop gate 45",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "hero",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Anchor it to the content or remove it."
+    },
+    {
+      "id": "SLP-46",
+      "title": "No Invented Metric",
+      "rule": "No quantitative claim the user did not supply - no 10x faster, no trusted by 50,000+ teams, no 99.9% uptime, no +47% conversion. Same for testimonials, logos, and case-study counts. And a stat is never the hero's sole headline: pair a lead figure with a line that says what it means.",
+      "source": "slop gate 46",
+      "kinds": [
+        "web-ui",
+        "slides",
+        "banner",
+        "social"
+      ],
+      "when": "copy",
+      "severity": "blocker",
+      "check": {
+        "type": "invented_metric"
+      },
+      "fix": "Replace with an em dash and a labelled grey block, ask the user for the number, or rebuild the section without the proof slot."
+    },
+    {
+      "id": "SLP-47",
+      "title": "No Re-Drawn UI Chrome",
+      "rule": "No hand-built browser bar with a URL pill and traffic-light dots, no fake phone frame, no fake code-block window, no fake terminal, no fake IDE chrome. The user's environment already supplies real chrome.",
+      "source": "slop gate 47",
+      "kinds": [
+        "web-ui",
+        "slides",
+        "social"
+      ],
+      "when": "html",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Use a real screenshot in a figure with at most a hairline border, or omit the chrome."
+    },
+    {
+      "id": "SLP-48",
+      "title": "No Mid-Render Token Improvisation",
+      "rule": "No colour value or font-family declaration outside the token block. Every colour and font references a named token. Inline oklch or a one-off hex means the model picked the theme and then freestyled.",
+      "source": "slop gate 48",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex_outside_tokens",
+        "pattern": "#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(",
+        "message": "Colour outside the token block."
+      },
+      "fix": "Lift it into the token block as a named variable."
+    },
+    {
+      "id": "SLP-49",
+      "title": "Clickable Text Never Wraps To Two Lines",
+      "rule": "No button label, nav link, footer link, tab label, breadcrumb, or CTA wraps at any width from 320px to 1920px. Two-line clickable text reads as a styling bug. A primary CTA label runs to three words at most, ideally one or two, and a CTA that wraps at desktop is a label that was never cut rather than a button that needs constraining.",
+      "source": "slop gate 49",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Shorten the label to three words or fewer, set white-space: nowrap and let the parent reflow, hide a non-essential item at narrow widths, or collapse the nav. Do not cap a CTA's max-width to make it wrap."
+    },
+    {
+      "id": "SLP-50",
+      "title": "Image Grid Tracks Use minmax(0, 1fr)",
+      "rule": "Any grid track containing an image needs minmax(0, 1fr). Bare 1fr resolves to minmax(auto, 1fr), whose auto minimum is the image's intrinsic width - a 1024px image forces a 1024px minimum and blows past the phone viewport.",
+      "source": "slop gate 50",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "grid",
+      "severity": "blocker",
+      "check": {
+        "type": "grid_minmax"
+      },
+      "fix": "One character per track: 1fr becomes minmax(0, 1fr)."
+    },
+    {
+      "id": "SLP-51",
+      "title": "Display Headers Break Long Words",
+      "rule": "Every display-size element carries overflow-wrap: anywhere and min-width: 0. Long hyphenated words and uppercase compounds otherwise overflow the viewport.",
+      "source": "slop gate 51",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "display_wrap_coverage"
+      },
+      "fix": "Add overflow-wrap: anywhere and min-width: 0 to the display rules."
+    },
+    {
+      "id": "SLP-52",
+      "title": "Theme Section-Head Overrides Collapse On Mobile",
+      "rule": "A theme that overrides .section__head grid-template-columns to anything but 1fr must also ship the mobile collapse, or a global override must exist at max-width: 48rem with matching specificity. Otherwise the title wraps onto the section label.",
+      "source": "slop gate 52",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Add the mobile collapse rule for the theme."
+    },
+    {
+      "id": "SLP-53",
+      "title": "Radio-Tab Patterns Do Not Scroll-Jump",
+      "rule": "CSS-only radio tabs either keep the radios in normal flow at zero size with opacity 0, or ship a JS handler that preventDefaults, sets checked, dispatches change, and focuses with preventScroll. Absolutely-positioned radios at top: 0 jump the page on every tab click.",
+      "source": "slop gate 53",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "tabs",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Move the radios into flow at zero size, or add the JS guard."
+    },
+    {
+      "id": "SLP-54",
+      "title": "Eyebrow Sits Above The Heading, Never Beside It",
+      "rule": "Any wrapper containing both an eyebrow, label, number, or kicker AND a heading must resolve to a single column - block, flex column, or a 1fr grid. Any multi-column grid on such a wrapper is banned, whatever the class name. Not bypassable by structural parity with a prior build; the gate is authoritative.",
+      "source": "slop gate 54",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Flatten the wrapper to one column and stack the eyebrow above the heading."
+    },
+    {
+      "id": "SLP-55",
+      "title": "All-Caps Display Type Has Line-Height At Least 1.0",
+      "rule": "Uppercase glyphs have no descenders, so at line-height under 1.0 the cap-tops of the next line collide with the baseline and commas of the one above. Floor is 1.0; 1.02-1.08 recommended.",
+      "source": "slop gate 55",
+      "kinds": [
+        "web-ui",
+        "banner",
+        "social"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Raise the tight line-height token to at least 1.0, or drop the uppercase transform."
+    },
+    {
+      "id": "SLP-56",
+      "title": "One Sticky Element At top: 0",
+      "rule": "A second sticky-at-top-0 element below a sticky nav overlaps it during scroll and paints over it. Define --banner-height and offset every secondary sticky to it; split the z-index tokens so the nav always out-paints.",
+      "source": "slop gate 56",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "sticky",
+      "severity": "required",
+      "check": {
+        "type": "sticky_top_zero"
+      },
+      "fix": "Offset secondary stickies to var(--banner-height) and raise the nav's z-index."
+    },
+    {
+      "id": "SLP-57",
+      "title": "Studied DNA Is Not Discarded For A Catalog Theme",
+      "rule": "If a study diagnosis ran earlier in the conversation, the build's stamp names studied-DNA with its source, not a catalog theme - unless the user explicitly pivoted.",
+      "source": "slop gate 57",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "study",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Re-emit using the studied DNA's tokens and update the stamp."
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  # A pull request already runs against the merge result, and develop is strict,
+  # so the head contains the base by the time it lands. The push run that
+  # followed each merge re-tested a tree the pull request had just tested. Only
+  # main keeps one, as the record that production passed.
+  push:
+    branches: [main]
+  # A run that GitHub never scheduled cannot be re-fired by any push, close or
+  # reopen, and a required context that never appears blocks a branch for good.
+  # This is the one lever that does not depend on an event being delivered.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # A dependabot event hands the workflow a read-only token that grants
+    # nothing by default, so the attribution step cannot list the pull
+    # request's commits without these named explicitly.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: ${{ hashFiles('package.json') != '' }}
+        with:
+          node-version: 22
+          cache: npm
+      # Attribution reaches a repository through two doors no local hook can
+      # watch. GitHub writes the squash commit after the push, stamped with
+      # whoever opened the pull request, and it assembles that commit's body
+      # out of branch commits written where the hooks are not installed. Both
+      # land after every local guard has already run and passed.
+      #
+      # This is the only check that sees either one, and `check` is the
+      # required context on both branches, so what it refuses cannot merge.
+      - name: No AI attribution
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OPENED_BY: ${{ github.event.pull_request.user.login }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Every AI vendor is named, so claude[bot] is caught by "claude". A bare
+          # [bot] match is not used: it would refuse dependabot, which authors no
+          # prose and is not what this rule is about.
+          ident='anthropic|claude|openai|codex|copilot|windsurf|devin|bard|githubcopilot|cursor\.(sh|com)'
+          # Anchored on the trailer or the phrase rather than the bare vendor
+          # name, so a commit that discusses a vendor still lands.
+          msg='co-?authored-?by:.*(claude|anthropic|codex|openai|copilot|gpt-|gemini|cursor|devin)'
+          msg+='|generated[[:space:]]+(with|by).*(claude|codex|openai|copilot|chatgpt)'
+          msg+='|(made|written|created|authored)[[:space:]]+(with|by)[[:space:]]+(claude|codex|chatgpt|copilot)'
+          msg+='|claude[-[:space:]]?session:|claude\.ai|anthropic\.com'
+
+          fail=0
+
+          if printf '%s' "$OPENED_BY" | grep -qiE "$ident"; then
+            echo "::error::Opened by $OPENED_BY. The squash commit is stamped with whoever opened the pull request, so this would land on the branch authored by an app. Reopen it with the owner's token."
+            fail=1
+          fi
+
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits" --paginate \
+            --jq '.[] | [.sha, (.commit.author.name + " <" + .commit.author.email + ">"), (.commit.committer.name + " <" + .commit.committer.email + ">"), (.commit.message | gsub("\n"; "\\n"))] | @tsv' > commits.tsv
+
+          while IFS=$'\t' read -r sha author committer message; do
+            [ -n "$sha" ] || continue
+            if printf '%s %s' "$author" "$committer" | grep -qiE "$ident"; then
+              echo "::error::${sha:0:8} is authored or committed by an AI identity: $author / $committer"
+              fail=1
+            fi
+            if printf '%s' "$message" | grep -qiE "$msg"; then
+              echo "::error::${sha:0:8} carries AI attribution in its message."
+              fail=1
+            fi
+            if printf '%s' "$message" | grep -qF $'\U0001F916'; then
+              echo "::error::${sha:0:8} carries a robot mark in its message."
+              fail=1
+            fi
+          done < commits.tsv
+
+          rm -f commits.tsv
+          if [ "$fail" -ne 0 ]; then
+            echo "Attribution is forbidden anywhere on these repos. Nothing here is fixed by editing this check."
+            exit 1
+          fi
+          echo "No attribution in this pull request."
+      - name: Version moved on
+        if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' && hashFiles('package.json') != '' }}
+        shell: bash
+        run: |
+          git fetch --quiet origin "$GITHUB_BASE_REF"
+          # A base branch with no package.json yet is the first PR into a new
+          # repo, not a failure. git exits 128 there, and under pipefail that
+          # kills the step before the gate has said anything.
+          base_pkg=$(git show "origin/$GITHUB_BASE_REF:package.json" 2>/dev/null || true)
+          base=$(printf '%s' "$base_pkg" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).version||"")}catch{console.log("")}})')
+          head=$(node -e 'console.log(require("./package.json").version||"")')
+          node -e '
+            const [b, h] = process.argv.slice(1);
+            const parts = v => v.split(/[.+-]/).filter(Boolean).map(x => /^\d+$/.test(x) ? Number(x) : x);
+            const cmp = (a, c) => { for (let i = 0; i < Math.max(a.length, c.length); i++) { const x = a[i] ?? 0, y = c[i] ?? 0; if (x === y) continue; return (typeof x === "number" && typeof y === "number") ? (x > y ? 1 : -1) : (String(x) > String(y) ? 1 : -1); } return 0; };
+            if (!h || (b && cmp(parts(h), parts(b)) <= 0)) { console.error(`Version must move on for every release: main has ${b || "none"}, this release has ${h || "none"}. Run bump-version.py patch`); process.exit(1); }
+            console.log(`version ${b || "none"} -> ${h}`);
+          ' "$base" "$head"
+          if [ -f public/release.json ]; then
+            rel=$(node -e 'console.log(require("./public/release.json").version||"")')
+            if [ "$rel" != "$head" ]; then
+              echo "public/release.json says $rel but package.json says $head; move the version with the project's own tool (bump-version.py) so release metadata keeps up."
+              exit 1
+            fi
+          fi
+          if [ -f README.md ]; then
+            # shields.io writes a literal dash in the version as a double dash, so the
+          # badge spells 2026.35.27-1 as 2026.35.27--1. Undo that before comparing,
+          # or a hyphenated version reads as drift against the manifest stating it.
+          badge=$(grep -o 'version-[0-9][0-9A-Za-z.+-]*-' README.md | head -1 | sed 's/^version-//; s/-$//; s/--/-/g' || true)
+            if [ -n "$badge" ] && [ "$badge" != "$head" ]; then
+              echo "README version badge says $badge but package.json says $head; move the badge with the version (version-badge.py does it)."
+              exit 1
+            fi
+          fi
+      - name: Install and check
+        shell: bash
+        run: |
+          if [ ! -f package.json ]; then
+            echo "No package.json — nothing to check."
+            exit 0
+          fi
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+          npm run format:check --if-present
+          npm run lint --if-present
+          npm run typecheck --if-present
+          npm test --if-present
+          npm run build --if-present

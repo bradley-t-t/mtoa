@@ -1,0 +1,320 @@
+{
+  "_": "The phrase scan. Edit here, not in ratchet.py; run `ratchet.py selftest` after. holds stand a sentence down, standing takes that back for a subject already approved in advance, asks is the second way into standing for a turn that defers without asking outright, settled cancels a tell in its own sentence, banned is held with no judge, tells go to the judge.",
+  "holds": [
+    {
+      "name": "hold-0",
+      "pattern": "\\bneeds?\\s+your\\s+(approval|sign[-\\s]?off|go[-\\s]?ahead|decision|call|input)\\b"
+    },
+    {
+      "name": "hold-1",
+      "pattern": "\\b(waiting|hold(?:ing)?|stopping|paused?)\\s+(on|for)\\s+your\\b"
+    },
+    {
+      "name": "hold-2",
+      "pattern": "\\b(approve|confirm)\\s+(this|that|these|those|the|it)\\b"
+    },
+    {
+      "name": "hold-3",
+      "pattern": "\\bbefore\\s+I\\s+(delete|drop|overwrite|force|push|merge|send|email|charge|refund|void|deploy|release|run)\\b"
+    },
+    {
+      "name": "hold-4",
+      "pattern": "\\bwhich\\s+(one|of these|would you|do you want|should I)\\b"
+    },
+    {
+      "name": "hold-5",
+      "pattern": "\\byour\\s+call\\b"
+    },
+    {
+      "name": "hold-6",
+      "pattern": "\\bsay\\s+the\\s+word\\s+and\\b"
+    },
+    {
+      "name": "hold-7",
+      "pattern": "\\bI\\s+need\\s+(you\\s+to|the)\\s+\\w+\\s+(credential|password|token|key|access)\\b"
+    }
+  ],
+  "asks": [
+    {
+      "name": "ask-want-me",
+      "pattern": "\\b(?:want|like)\\s+me\\s+to\\b|\\bshall\\s+I\\b|\\bshould\\s+I\\b"
+    },
+    {
+      "name": "ask-rather-you",
+      "pattern": "\\bI\\s*(?:'d|\u2019d| would| had)\\s+rather\\s+you\\b|\\bI\\s*(?:'d|\u2019d| would)\\s+want\\s+your\\s+eyes\\b"
+    },
+    {
+      "name": "ask-holding-off",
+      "pattern": "\\b(?:hold(?:ing)?\\s+off|held\\s+off|stand(?:ing)?\\s+by|leav(?:e|ing)\\s+it)\\b.{0,40}\\b(?:until|before|for\\s+you|to\\s+you)\\b|\\b(?:until|before)\\s+you\\s+(?:say|said|confirm|approve|sign|look|are\\s+ready)\\b"
+    },
+    {
+      "name": "ask-pending",
+      "pattern": "\\bpending\\s+your\\b|\\bready\\s+(?:for|when)\\s+you\\s+(?:are|say|want)\\b"
+    },
+    {
+      "name": "ask-not-run",
+      "pattern": "\\b(?:have\\s*n(?:o|'|\u2019)?t|did\\s*n(?:o|'|\u2019)?t|not)\\s+(?:actually\\s+)?(?:run|ran|applied|executed)\\b|\\bbefore\\s+I\\s+(?:ran|applied|executed)\\b"
+    }
+  ],
+  "standing": [
+    {
+      "name": "standing-sql",
+      "pattern": "\\bsql\\b|(?-i:\\b(?:SELECT|INSERT|UPSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE)\\b).{0,40}(?-i:\\b(?:FROM|INTO|TABLE|SET|WHERE|VALUES|INDEX|POLICY|COLUMN)\\b)"
+    },
+    {
+      "name": "standing-query",
+      "pattern": "\\b(?<!media )(?<!search )(?<!url )(?<!css )quer(?:y|ies|ied)(?!\\s+(?:string|param|params|parameter|selector))\\b|\\b(?:migrations?|migrate[sd]?|ddl|dml|psql|rls|row[-\\s]level\\s+security|schema\\s+(?:change|migration|edit)|backfill(?:s|ed|ing)?)\\b"
+    },
+    {
+      "name": "standing-ddl",
+      "pattern": "\\b(?:select|insert|upsert|update|delete|alter|create|drop|truncate|rename|backfill|migrate|seed|reindex|grant|revoke|add|remove)\\w*\\b.{0,60}\\b(?:table|column|row|index|schema|constraint|trigger|view|polic(?:y|ies)|sequence)s?\\b"
+    },
+    {
+      "name": "standing-ddl-reversed",
+      "pattern": "\\b(?:table|column|row|index|schema|constraint|trigger|view|polic(?:y|ies)|sequence)s?\\b.{0,60}\\b(?:drop|delete|alter|insert|update|truncate|rename|backfill|create)\\w*\\b"
+    },
+    {
+      "name": "standing-database",
+      "pattern": "\\b(?:run|running|execute|executing|apply|applying|write|writing)\\b.{0,40}\\b(?:database|supabase|postgres(?:ql)?)\\b|\\b(?:database|supabase|postgres(?:ql)?)\\b.{0,40}\\b(?:write|writes|statement|quer(?:y|ies)|migration)\\b"
+    }
+  ],
+  "settled": [
+    {
+      "name": "settled-0",
+      "pattern": "\\bno\\s+(remaining|outstanding|further|other|more|known|open)\\b"
+    },
+    {
+      "name": "settled-1",
+      "pattern": "\\bnothing\\s+(left|remaining|outstanding|else|further|more)\\b"
+    },
+    {
+      "name": "settled-2",
+      "pattern": "\\bnot\\s+(one|a single)\\b"
+    },
+    {
+      "name": "settled-3",
+      "pattern": "\\ball\\s+(of\\s+)?(them|it|the\\s+\\w+)?\\s*(are|is|were|was)?\\s*(done|passing|green|fixed|handled|complete)\\b"
+    },
+    {
+      "name": "settled-4",
+      "pattern": "\\b(now|already|has|have|had)\\s+(been\\s+)?(fixed|done|resolved|handled|removed|completed|landed)\\b"
+    },
+    {
+      "name": "settled-5",
+      "pattern": "\\bzero\\s+(remaining|left|failing|outstanding)\\b"
+    },
+    {
+      "name": "settled-6",
+      "pattern": "\\bwas\\s+the\\s+(last|only)\\b"
+    },
+    {
+      "name": "settled-7",
+      "pattern": "\\bthat\\s+was\\s+the\\s+\\w*\\s*(one|thing|bug|issue|step)\\b"
+    }
+  ],
+  "banned": [
+    {
+      "name": "announced omission",
+      "pattern": "\\bwhat\\s+I\\s+(?:deliberately\\s+|intentionally\\s+|consciously\\s+|purposely\\s+|explicitly\\s+)?(?:did\\s*n(?:o|'|\u2019)?t|have\\s*n(?:o|'|\u2019)?t)\\b"
+    },
+    {
+      "name": "chose not to",
+      "pattern": "\\bI\\s+(?:chose|opted|decided|elected)\\s+(?:not\\s+to|against)\\b|\\bI\\s+(?:deliberately|intentionally|purposely|consciously)\\s+(?:did\\s*n(?:o|'|\u2019)?t|left|skipped|avoided|held\\s+off|stopped)\\b"
+    },
+    {
+      "name": "left alone",
+      "pattern": "\\b(?:left|leaving)\\s+(?:\\w+\\s+){0,4}?(?:alone|as[-\\s]is|as\\s+it\\s+is|untouched)\\b"
+    },
+    {
+      "name": "noticed and left",
+      "pattern": "\\b(?:one|another|a)\\s+thing\\s+(?:I\\s+)?(?:noticed|spotted|saw|found)\\b|\\b(?:noticed|spotted|flagged|named)\\s+(?:it\\s+)?(?:but|and)\\s+(?:left|not|did\\s*n)\\b|\\bnamed?\\s+once\\s+and\\s+left\\b"
+    },
+    {
+      "name": "narrated non-action",
+      "pattern": "\\bno\\s+(?:reply|response|message|answer|action|change)\\s+(?:was\\s+)?(?:sent|posted|made|needed|required|taken)\\b|\\bI\\s+(?:did\\s*n(?:o|'|\u2019)?t|have\\s*n(?:o|'|\u2019)?t)\\s+(?:reply|replied|respond|responded|send|sent)\\b|\\bnothing\\s+(?:\\w+\\s+){0,2}?(?:was|were)\\s+affected\\b|\\bnothing\\s+(?:needed|required)\\s+(?:doing|to\\s+be\\s+done)\\b"
+    }
+  ],
+  "tells": [
+    {
+      "name": "one more thing",
+      "pattern": "\\b(?:just|only|there'?s|there is|but)?\\s*\\bone\\s+(?:more|last|final|small|little|other|remaining)\\s+(?:thing|item|step|issue|bug|problem|quirk|wrinkle|caveat|gotcha|snag|tweak|fix|change|piece|bit|detail|note|catch)\\b"
+    },
+    {
+      "name": "one quirk",
+      "pattern": "\\bone\\s+(?:quirk|wrinkle|caveat|gotcha|oddity|snag|hitch|kink|rough edge|loose end)\\b"
+    },
+    {
+      "name": "a few more",
+      "pattern": "\\b(?:a\\s+)?(?:couple|few|handful)\\s+(?:of\\s+)?(?:more|remaining|other)\\s+(?:things?|items?|steps?|bugs?|issues?|fixes?|files?|places?|spots?|call\\s?sites?)\\b"
+    },
+    {
+      "name": "loose ends",
+      "pattern": "\\b(?:loose ends?|open items?|outstanding (?:items?|work|issues?)|remaining work|the rest of (?:it|the|this))\\b"
+    },
+    {
+      "name": "n left",
+      "pattern": "\\b(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten)\\s+(?:more\\s+|remaining\\s+|other\\s+)?(?:steps?|items?|tasks?|things?|files?|tests?|checks?|fixes?|bugs?|issues?|errors?|failures?|todos?|places?|spots?|call\\s?sites?|references?|occurrences?|cases?|warnings?)\\s+(?:are\\s+|is\\s+|still\\s+)?(?:left|remaining|outstanding|to go|unfixed|untouched|to do|still (?:to|need))"
+    },
+    {
+      "name": "still failing",
+      "pattern": "\\b(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|some|a few)\\s+(?:tests?|checks?|cases?|specs?|assertions?)\\s+(?:are\\s+|is\\s+)?still\\s+(?:failing|red|broken)\\b"
+    },
+    {
+      "name": "still broken",
+      "pattern": "\\bstill\\s+(?:failing|broken|red|erroring|throwing|not working|does ?n'?t work|unresolved)\\b"
+    },
+    {
+      "name": "step n of m",
+      "pattern": "\\bstep\\s+\\d+\\s+of\\s+\\d+\\b"
+    },
+    {
+      "name": "n of m done",
+      "pattern": "\\b(\\d+)\\s*(?:of|/|out of)\\s*(\\d+)\\s+(?:done|complete|completed|finished|passing|working)\\b",
+      "numeric": "ratio"
+    },
+    {
+      "name": "unchecked box",
+      "pattern": "(?m)^\\s*[-*+]?\\s*\\[\\s\\]\\s+\\S"
+    },
+    {
+      "name": "still needs",
+      "pattern": "\\bstill\\s+(?:needs?|need|has|have|had|to)\\s+(?:to\\s+)?(?:be\\s+)?\\w+"
+    },
+    {
+      "name": "left to do",
+      "pattern": "\\bleft\\s+to\\s+(?:do|fix|implement|wire|finish|write|handle|clean|test|check|update)\\b"
+    },
+    {
+      "name": "remains to be done",
+      "pattern": "\\bremains?\\s+(?:to\\s+be\\s+(?:done|fixed|wired|written)|(?:un)?(?:done|fixed|handled))\\b"
+    },
+    {
+      "name": "next steps",
+      "pattern": "(?m)^\\s*(?:#+\\s*)?(?:\\*\\*)?(?:next|remaining|outstanding|todo|to do|follow[-\\s]?ups?)\\s*(?:steps?|items?|work)?(?:\\*\\*)?\\s*[:\\-\u2014]"
+    },
+    {
+      "name": "I'll continue",
+      "pattern": "\\bI(?:'|\u2019)?ll\\s+(?:continue|keep going|carry on|pick (?:that|this|it) up|(?:do|handle|fix|finish|tackle|get to) (?:that|this|it|the rest)(?: next| after| now)?)\\b"
+    },
+    {
+      "name": "want me to continue",
+      "pattern": "\\b(?:(?:would|do)\\s+you\\s+)?(?:want|like)\\s+me\\s+to\\s+(?:continue|keep going|finish|proceed|go ahead|do the rest|carry on|fix|handle|write|add|implement)\\b"
+    },
+    {
+      "name": "shall I continue",
+      "pattern": "\\b(?:shall|should)\\s+I\\s+(?:continue|proceed|keep going|finish|go ahead|do the rest|carry on)\\b"
+    },
+    {
+      "name": "if you want I can",
+      "pattern": "\\bif\\s+you\\s+(?:want|like|'d like|would like)\\s*,?\\s*I\\s+(?:can|could|will|'ll)\\b"
+    },
+    {
+      "name": "let me know if",
+      "pattern": "\\blet\\s+me\\s+know\\s+if\\s+you(?:'|\u2019)?d?\\s*(?:want|like|'d like)\\s+me\\s+to\\b"
+    },
+    {
+      "name": "in a follow-up",
+      "pattern": "\\b(?:in|as)\\s+(?:a|another)\\s+follow[-\\s]?up\\b"
+    },
+    {
+      "name": "later",
+      "pattern": "\\b(?:can|could|should|we can|I can|you can)\\s+(?:be\\s+)?(?:do(?:ne)?|add(?:ed)?|fix(?:ed)?|handle[d]?|clean(?:ed)? up|revisit(?:ed)?|tackle[d]?)\\s+(?:that\\s+)?later\\b"
+    },
+    {
+      "name": "revisit",
+      "pattern": "\\b(?:revisit|circle back|come back to|return to)\\s+(?:this|that|it|these|them|later)\\b"
+    },
+    {
+      "name": "for now",
+      "pattern": "\\bfor\\s+now\\b"
+    },
+    {
+      "name": "temporary",
+      "pattern": "\\b(?:placeholder|stubbed?(?:\\s+out)?|hard[-\\s]?coded for now|temporar(?:y|ily)|quick(?:\\s+and\\s+dirty)? hack|band[-\\s]?aid|workaround for now)\\b"
+    },
+    {
+      "name": "did not get to",
+      "pattern": "\\b(?:did\\s*n[o']?t|have\\s*n[o']?t|has\\s*n[o']?t|was\\s*n[o']?t able to|were\\s*n[o']?t able to|could\\s*n[o']?t)\\s+(?:yet\\s+)?(?:get(?:ten)? (?:to|around to)|finish(?:ed)?|complete[d]?|cover(?:ed)?|touch(?:ed)?|test(?:ed)?|verif(?:y|ied))\\b"
+    },
+    {
+      "name": "not fully done",
+      "pattern": "\\bnot\\s+(?:quite|fully|entirely|completely|totally|yet)\\s+(?:done|finished|complete|working|wired|tested|there)\\b"
+    },
+    {
+      "name": "almost done",
+      "pattern": "\\b(?:almost|nearly|mostly|basically|practically)\\s+(?:done|there|finished|complete|working)\\b"
+    },
+    {
+      "name": "partially done",
+      "pattern": "\\bpartial(?:ly)?\\s+(?:done|complete|implemented|working|migrated|converted|applied)\\b"
+    },
+    {
+      "name": "not yet",
+      "pattern": "\\bnot\\s+yet\\s+(?:implemented|wired|hooked|tested|done|written|added|migrated|verified|covered|handled)\\b"
+    },
+    {
+      "name": "TODO",
+      "pattern": "(?m)^\\s*(?:[-*+]\\s*)?(?:TODO|FIXME)\\b|\\b(?:left|leaving|added?|there(?:'|\\u2019)?s|there is|there are|still|some|a few|one|two|three)\\s+(?:an?\\s+|some\\s+|more\\s+)?(?:TODOs?|FIXMEs?)\\b"
+    },
+    {
+      "name": "known issue",
+      "pattern": "\\b(?:one|a|the)\\s+known\\s+(?:issue|bug|problem|limitation|gap)\\b"
+    },
+    {
+      "name": "only thing left",
+      "pattern": "\\b(?:the\\s+)?(?:only|last|final)\\s+(?:thing|item|piece|bit|issue|bug|problem|step)\\s+(?:that\\s+)?(?:is\\s+|that'?s\\s+)?(?:left|remaining|outstanding|missing)\\b"
+    },
+    {
+      "name": "left as an exercise",
+      "pattern": "\\bleft\\s+(?:as|for)\\s+(?:an?\\s+)?(?:exercise|future|later|follow[-\\s]?up|another)\\b"
+    },
+    {
+      "name": "one caveat",
+      "pattern": "\\b(?:one|a)\\s+caveat\\b|\\bwith\\s+one\\s+exception\\b"
+    },
+    {
+      "name": "skipped",
+      "pattern": "\\bI\\s+(?:skipped|left out|left off|omitted|passed on|punted on|deferred)\\b"
+    },
+    {
+      "name": "will do it later",
+      "pattern": "\\b(?:I|we)\\s*(?:'|\u2019)?(?:ll|will|can|could|should|may|might)\\b[^.!?\\n]{0,60}\\blater\\b"
+    },
+    {
+      "name": "can be done later",
+      "pattern": "\\b(?:can|could|should|may|might)\\s+be\\s+\\w+(?:ed|d|n)\\b[^.!?\\n]{0,40}\\blater\\b"
+    },
+    {
+      "name": "not done yet",
+      "pattern": "\\b(?:I|we)\\s+(?:have|has|had|did|do|am|are)\\s*n(?:o|'|\u2019)?t\\b[^.!?\\n]{0,60}\\byet\\b|\\b(?:it|this|that|they|which)\\s+(?:is|was|are|were|has|have|had)\\s*n(?:o|'|\u2019)?t\\s+(?:been\\s+)?(?:\\w+ed|wired|done|built|run|set|hooked|live|there|in)\\b[^.!?\\n]{0,40}\\byet\\b"
+    },
+    {
+      "name": "did not touch it",
+      "pattern": "\\b(?:I|we)\\s+(?:did|have|had)\\s*n(?:o|'|\u2019)?t\\s+(?:\\w+\\s+){0,2}?(?:run|ran|check|test|verify|update|wire|hook|add|remove|write|migrate|convert|handle|apply|deploy|measure|review|clean)\\b"
+    },
+    {
+      "name": "n still doing",
+      "pattern": "\\b(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|some|several|a\\s+few|other)\\s+(?:\\w+\\s+){0,2}?(?:files?|places?|spots?|call\\s?sites?|references?|occurrences?|tests?|cases?|modules?|components?|handlers?|callers?|pages?|routes?|endpoints?|functions?|queries?)\\s+still\\s+\\w+"
+    },
+    {
+      "name": "denied deferral",
+      "pattern": "\\b(?:rather\\s+than|instead\\s+of|not)\\s+(?:\\w+\\s+){0,2}?(?:I|we)\\s+(?:left|skipped|punted|deferred|dropped|missed|ran\\s+out)\\b"
+    },
+    {
+      "name": "denied leftovers",
+      "pattern": "\\b(?:rather\\s+than|instead\\s+of|not)\\s+(?:\\w+\\s+){0,2}?(?:leftovers?|loose\\s+ends?|half[-\\s]?(?:done|finished|baked)|unfinished\\s+\\w+|incomplete\\s+\\w+)\\b"
+    },
+    {
+      "name": "half done",
+      "pattern": "\\bhalf[-\\s]?(?:done|finished|built|written|wired|complete[d]?|implemented|migrated|baked)\\b|\\bhalfway\\s+(?:through|done|there)\\b"
+    },
+    {
+      "name": "handed back to decide",
+      "pattern": "\\b(?:for|left\\s+to)\\s+you\\s+to\\s+(?:decide|choose|pick|call|settle|judge|weigh)\\b|\\byours?\\s+to\\s+(?:decide|call|choose|make|judge)\\b|\\bup\\s+to\\s+you\\s+(?:whether|which|if|how|to)\\b|\\b(?:decisions?|choices?|calls?|questions?)\\s+for\\s+you\\b"
+    },
+    {
+      "name": "meta hedge",
+      "pattern": "\\bfor\\s+what\\s+it(?:'|\u2019)?s\\s+worth\\b|\\bworth\\s+(?:noting|flagging|mentioning|calling\\s+out)\\b|\\bjust\\s+so\\s+you\\s+know\\b"
+    }
+  ]
+}

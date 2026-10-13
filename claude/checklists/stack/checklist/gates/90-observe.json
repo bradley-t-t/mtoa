@@ -1,0 +1,54 @@
+{
+  "group": "Observability",
+  "prefix": "OBS",
+  "description": "Whether a failure in front of a real visitor reaches anybody. A site with no reporting is not a site with no errors; it is a site where the errors are only ever seen by the person who left.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "public_site",
+    "severity": "required",
+    "source": "references/observability.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "OBS-01",
+      "title": "The Reporting Snippet Is In The Page",
+      "rule": "The error reporting snippet is present in the served HTML, not only in the repository. A snippet added to a template that the build does not use reports nothing and reads as done.",
+      "check": {"type": "reporter_snippet"},
+      "fix": "Add it to the document the build actually serves, then confirm it in the deployed page."
+    },
+    {
+      "id": "OBS-02",
+      "when": ["public_site", "agency_status"],
+      "title": "The Collector Knows This Site",
+      "rule": "The site has an entry in the collector on the Pi, so a report arriving from it is attributed rather than dropped.",
+      "check": {"type": "probe", "probe": "observe.collector"},
+      "fix": "Run /onboard-error-reporting, which teaches the collector, the monitor and the board in one pass."
+    },
+    {
+      "id": "OBS-03",
+      "when": ["public_site", "agency_status"],
+      "title": "An Uptime Monitor Watches It",
+      "rule": "The uptime monitor has a target for this site. Error reporting says what broke while somebody was there; the monitor is what notices when nobody is.",
+      "check": {"type": "probe", "probe": "observe.monitor"},
+      "fix": "Add the target to the monitor's configuration on the Pi."
+    },
+    {
+      "id": "OBS-04",
+      "when": ["public_site", "agency_status"],
+      "title": "It Appears On The Status Board",
+      "rule": "The site is listed on the public status page. A site being watched and a site being seen to be watched are different things, and visitors only get the second.",
+      "check": {"type": "probe", "probe": "observe.board"},
+      "fix": "Add it to the status feed the board reads."
+    },
+    {
+      "id": "OBS-05",
+      "when": ["public_site", "ticket_queue"],
+      "title": "A Real Error Travelled The Whole Path",
+      "rule": "An error thrown in a browser on the deployed site reached Discord and opened a ticket. Every step of this pipeline can be configured correctly and still not connect, and the only proof that it does is a report that made the trip.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "observe.roundtrip"},
+      "fix": "Throw one deliberately on the deployed site and follow it through. A site is not onboarded until one has."
+    }
+  ]
+}

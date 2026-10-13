@@ -1,0 +1,56 @@
+{
+  "user": {
+    "name": "",
+    "email": "",
+    "git_name": "",
+    "git_email": "",
+    "pronouns": {
+      "subject": "they",
+      "object": "them",
+      "possessive": "their"
+    }
+  },
+  "assistant": {
+    "name": "Sunday",
+    "wake_word": "sunday"
+  },
+  "github": {
+    "owners": [],
+    "mirror": "",
+    "tickets": "",
+    "elsewhere": {}
+  },
+  "host": {
+    "ssh": "",
+    "url": "",
+    "user": "",
+    "home": "",
+    "lan_name": "",
+    "lan_ip": "",
+    "tailnet_ip": "",
+    "voice_port": 8794,
+    "status_name": "Cloud Services"
+  },
+  "desk": {
+    "ssh": "",
+    "home": ""
+  },
+  "notify": {
+    "slack_channel": "",
+    "mail_from": "",
+    "mail_credential": "resend-api-key"
+  },
+  "secrets": {
+    "backend": "env"
+  },
+  "agency": {},
+  "desktop": {
+    "keep_folders": []
+  },
+  "voice": {
+    "pronounce": [],
+    "home_ssid": "",
+    "home_gateways": []
+  },
+  "routines": {}
+}

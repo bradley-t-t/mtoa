@@ -1,0 +1,56 @@
+{
+  "group": "Run Protocol",
+  "prefix": "PRC",
+  "description": "The bookkeeping that stops the checklist becoming a survey. These gates answer to the run's own state rather than to an attestation, so the run cannot close by claiming it is finished.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PRC-01",
+      "title": "The Run Was Opened Before The Work",
+      "rule": "A run exists and the changes are recorded against it. Work done outside a run is work nothing checked, and an unchecked change looks exactly like a passing one afterwards.",
+      "check": {"type": "run_opened"},
+      "fix": "seo-pass.py start --kind <kind> --target <path>"
+    },
+    {
+      "id": "PRC-02",
+      "title": "Scope Is Every Route, Not The One Named",
+      "rule": "The targets cover every route a crawler reaches, not only the page the prompt mentioned. A title fixed on one route and left wrong on nine others has not been fixed.",
+      "check": {"type": "scope_coverage"},
+      "fix": "Widen the targets with scan --target, or answer n/a naming why those routes are outside this deliverable."
+    },
+    {
+      "id": "PRC-03",
+      "title": "Every File In Scope Was Read And Ruled On",
+      "rule": "Each file under the targets ends either changed or explicitly ruled as needing no SEO change, with the reason. A file nobody opened and a file considered and left alone are indistinguishable without this.",
+      "check": {"type": "file_coverage"},
+      "fix": "seo-pass.py files, then read each one and either change it or file-clear it with a note."
+    },
+    {
+      "id": "PRC-04",
+      "title": "Copy A Person Reads Passes The Writing Standard",
+      "rule": "Titles, descriptions and body copy are read by people before they are parsed by a crawler, so they answer to the avoid-ai-writing standard like any other user-facing string.",
+      "severity": "required",
+      "check": {"type": "writing_pass"},
+      "fix": "Invoke avoid-ai-writing and rewrite what it flags, then verify again."
+    },
+    {
+      "id": "PRC-05",
+      "title": "Every Applicable Gate Is Answered",
+      "rule": "No gate is left silent. A gate that is not met is work to do; the only ways past one are changing the project or naming the condition that puts it out of scope.",
+      "check": {"type": "all_resolved"},
+      "fix": "seo-pass.py status lists what is open."
+    },
+    {
+      "id": "PRC-06",
+      "title": "The Filled Checklist Was Rendered",
+      "rule": "The run ends with the whole checklist shown - every gate, its verdict, the evidence, and a section listing anything answered not applicable and why.",
+      "check": {"type": "report_emitted"},
+      "fix": "seo-pass.py report"
+    }
+  ]
+}

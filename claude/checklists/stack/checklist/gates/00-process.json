@@ -1,0 +1,63 @@
+{
+  "group": "Run Protocol",
+  "prefix": "PRC",
+  "description": "The bookkeeping that stops the checklist becoming a survey. These gates answer to the run's own state rather than to an attestation, so the run cannot close by claiming it is finished.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PRC-01",
+      "title": "The Run Was Opened Before The Work",
+      "rule": "A run exists and the changes are recorded against it. Work done outside a run is work nothing checked, and an unchecked change looks exactly like a passing one afterwards.",
+      "check": {"type": "run_opened"},
+      "fix": "stack-pass.py start --kind <kind> --target <path>"
+    },
+    {
+      "id": "PRC-02",
+      "title": "Scope Is The Whole Project, Not The Service Named",
+      "rule": "The targets cover every service the project talks to, not only the one the prompt mentioned. A Supabase key checked while Clerk sits on development keys in production has not been checked.",
+      "check": {"type": "scope_coverage"},
+      "fix": "Widen the targets with scan --target, or answer n/a naming why those services are outside this deliverable."
+    },
+    {
+      "id": "PRC-03",
+      "title": "Every File In Scope Was Read And Ruled On",
+      "rule": "Each file under the targets ends either changed or explicitly ruled as needing no wiring change, with the reason. A file nobody opened and a file considered and left alone are indistinguishable without this.",
+      "check": {"type": "file_coverage"},
+      "fix": "stack-pass.py files, then read each one and either change it or file-clear it with a note."
+    },
+    {
+      "id": "PRC-04",
+      "title": "The Live Services Were Probed, Not Read About",
+      "rule": "Every service the project depends on was reached over the network in this run. Source can say a project uses Supabase; only a request can say the project is not paused. A configuration that reads correctly and answers nothing is the failure this group exists to catch.",
+      "check": {"type": "probe_filed"},
+      "fix": "scripts/probe.py all --root <path> --out /tmp/stack-probe.json, then stack-pass.py probe --file /tmp/stack-probe.json"
+    },
+    {
+      "id": "PRC-05",
+      "title": "What Belongs To Another Checklist Was Handed Over",
+      "rule": "This checklist asks whether a thing is wired up and alive, and nothing else. A finding about how the footer looks belongs to design, one about metadata or share cards to SEO, one about weight or loading to performance. Each is named and handed over, never resolved here and never dropped.",
+      "severity": "required",
+      "check": {"type": "delegation"},
+      "fix": "stack-pass.py delegate --to <design|seo|perf> --note \"<what was found and where it went>\", or answer n/a when nothing outside this checklist came up."
+    },
+    {
+      "id": "PRC-06",
+      "title": "Every Applicable Gate Is Answered",
+      "rule": "No gate is left silent. A gate that is not met is work to do; the only ways past one are changing the project or naming the condition that puts it out of scope.",
+      "check": {"type": "all_resolved"},
+      "fix": "stack-pass.py status lists what is open."
+    },
+    {
+      "id": "PRC-07",
+      "title": "The Filled Checklist Was Rendered",
+      "rule": "The run ends with the whole checklist shown - every gate, its verdict, the evidence, what was delegated, and a section listing anything answered not applicable and why.",
+      "check": {"type": "report_emitted"},
+      "fix": "stack-pass.py report"
+    }
+  ]
+}

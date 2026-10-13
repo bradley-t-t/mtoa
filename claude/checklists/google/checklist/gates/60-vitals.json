@@ -1,0 +1,87 @@
+{
+  "group": "Core Web Vitals",
+  "prefix": "CWV",
+  "description": "The field record Google holds for the property, which is the only speed measurement search uses. This group diagnoses and delegates: it reads the Chrome UX Report at the 75th percentile, decides which URL groups and which form factor are failing, and hands the work of making a page faster to perf-checklist. No file in the repository is edited here.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/vitals.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "CWV-01",
+      "title": "The Field Record Is The Diagnosis",
+      "rule": "The verdict for every vitals gate comes from the CrUX record at the 75th percentile, not from a lab score. Lab numbers vary by more than most improvements and describe one simulated device; the field record is what real visitors experienced and what search reads.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "cwv.field_record"},
+      "fix": "Pull the CrUX record for the origin and for each URL group through the PageSpeed Insights API, and record it as the run's baseline before changing anything."
+    },
+    {
+      "id": "CWV-02",
+      "title": "Mobile And Desktop Are Judged Apart",
+      "rule": "Each metric is read once for phone and once for desktop, and both pass. The two records are collected separately and routinely disagree by a factor of two, so a combined reading hides the form factor carrying most of the traffic.",
+      "check": {"type": "probe", "probe": "cwv.form_factor_split"},
+      "fix": "Request the PageSpeed Insights API twice per URL with strategy=mobile and strategy=desktop, and hold the worse of the two as the verdict."
+    },
+    {
+      "id": "CWV-03",
+      "title": "Largest Contentful Paint Is Under 2.5 Seconds",
+      "rule": "LCP at the 75th percentile is below 2.5 seconds on both form factors. Above 4 seconds the record is classed poor, and the range between the two is a page that passes for three visitors in four and fails for the rest.",
+      "check": {"type": "probe", "probe": "cwv.lcp"},
+      "fix": "Record the failing URL groups and hand them to perf-checklist with the measured value and the form factor. The cause is usually the hero image, a render-blocking stylesheet, or time to first byte."
+    },
+    {
+      "id": "CWV-04",
+      "title": "Interaction To Next Paint Is Under 200 Milliseconds",
+      "rule": "INP at the 75th percentile is below 200 milliseconds on both form factors. INP measures the worst interaction of a visit rather than the first, so a page that loads quickly and answers slowly fails here while scoring well in the lab.",
+      "check": {"type": "probe", "probe": "cwv.inp"},
+      "fix": "Hand the failing groups to perf-checklist. The field record names no interaction, so attribution comes from the web-vitals attribution build recording real sessions."
+    },
+    {
+      "id": "CWV-05",
+      "title": "Cumulative Layout Shift Is Under 0.1",
+      "rule": "CLS at the 75th percentile is below 0.1 on both form factors. Shift is caused by content arriving without reserved space, and it is the one metric a fast connection makes worse rather than better.",
+      "check": {"type": "probe", "probe": "cwv.cls"},
+      "fix": "Hand the failing groups to perf-checklist. Unsized media, late-loading fonts, and injected banners account for nearly all of it."
+    },
+    {
+      "id": "CWV-06",
+      "title": "The Origin Record Passes, Not Only Sampled URLs",
+      "rule": "The origin-level CrUX record passes all three metrics. A handful of fast URLs can pass individually while the origin fails, because the origin record aggregates every page real visitors reached, including the ones nobody thought to measure.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "cwv.origin_pass"},
+      "fix": "Read the origin record, then use the Search Console vitals report to find which URL groups drag it down, and delegate those groups rather than the home page."
+    },
+    {
+      "id": "CWV-07",
+      "title": "A URL Group With No Field Data Is Diagnosed In The Lab",
+      "rule": "Any URL with too little traffic for its own CrUX record is measured in the lab instead, as a median of three runs. A missing field record is an unknown, and an unknown recorded as a pass is the same as a failure nobody looked at.",
+      "check": {"type": "probe", "probe": "cwv.lab_fallback"},
+      "fix": "Take three lab runs against the URL, keep the median, and record it as lab-derived so the verdict cannot be mistaken for a field reading."
+    },
+    {
+      "id": "CWV-08",
+      "title": "The Search Console Vitals Report Has No Failing Group",
+      "rule": "The Core Web Vitals report shows no URL group in the poor or needs-improvement band on either form factor. The report groups URLs by page template, which is the unit a fix actually applies to.",
+      "check": {"type": "probe", "probe": "cwv.gsc_groups"},
+      "fix": "Read the failing groups from the Search Console API, delegate each template to perf-checklist, and start validation once the fix is live."
+    },
+    {
+      "id": "CWV-09",
+      "title": "Every Speed Fix Is Handed To The Performance Checklist",
+      "rule": "No page weight, script, image or caching change is made inside this run. This group owns the diagnosis and the delegation record; perf-checklist owns the files and the proof that the page still renders as it did.",
+      "severity": "blocker",
+      "check": {"type": "manual"},
+      "fix": "Record a handover naming each failing URL group, its metric, its measured value and its form factor, then open the perf-checklist run against those routes."
+    },
+    {
+      "id": "CWV-10",
+      "title": "A Landed Fix Is Confirmed Against A Refreshed Record",
+      "rule": "A metric is recorded as fixed only after the field record moves. CrUX is a 28-day trailing window, so a change that landed today is invisible in it for weeks and a lab improvement is not evidence the field improved.",
+      "check": {"type": "probe", "probe": "cwv.recheck"},
+      "fix": "Note the landing date, re-pull the CrUX record once 28 days of data has accumulated, and use the Search Console validation flow to track the group in the meantime."
+    }
+  ]
+}

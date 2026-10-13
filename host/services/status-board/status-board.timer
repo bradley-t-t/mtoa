@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the site status board every two minutes
+
+[Timer]
+OnBootSec=120
+OnUnitActiveSec=120
+AccuracySec=10
+
+[Install]
+WantedBy=timers.target

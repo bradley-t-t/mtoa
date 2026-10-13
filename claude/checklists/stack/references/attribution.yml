@@ -1,0 +1,73 @@
+name: Attribution
+
+# The pull request gate in ci.yml refuses attribution before a merge. This is
+# the reading behind it: what a push actually added to a protected branch,
+# checked after the fact, so anything that reaches the branch by a route the
+# gate never saw is loud within the minute rather than found weeks later.
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: attribution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  attribution:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan what this push added
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ident='anthropic|claude|openai|codex|copilot|windsurf|devin|bard|githubcopilot|cursor\.(sh|com)'
+          msg='co-?authored-?by:.*(claude|anthropic|codex|openai|copilot|gpt-|gemini|cursor|devin)'
+          msg+='|generated[[:space:]]+(with|by).*(claude|codex|openai|copilot|chatgpt)'
+          msg+='|(made|written|created|authored)[[:space:]]+(with|by)[[:space:]]+(claude|codex|chatgpt|copilot)'
+          msg+='|claude[-[:space:]]?session:|claude\.ai|anthropic\.com'
+
+          # A new branch, or a force push past the recorded base, leaves nothing
+          # to compare against. Read the head commit alone rather than the whole
+          # history it sits on: this gate is about what arrived, not what was
+          # already there.
+          if [ -z "${BEFORE:-}" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            range_api="repos/$GITHUB_REPOSITORY/commits/$AFTER"
+            jqf='[.] | .[] | [.sha, (.commit.author.name + " <" + .commit.author.email + ">"), (.commit.committer.name + " <" + .commit.committer.email + ">"), (.commit.message | gsub("\n"; "\\n"))] | @tsv'
+          else
+            range_api="repos/$GITHUB_REPOSITORY/compare/$BEFORE...$AFTER"
+            jqf='.commits[] | [.sha, (.commit.author.name + " <" + .commit.author.email + ">"), (.commit.committer.name + " <" + .commit.committer.email + ">"), (.commit.message | gsub("\n"; "\\n"))] | @tsv'
+          fi
+
+          head_jq='[.] | .[] | [.sha, (.commit.author.name + " <" + .commit.author.email + ">"), (.commit.committer.name + " <" + .commit.committer.email + ">"), (.commit.message | gsub("\n"; "\\n"))] | @tsv'
+          if ! gh api "$range_api" --jq "$jqf" > added.tsv 2>/dev/null; then
+            # A force push leaves `before` naming a commit the repository no
+            # longer holds, so the comparison 404s. Read the head commit rather
+            # than failing the run: refusing here would say attribution was
+            # found, which is the opposite of what happened.
+            gh api "repos/$GITHUB_REPOSITORY/commits/$AFTER" --jq "$head_jq" > added.tsv 2>/dev/null \
+              || { echo "Could not read the pushed range."; exit 1; }
+          fi
+
+          fail=0
+          while IFS=$'\t' read -r sha author committer message; do
+            [ -n "$sha" ] || continue
+            if printf '%s %s' "$author" "$committer" | grep -qiE "$ident"; then
+              echo "::error::${sha:0:8} landed on ${GITHUB_REF_NAME} authored or committed by an AI identity: $author / $committer"
+              fail=1
+            fi
+            if printf '%s' "$message" | grep -qiE "$msg"; then
+              echo "::error::${sha:0:8} landed on ${GITHUB_REF_NAME} carrying AI attribution in its message."
+              fail=1
+            fi
+          done < added.tsv
+
+          rm -f added.tsv
+          [ "$fail" -eq 0 ] || exit 1
+          echo "Nothing this push added carries attribution."

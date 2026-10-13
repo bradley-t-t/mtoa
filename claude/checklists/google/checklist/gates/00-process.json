@@ -1,0 +1,56 @@
+{
+  "group": "Run Protocol",
+  "prefix": "PRC",
+  "description": "The bookkeeping that stops the checklist becoming a survey. These gates answer to the run's own state rather than to an attestation, so a run cannot close by declaring itself finished. Google's side of a site is invisible from the repository, which is exactly why the record of what was checked has to be kept by the run instead of by the code.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PRC-01",
+      "title": "The Run Was Opened Before The Work",
+      "rule": "A run exists and every change is recorded against it. A property edited outside a run leaves no trace in any repository, so an unrecorded change and an untouched account read the same afterwards.",
+      "check": {"type": "run_opened"},
+      "fix": "google-pass.py start --kind <kind> --site <host>"
+    },
+    {
+      "id": "PRC-02",
+      "title": "Scope Is Every Site, Not The One Named",
+      "rule": "The run covers every site in the portfolio, not only the host the prompt mentioned. Fixing Google for one site and leaving fifteen wrong has not fixed anything: the same missing property, the same unsubmitted sitemap and the same duplicated tag sit on all of them, and each one costs its own traffic.",
+      "check": {"type": "site_coverage"},
+      "fix": "google-pass.py sites lists what the portfolio holds. Add the missing hosts with google-pass.py start --site, or answer n/a per host naming the reason that host is outside the run."
+    },
+    {
+      "id": "PRC-03",
+      "title": "Copy A Person Reads Passes The Writing Standard",
+      "rule": "Business Profile descriptions, profile posts, and the titles that surface in search results are read by people before any machine parses them, so they answer to the avoid-ai-writing standard like every other user-facing string.",
+      "severity": "required",
+      "check": {"type": "writing_pass"},
+      "fix": "Run the copy through writing-pass.py check, rewrite what it flags, and verify again before publishing it to the account."
+    },
+    {
+      "id": "PRC-04",
+      "title": "Findings Belonging To Another Checklist Were Handed Over",
+      "rule": "A defect that lives in the repository belongs to the checklist that owns those files. A missing canonical tag, a slow page, and a broken deploy are each somebody else's gate, and a run that fixes them here leaves the owning checklist reporting green over a problem it never saw.",
+      "check": {"type": "delegation", "allow": ["seo", "perf", "stack"]},
+      "fix": "google-pass.py delegate --to <seo|perf|stack> with the finding, or google-pass.py delegate --none when nothing crossed a boundary."
+    },
+    {
+      "id": "PRC-05",
+      "title": "Every Applicable Gate Is Answered",
+      "rule": "No gate is left silent. A gate that is not met is work to do, and the only ways past one are changing the account or naming the condition that puts it out of scope for that site.",
+      "check": {"type": "all_resolved"},
+      "fix": "google-pass.py status lists what is open, per site."
+    },
+    {
+      "id": "PRC-06",
+      "title": "The Filled Checklist Was Rendered",
+      "rule": "The run ends with the whole checklist shown: every site, every gate, its verdict, the reading it rests on, and a section listing anything answered not applicable and why.",
+      "check": {"type": "report_emitted"},
+      "fix": "google-pass.py report"
+    }
+  ]
+}

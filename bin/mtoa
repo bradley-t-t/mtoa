@@ -1,0 +1,292 @@
+#!/usr/bin/env python3
+"""mtoa: install, check and run the M.T.O.A. setup from this checkout.
+
+  mtoa install [--force]        put claude/ into ~/.claude and start a profile
+  mtoa update [--force]         pull this checkout, then install again
+  mtoa doctor                   say what works, what is broken and what is not set up
+  mtoa config get <key>         read the profile (also: config path, config show)
+  mtoa host <check|push|units>  deploy host/ to the machine host.ssh names
+  mtoa voice deploy             deploy voice/ to that machine and restart it
+  mtoa voice ear                make this computer an ear for the voice server
+
+Install copies, it never links, so this checkout can move or go away. A file in
+~/.claude that differs from the checkout is replaced only when it is still the
+copy the last install wrote; one you have edited since is left alone and named,
+unless --force, which moves it under ~/.claude/.mtoa-replaced/ first.
+"""
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CLAUDE = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+MANIFEST = CLAUDE / ".mtoa-manifest.json"
+SKIP = {".DS_Store"}
+
+
+def say(*parts):
+    print(*parts, flush=True)
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def files_under(base):
+    for path in sorted(base.rglob("*")):
+        if path.is_file() and path.name not in SKIP and "__pycache__" not in path.parts:
+            yield path
+
+
+def load_manifest():
+    try:
+        return json.loads(MANIFEST.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def install(force=False):
+    source = ROOT / "claude"
+    if not source.is_dir():
+        say("mtoa: %s has no claude/ to install" % ROOT)
+        return 1
+    CLAUDE.mkdir(parents=True, exist_ok=True)
+    manifest = load_manifest()
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    added = replaced = same = 0
+    kept = []
+    for path in files_under(source):
+        rel = path.relative_to(source).as_posix()
+        dest = CLAUDE / rel
+        new = sha(path)
+        if dest.is_file():
+            old = sha(dest)
+            if old == new:
+                manifest[rel] = new
+                same += 1
+                continue
+            if manifest.get(rel) != old and not force:
+                kept.append(rel)
+                continue
+            if manifest.get(rel) != old:
+                backup = CLAUDE / ".mtoa-replaced" / stamp / rel
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(dest), str(backup))
+            replaced += 1
+        else:
+            added += 1
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, dest)
+        manifest[rel] = new
+    MANIFEST.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
+
+    profile = CLAUDE / "profile"
+    started = []
+    for name in ("mtoa.json", "CLAUDE.md"):
+        if not (profile / name).exists():
+            profile.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / "profile.example" / name, profile / name)
+            started.append(name)
+
+    say("installed into %s: %d new, %d updated, %d unchanged" % (CLAUDE, added, replaced, same))
+    if started:
+        say("started your profile at %s (%s); fill it in, then run mtoa doctor"
+            % (profile, ", ".join(started)))
+    if kept:
+        say("left %d file(s) you have changed since the last install:" % len(kept))
+        for rel in kept[:40]:
+            say("  " + rel)
+        if len(kept) > 40:
+            say("  and %d more" % (len(kept) - 40))
+        say("compare with diff ~/.claude/<file> %s/claude/<file>, or run install --force,"
+            % ROOT)
+        say("which keeps your copies under %s" % (CLAUDE / ".mtoa-replaced" / stamp))
+    return 0
+
+
+def update(force=False):
+    if not (ROOT / ".git").exists():
+        say("mtoa: %s is not a git checkout, so there is nothing to pull" % ROOT)
+        return 1
+    done = subprocess.run(["git", "-C", str(ROOT), "pull", "--ff-only", "-q"])
+    if done.returncode != 0:
+        say("mtoa: the pull did not fast-forward; nothing was installed")
+        return 1
+    return install(force)
+
+
+def config(args):
+    reader = CLAUDE / "tools" / "mtoa_config.py"
+    if not reader.is_file():
+        reader = ROOT / "claude" / "tools" / "mtoa_config.py"
+    return subprocess.run([sys.executable, str(reader)] + args).returncode
+
+
+def profile_get(key, default=""):
+    reader = CLAUDE / "tools" / "mtoa_config.py"
+    if not reader.is_file():
+        reader = ROOT / "claude" / "tools" / "mtoa_config.py"
+    done = subprocess.run([sys.executable, str(reader), "get", key], capture_output=True, text=True)
+    value = done.stdout.strip()
+    return value or default
+
+
+def doctor():
+    broken, unset = [], []
+
+    def ok(text):
+        say("  ok      " + text)
+
+    def bad(text):
+        broken.append(text)
+        say("  BROKEN  " + text)
+
+    def off(text):
+        unset.append(text)
+        say("  not set " + text)
+
+    say("M.T.O.A. at %s, installed into %s" % (ROOT, CLAUDE))
+    if sys.version_info >= (3, 9):
+        ok("python %d.%d" % sys.version_info[:2])
+    else:
+        bad("python 3.9 or newer is needed; this is %d.%d" % sys.version_info[:2])
+    for tool, need in (("git", True), ("claude", False), ("gh", False)):
+        if shutil.which(tool):
+            ok(tool)
+        elif need:
+            bad("%s is not on PATH" % tool)
+        else:
+            off("%s is not on PATH" % tool)
+
+    source = ROOT / "claude"
+    manifest = load_manifest()
+    missing = [p.relative_to(source).as_posix() for p in files_under(source)
+               if not (CLAUDE / p.relative_to(source)).is_file()]
+    drifted = [p.relative_to(source).as_posix() for p in files_under(source)
+               if (CLAUDE / p.relative_to(source)).is_file()
+               and sha(CLAUDE / p.relative_to(source)) != sha(p)]
+    if missing:
+        bad("%d file(s) are not installed (run mtoa install), e.g. %s" % (len(missing), missing[0]))
+    else:
+        ok("every file in claude/ is installed")
+    if drifted:
+        mine = [r for r in drifted if manifest.get(r) != sha(CLAUDE / r)]
+        say("  note    %d installed file(s) differ from this checkout, %d of them edited by you"
+            % (len(drifted), len(mine)))
+
+    claude_md = CLAUDE / "CLAUDE.md"
+    if claude_md.is_file() and "@profile/CLAUDE.md" in claude_md.read_text():
+        ok("CLAUDE.md imports your profile")
+    else:
+        bad("~/.claude/CLAUDE.md is missing or does not import profile/CLAUDE.md")
+
+    try:
+        settings = json.loads((CLAUDE / "settings.json").read_text())
+        commands = [h.get("command", "") for rows in (settings.get("hooks") or {}).values()
+                    for row in rows for h in row.get("hooks", [])]
+        wanted = ["ratchet/hook.py", "checklists/hook.py", "tools/peer-reply-guard.py"]
+        absent = [w for w in wanted if not any(w in c for c in commands)]
+        if absent:
+            bad("settings.json does not run %s; merge the hooks from %s/claude/settings.json"
+                % (", ".join(absent), ROOT))
+        else:
+            ok("settings.json runs the hooks")
+        for w in wanted:
+            if not (CLAUDE / w).is_file():
+                bad("%s is not installed" % w)
+    except (OSError, ValueError) as problem:
+        bad("~/.claude/settings.json is unreadable (%s)" % problem)
+
+    for script in ("ratchet/hook.py", "checklists/hook.py", "tools/mtoa_config.py",
+                   "tools/with-credential.py"):
+        path = CLAUDE / script
+        if path.is_file():
+            done = subprocess.run([sys.executable, "-m", "py_compile", str(path)],
+                                  capture_output=True, text=True)
+            if done.returncode != 0:
+                bad("%s does not compile: %s" % (script, done.stderr.strip()[:200]))
+
+    profile = CLAUDE / "profile" / "mtoa.json"
+    if not profile.is_file():
+        bad("there is no profile at %s (run mtoa install)" % profile)
+    else:
+        try:
+            json.loads(profile.read_text())
+            ok("profile at %s" % profile)
+        except ValueError as problem:
+            bad("the profile is not valid JSON (%s)" % problem)
+    for key, what in (("user.name", "your name (user.name)"),
+                      ("github.owners", "your GitHub owners (github.owners), so the release skills know your repos"),
+                      ("host.ssh", "a host (host.ssh), for host/ and voice/"),
+                      ("github.mirror", "a private mirror (github.mirror), for carrying your setup between machines")):
+        value = profile_get(key)
+        if value and value not in ("[]", "{}"):
+            ok("%s: %s" % (key, value))
+        else:
+            off(what)
+
+    backend = os.environ.get("MTOA_SECRETS_BACKEND") or profile_get("secrets.backend", "env")
+    if backend == "env":
+        env_file = Path(profile_get("secrets.env_file") or Path.home() / ".config" / "mtoa" / "secrets.env").expanduser()
+        if env_file.is_file():
+            loose = os.name == "posix" and env_file.stat().st_mode & 0o077
+            (bad if loose else ok)("secrets file %s%s" % (env_file, " is readable by others; chmod 600 it" if loose else ""))
+        else:
+            off("a secrets file (%s), for the tools that need a key" % env_file)
+    else:
+        ok("secrets kept in %s" % backend)
+
+    host = profile_get("host.ssh")
+    if host and shutil.which("ssh"):
+        done = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", host, "true"],
+                              capture_output=True, text=True)
+        (ok if done.returncode == 0 else bad)("ssh %s %s" % (host, "answers" if done.returncode == 0 else "does not answer"))
+
+    say("")
+    if broken:
+        say("%d broken, %d not set up" % (len(broken), len(unset)))
+        return 1
+    say("nothing broken%s" % (", %d not set up" % len(unset) if unset else ""))
+    return 0
+
+
+def host(args):
+    script = ROOT / "host" / "bin" / "deploy.sh"
+    return subprocess.run(["bash", str(script)] + (args or ["check"])).returncode
+
+
+def voice(args):
+    if args[:1] == ["deploy"]:
+        return subprocess.run(["sh", str(ROOT / "voice" / "deploy" / "deploy-server.sh")]).returncode
+    if args[:1] == ["ear"]:
+        return subprocess.run([sys.executable, str(ROOT / "voice" / "clients" / "mic_ear.py")]).returncode
+    say("mtoa voice deploy | mtoa voice ear")
+    return 64
+
+
+def main(argv):
+    verb, rest = (argv[1], argv[2:]) if len(argv) > 1 else ("", [])
+    force = "--force" in rest
+    if verb == "install":
+        return install(force)
+    if verb == "update":
+        return update(force)
+    if verb == "doctor":
+        return doctor()
+    if verb == "config":
+        return config(rest or ["show"])
+    if verb == "host":
+        return host(rest)
+    if verb == "voice":
+        return voice(rest)
+    say(__doc__.strip())
+    return 0 if verb in ("", "help", "-h", "--help") else 64
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

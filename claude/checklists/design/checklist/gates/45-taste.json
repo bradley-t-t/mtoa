@@ -1,0 +1,840 @@
+{
+  "group": "Marketing Surfaces",
+  "prefix": "TST",
+  "description": "What a landing page, portfolio, or public product page owes that an app screen does not. Every gate here carries the marketing condition, which the tool reads from the target and --flag marketing / --flag app overrides.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component",
+      "slides"
+    ],
+    "when": "marketing",
+    "severity": "required"
+  },
+  "gates": [
+    {
+      "id": "TST-01",
+      "title": "Hero Headline Is Two Lines Or Fewer",
+      "rule": "The hero headline wraps to at most two lines at desktop. A four-line hero headline is a font-size error, never a copy-length error: the fix is a smaller display step planned against the asset beside it, or fewer words.",
+      "source": "references/marketing-surfaces.md#hero-fold",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "layout_probe",
+        "dimension": "hero-headline"
+      },
+      "fix": "Drop the hero display step, or cut the headline. Default range is text-4xl md:text-5xl lg:text-6xl; text-6xl md:text-7xl is for three to five words."
+    },
+    {
+      "id": "TST-02",
+      "title": "Hero Subtext Caps At Twenty Words And Four Lines",
+      "rule": "Hero subtext runs to 20 words at most and 4 rendered lines at most. A value proposition that cannot be stated in 20 words is unclear rather than large.",
+      "source": "references/marketing-surfaces.md#hero-fold",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "layout_probe",
+        "dimension": "hero-subtext"
+      },
+      "fix": "Cut the subtext to one sentence that says what the product does for whom."
+    },
+    {
+      "id": "TST-03",
+      "title": "Hero Top Padding Caps At Six Rem",
+      "rule": "Hero top padding stops at 6rem (pt-24) at desktop. Past that the content floats halfway down the viewport and reads as a layout bug rather than as space.",
+      "source": "references/marketing-surfaces.md#hero-padding",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "check": {
+        "type": "hero_top_padding",
+        "max_rem": 6
+      },
+      "fix": "Reduce the hero's top padding to pt-24 or less. If it needs more presence, raise the font scale or the asset size instead."
+    },
+    {
+      "id": "TST-04",
+      "title": "Hero Carries At Most Four Text Elements",
+      "rule": "The hero is one moment: an eyebrow or a brand strip but not both, a headline, a subtext, and the CTAs. The tagline under the buttons, the trust micro-strip, the pricing teaser, the feature bullets, and the avatar row all belong to sections below it.",
+      "source": "references/marketing-surfaces.md#hero-stack",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "hero_stack_count",
+        "max": 4
+      },
+      "fix": "Move everything past the fourth text element out of the hero and into its own section."
+    },
+    {
+      "id": "TST-05",
+      "title": "The Trust Strip Sits Below The Hero",
+      "rule": "A Used by / Trusted by / Backed by logo wall is a section directly under the hero, never a row inside it. The hero carries the value proposition and the primary action and nothing else.",
+      "source": "references/marketing-surfaces.md#trust-strip",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "trust_strip_placement"
+      },
+      "fix": "Lift the logo wall out of the hero element into the section that follows it."
+    },
+    {
+      "id": "TST-06",
+      "title": "No Version Or Status Label In The Hero",
+      "rule": "V0.6, v2.0, BETA, ALPHA, EARLY ACCESS, INVITE-ONLY PREVIEW as a hero eyebrow. Acceptable only when the brief is explicitly about launch or preview status.",
+      "source": "references/marketing-surfaces.md#version-label",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "hero_forbid_regex",
+        "pattern": ">\\s*(v\\d+\\.\\d+(\\.\\d+)?|beta|alpha|early access|invite[ -]only( preview)?|public beta|now in preview)\\s*<",
+        "message": "version or status label inside the hero"
+      },
+      "fix": "Delete the label. If the launch status is the story, it belongs in the headline, not in an eyebrow above it."
+    },
+    {
+      "id": "TST-07",
+      "title": "The Hero Carries A Real Visual",
+      "rule": "Text over a gradient blob is a placeholder, not a hero. A real photograph, a generated asset, a real product view, or a composition that is itself the visual.",
+      "source": "references/marketing-surfaces.md#hero-visual",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Generate or source a hero image at the section's aspect ratio, or make the typography itself the composition rather than decorating it with a blur."
+    },
+    {
+      "id": "TST-08",
+      "title": "One Eyebrow Per Three Sections",
+      "rule": "An eyebrow is the small uppercase wide-tracking label above a section headline. One above every section produces the same templated rhythm on every page. The cap is ceil(sectionCount / 3), hero included, and a section with an eyebrow is followed by two without.",
+      "source": "references/marketing-surfaces.md#eyebrow-density",
+      "severity": "blocker",
+      "check": {
+        "type": "eyebrow_density"
+      },
+      "fix": "Delete eyebrows until the count is within the cap. The headline alone is enough; the section's position on the page already says what it is."
+    },
+    {
+      "id": "TST-09",
+      "title": "No Section-Number Eyebrow",
+      "rule": "00 / INDEX, 001 · Capabilities, 06 · how it works, Phase 01, No. 02, and 01 / 4 pagination on tiles. An eyebrow names its topic in plain language or it does not exist.",
+      "source": "references/marketing-surfaces.md#section-numbering",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(^|>)\\s*(0\\d{1,2}|00)\\s*[/·.\\-]\\s*[A-Za-z]|\\b(phase|no\\.|chapter)\\s*0\\d\\b|>\\s*0\\d\\s*/\\s*\\d\\s*<",
+        "message": "enumerated eyebrow"
+      },
+      "fix": "Replace the number with the topic, or drop the label."
+    },
+    {
+      "id": "TST-10",
+      "title": "No Generic Step Labels",
+      "rule": "Step 1 / Step 2, Stage 1 / Stage 2, Pass One / Pass Two, Phase 01 / Phase 02. The step content is the label; progression is carried by the verb.",
+      "source": "references/marketing-surfaces.md#step-labels",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": ">\\s*(step|stage|phase|pass)\\s+(one|two|three|four|five|\\d{1,2})\\s*[:.·]?\\s*<|>\\s*(step|stage|phase)\\s+\\d{1,2}\\s*[:·]",
+        "message": "enumerated step label"
+      },
+      "fix": "Label each step with what it does: Install, Configure, Ship."
+    },
+    {
+      "id": "TST-11",
+      "title": "At Most Two Consecutive Image-And-Text Splits",
+      "rule": "Alternating left-image-right-text with left-text-right-image is banal past two in a row. The third consecutive split fails, and breaks with a full-width section, a vertical stack, a bento grid, a marquee, or any other family.",
+      "source": "references/marketing-surfaces.md#layout-repetition",
+      "severity": "blocker",
+      "check": {
+        "type": "layout_family_run",
+        "max_run": 2
+      },
+      "fix": "Reshape the third section into a different layout family."
+    },
+    {
+      "id": "TST-12",
+      "title": "Four Layout Families Across Eight Sections",
+      "rule": "A layout family appears at most once per page, and a page of eight sections uses at least four distinct families. Selected commissions must not look like What we do.",
+      "source": "references/marketing-surfaces.md#layout-repetition",
+      "check": {
+        "type": "layout_family_diversity",
+        "per_sections": 8,
+        "min_families": 4
+      },
+      "fix": "Rebuild the repeated sections on different structures: a bento, a full-bleed statement, a horizontal scroll, a stacked editorial column."
+    },
+    {
+      "id": "TST-13",
+      "title": "No Micro-Meta Sentence Under A Section Heading",
+      "rule": "An explanatory sentence under a section heading, of the shape 'Each of these is a feature we ship today, not a roadmap promise', is the builder talking about the work inside the product. Eyebrow, headline, body is enough.",
+      "source": "references/marketing-surfaces.md#micro-meta",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Delete the sentence. If it carries real information, it belongs in the body copy."
+    },
+    {
+      "id": "TST-14",
+      "title": "One Marquee Per Page",
+      "rule": "At most one horizontal marquee on a page. Two read as a template with a scrolling strip in every gap.",
+      "source": "references/marketing-surfaces.md#marquee-count",
+      "check": {
+        "type": "marquee_count",
+        "max": 1
+      },
+      "fix": "Keep the marquee that carries the most breadth and reshape the other into a grid or a static row."
+    },
+    {
+      "id": "TST-15",
+      "title": "A Bento Grid Has Exactly As Many Cells As It Has Items",
+      "rule": "Three items is three cells, five items is five. An empty cell in the middle or at the end means the grid was shaped before the content was counted.",
+      "source": "references/marketing-surfaces.md#bento-cells",
+      "when": [
+        "marketing",
+        "grid"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "grid_cell_fill"
+      },
+      "fix": "Reshape the grid to the item count, asymmetrically if needed. Do not paste a blank tile."
+    },
+    {
+      "id": "TST-16",
+      "title": "Bento Cells Carry Visual Variation",
+      "rule": "At least two or three cells in a multi-cell grid hold a real image, a brand-appropriate gradient, a pattern, or a tinted surface. Six white-on-white cards with only type inside reads as a default even when the rest of the page is good.",
+      "source": "references/marketing-surfaces.md#bento-cells",
+      "when": [
+        "marketing",
+        "grid"
+      ],
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Give two or three cells real visual content and let the rest carry the type."
+    },
+    {
+      "id": "TST-17",
+      "title": "A List Past Five Items Changes Component",
+      "rule": "The default unordered list, or divide-y rows with a hairline under every one, is the laziest available layout for more than five items. Grouped columns, a card grid, tabs, scroll-snap pills, a carousel, or a marquee, chosen by what the items are.",
+      "source": "references/marketing-surfaces.md#long-lists",
+      "check": {
+        "type": "long_list_component",
+        "max_plain_items": 5
+      },
+      "fix": "Move the list to a component that suits its length: cluster it into three labelled groups, or give each item a card."
+    },
+    {
+      "id": "TST-18",
+      "title": "No Hairline Under Every Row Of A Spec List",
+      "rule": "A ten-row spec list with a border under each row is the pattern that ships most and reads worst. One separator treatment, used sparsely: a bottom border between rows or a top border above the group, never both, and never on every row of a long list.",
+      "source": "references/marketing-surfaces.md#long-lists",
+      "check": {
+        "type": "spec_list_hairlines"
+      },
+      "fix": "Group the rows into two or three clusters with one soft divider each, or give each spec a card."
+    },
+    {
+      "id": "TST-19",
+      "title": "No Filled-Track Comparison Bars",
+      "rule": "Scoring or progress bars with a filled background track as a comparison visual import dashboard chrome onto a marketing page. A number with a small icon, or a thin inline bar with no track, carries the same information.",
+      "source": "references/marketing-surfaces.md#comparison-bars",
+      "check": {
+        "type": "comparison_track_bar"
+      },
+      "fix": "Replace the track-and-fill pair with a figure, or with a hairline bar that has no background track."
+    },
+    {
+      "id": "TST-20",
+      "title": "No Scroll Cue",
+      "rule": "Scroll, down-arrow scroll, Scroll to explore, Scroll to walk through it, animated mouse-wheel icons. A reader who has not scrolled yet is looking at the hero and knows what scrolling is.",
+      "source": "references/marketing-surfaces.md#scroll-cues",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": ">\\s*[↓⌄v]?\\s*scroll( to (explore|discover|begin|continue|walk)| down| for more)?\\s*[↓⌄]?\\s*<|ScrollIndicator|ScrollCue|scroll-(cue|hint|indicator)|MouseScroll",
+        "message": "scroll cue"
+      },
+      "fix": "Delete it. The bottom of the viewport does not need a label."
+    },
+    {
+      "id": "TST-21",
+      "title": "No Decoration Text Strip At The Hero Bottom",
+      "rule": "A mono-caps strip across the bottom of the hero: BRAND. MOTION. SPATIAL., TYPE / FORM / MOTION, ESTD. 2018 · LISBON. Acceptable only when the strip carries real navigation or real status.",
+      "source": "references/marketing-surfaces.md#decoration-strips",
+      "when": [
+        "marketing",
+        "hero"
+      ],
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Delete the strip, or make its entries real links."
+    },
+    {
+      "id": "TST-22",
+      "title": "No Locale, Time, Or Weather Strip",
+      "rule": "Lisbon 14:23 · 18°C in the nav, an atmospheric address in the footer, a timezone clock in the header. A contact address is fine; a place-and-weather strip as mood is agency decoration. Allowed for a genuinely timezone-distributed studio, a travel brand, or a physical venue.",
+      "source": "references/marketing-surfaces.md#decoration-strips",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "\\d{1,2}:\\d{2}\\s*(·|\\||,)\\s*-?\\d{1,3}\\s*°|°[CF]\\s*(<|·|\\|)|>\\s*[A-Z]{3}\\s+\\d{1,2}:\\d{2}|localTime|LocalTime|useClock",
+        "message": "locale, time, or weather strip"
+      },
+      "fix": "Delete the strip. Keep a real contact address in the footer if there is one."
+    },
+    {
+      "id": "TST-23",
+      "title": "The Middle Dot Is Rationed",
+      "rule": "One middle dot per line in a metadata strip. It is not the default separator for everything: foo · bar · baz · qux is a line that wanted columns, hairlines, or a break.",
+      "source": "references/marketing-surfaces.md#separators",
+      "check": {
+        "type": "separator_density",
+        "max_per_line": 1
+      },
+      "fix": "Break the run into columns or lines, or drop to one separator."
+    },
+    {
+      "id": "TST-24",
+      "title": "Zero Decorative Status Dots",
+      "rule": "A coloured dot before a nav link, a list row, a badge, or a heading is decoration. It earns its place only by carrying real semantic state, and then it appears once per section at most.",
+      "source": "references/marketing-surfaces.md#separators",
+      "check": {
+        "type": "decorative_dots"
+      },
+      "fix": "Remove the dots. Keep one only where it reports a live state the reader acts on."
+    },
+    {
+      "id": "TST-25",
+      "title": "No Pill Or Label Overlaid On An Image",
+      "rule": "Brand · 02, PLATE · BRAND, Field notes - journal floating over a photograph. Either the image speaks alone or a caption sits below it, outside the frame.",
+      "source": "references/marketing-surfaces.md#image-labels",
+      "when": [
+        "marketing",
+        "image"
+      ],
+      "check": {
+        "type": "image_overlay_label"
+      },
+      "fix": "Move the label below the image as a caption, or delete it."
+    },
+    {
+      "id": "TST-26",
+      "title": "No Photo-Credit Caption As Decoration",
+      "rule": "Field study no. 12 · Ines Caetano, Plate 03 · House archive, Frame XII · 35mm under stock or placeholder photography. Credit belongs to a real photographer of a real photograph.",
+      "source": "references/marketing-surfaces.md#image-labels",
+      "when": [
+        "marketing",
+        "image"
+      ],
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(field study|plate|frame|study|figure|fig\\.)\\s+(no\\.?\\s*)?[0-9ivxlc]{1,4}\\s*(·|\\||,|-)\\s*[A-Z]",
+        "message": "decorative photo credit"
+      },
+      "fix": "Delete the caption, or replace it with one functional line about what the image shows."
+    },
+    {
+      "id": "TST-27",
+      "title": "No Version Footer On A Marketing Page",
+      "rule": "v1.4.2, Build 0048, last sync 4s ago · main in a marketing footer. Those are devtool fixtures. A live-stock counter is the same unless the number is real.",
+      "source": "references/marketing-surfaces.md#version-footer",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": ">\\s*v\\d+\\.\\d+\\.\\d+|>\\s*build\\s+\\d{3,}|last sync\\s+\\d|\\b\\d{1,4}\\s+of\\s+\\d{2,4}\\s+(remaining|left|claimed)",
+        "message": "build or stock string in marketing chrome"
+      },
+      "fix": "Delete it. A marketing footer names the entity and the year."
+    },
+    {
+      "id": "TST-28",
+      "title": "No Vertical Rotated Text As Decoration",
+      "rule": "INDEX OF WORK rotated ninety degrees down the side of a section. An agency-portfolio cliche that serves composition only when the brief is explicitly experimental.",
+      "source": "references/marketing-surfaces.md#decoration-strips",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "writing-mode:\\s*vertical|\\brotate-\\[?-?90(deg)?\\]?\\b|transform:\\s*rotate\\(-?90deg\\)|\\[writing-mode:vertical",
+        "message": "rotated text"
+      },
+      "fix": "Set the text horizontally, or remove it."
+    },
+    {
+      "id": "TST-29",
+      "title": "No Crosshair Or Hairline Grid As Decoration",
+      "rule": "Vertical and horizontal rules drawn across a section only to make the page feel designed. Lines organise real content or they come out.",
+      "source": "references/marketing-surfaces.md#decoration-strips",
+      "severity": "advisory",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Delete the lines, or align them to the columns the content actually uses."
+    },
+    {
+      "id": "TST-30",
+      "title": "No Custom Mouse Cursor",
+      "rule": "A replaced cursor is outdated, hostile to accessibility, and hostile to frame rate. This holds on every surface, not only marketing ones.",
+      "source": "references/marketing-surfaces.md#custom-cursor",
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "cursor:\\s*url\\(|cursor:\\s*none|\\bcursor-none\\b|CustomCursor|custom-cursor|MagneticCursor|cursorRef",
+        "message": "custom cursor"
+      },
+      "fix": "Remove the custom cursor and restore the platform one."
+    },
+    {
+      "id": "TST-31",
+      "title": "One Accent Across The Whole Page",
+      "rule": "A warm-grey site does not get a blue CTA in section seven, and a rose-accented site does not get a teal badge in the footer. One accent, chosen once, used everywhere, with semantic state colours as the only exception.",
+      "source": "references/marketing-surfaces.md#accent-lock",
+      "when": [
+        "marketing",
+        "css"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "accent_consistency"
+      },
+      "fix": "Pick the accent and route every non-semantic use through the one token."
+    },
+    {
+      "id": "TST-32",
+      "title": "The Page Holds One Theme",
+      "rule": "A light warm-paper section between dark sections tells the reader they walked into a different website. Tints within one family are fine; flipping families mid-scroll is broken. One deliberate colour-block switch is allowed when the brief asks for it.",
+      "source": "references/marketing-surfaces.md#theme-lock",
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "theme_lock"
+      },
+      "fix": "Move every section onto surfaces from the same theme family, or make the one switch a composed transition rather than an alternation."
+    },
+    {
+      "id": "TST-33",
+      "title": "A Serif Is Justified, And Is Never Fraunces Or Instrument Serif",
+      "rule": "Serif is not the default for a creative brief. It is justified when the brief names one, or when the family is genuinely editorial, luxury, publication, manuscript, heritage, or vintage and the choice of that face can be argued for that brand. Fraunces and Instrument Serif are the two the model reaches for first and are banned outright as defaults.",
+      "source": "references/marketing-surfaces.md#serif-discipline",
+      "when": "font",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "Fraunces|Instrument[_ +]?Serif",
+        "message": "default display serif"
+      },
+      "fix": "Move to a sans display face, or to a justified serif from a rotated pool, and record the reason this face fits this brand."
+    },
+    {
+      "id": "TST-34",
+      "title": "Emphasis Stays In One Family",
+      "rule": "Emphasising a word inside a headline uses italic or bold of the same face. A serif word injected into a sans headline, or the reverse, is mixed-family emphasis and reads as amateur.",
+      "source": "references/marketing-surfaces.md#serif-discipline",
+      "when": "font",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Set the emphasised word in the same family, in italic or a heavier weight."
+    },
+    {
+      "id": "TST-35",
+      "title": "Premium-Consumer Briefs Do Not Default To Beige And Brass",
+      "rule": "Warm cream backgrounds, brass or clay or oxblood accents, espresso near-black text: the palette every premium-consumer page reaches for, after which the brand is invisible. Allowed when the brief names those colours or the identity is genuinely warm-craft and the fit can be argued.",
+      "source": "references/marketing-surfaces.md#premium-consumer-palette",
+      "when": [
+        "marketing",
+        "css"
+      ],
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "#(f5f1ea|f7f5f1|fbf8f1|efeae0|ece6db|faf7f1|e8dfcb|b08947|b6553a|9a2436|9c6e2a|bc7c3a|7d5621|1a1714|1a1814|1b1814)\\b",
+        "message": "default premium-consumer palette"
+      },
+      "fix": "Rotate to another family: cold luxury, forest, black and tan, cobalt and cream, terracotta and slate, olive and brick, or monochrome with one saturated accent."
+    },
+    {
+      "id": "TST-36",
+      "title": "No Neon Or Outer Glow",
+      "rule": "A saturated colour thrown wide behind an element as a glow. Depth comes from an inner border or a shadow tinted to the background hue, never a pure-black shadow on a light surface and never a coloured halo.",
+      "source": "references/marketing-surfaces.md#glow-and-gradient-text",
+      "when": "css",
+      "check": {
+        "type": "neon_glow"
+      },
+      "fix": "Replace the glow with a 1px inner border or a tinted low-alpha shadow."
+    },
+    {
+      "id": "TST-37",
+      "title": "No Gradient Fill On Display Type",
+      "rule": "Clipping a gradient into a large headline is the most recognisable generated-page treatment there is, and it costs contrast at both ends of the ramp.",
+      "source": "references/marketing-surfaces.md#glow-and-gradient-text",
+      "when": "css",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "bg-clip-text|background-clip:\\s*text|-webkit-background-clip:\\s*text|text-transparent",
+        "message": "gradient text"
+      },
+      "fix": "Set the headline in one token colour and carry emphasis with weight."
+    },
+    {
+      "id": "TST-38",
+      "title": "Zero Em-Dashes In Any Visible String",
+      "rule": "Headlines, eyebrows, pills, button labels, body copy, quotes, attribution, captions, alt text, nav items. The en-dash used as a separator goes with it, and ranges take a hyphen. Binary because every softer phrasing of this has been ignored.",
+      "source": "references/marketing-surfaces.md#em-dash",
+      "when": "copy",
+      "severity": "blocker",
+      "check": {
+        "type": "visible_string_scan",
+        "pattern": "[\\u2014\\u2013]",
+        "message": "em-dash or en-dash in a string the reader sees"
+      },
+      "fix": "Restructure the sentence: a period, a comma, parentheses, or a colon. Ranges take a hyphen."
+    },
+    {
+      "id": "TST-39",
+      "title": "One CTA Label Per Intent",
+      "rule": "Get in touch, Contact us, Let's talk, Start a project, Reach out are one intent and get one label, used in the nav, the hero, and the footer alike. The same holds for signup and for portfolio. Primary CTA copy is three words at most and never wraps.",
+      "source": "references/marketing-surfaces.md#cta-intent",
+      "severity": "blocker",
+      "check": {
+        "type": "cta_intent_dedupe"
+      },
+      "fix": "Pick one label per intent and use it in every place that action appears."
+    },
+    {
+      "id": "TST-40",
+      "title": "Section Copy Stays Within Its Density",
+      "rule": "Per section: a headline of eight words or fewer, a sub-paragraph of twenty-five words or fewer, and one visual or one CTA. Numbers are real, labelled as mock, or gone. One copy register for the page.",
+      "source": "references/marketing-surfaces.md#copy-density",
+      "check": {
+        "type": "copy_density",
+        "max_headline_words": 8,
+        "max_body_words": 25
+      },
+      "fix": "Cut the headline to the claim and the paragraph to the reason. Move anything left over into its own section or off the page."
+    },
+    {
+      "id": "TST-41",
+      "title": "A Quote Is Three Lines With A Named Attribution",
+      "rule": "Quote body at most three lines: a landing-page quote is a snippet and a longer original gets cut. Attribution carries name and role, optionally company, never a bare first name. Real typographic quote marks or none.",
+      "source": "references/marketing-surfaces.md#quotes",
+      "when": [
+        "marketing",
+        "quote"
+      ],
+      "check": {
+        "type": "quote_shape",
+        "max_lines": 3
+      },
+      "fix": "Cut the quote to its point and give the attribution a role beside the name."
+    },
+    {
+      "id": "TST-42",
+      "title": "No Filler Verbs",
+      "rule": "Elevate, Seamless, Unleash, Next-Gen, Revolutionize, Supercharge, Effortless, Transformative. Concrete verbs say what the product does; these say that someone wanted a sentence there.",
+      "source": "references/marketing-surfaces.md#copy-density",
+      "when": "copy",
+      "check": {
+        "type": "visible_string_scan",
+        "pattern": "\\b(elevate|elevating|seamless(ly)?|unleash|next-gen|revolutioniz(e|ing)|supercharge|effortless(ly)?|transformative|game-chang(er|ing)|cutting-edge|best-in-class)\\b",
+        "message": "filler verb"
+      },
+      "fix": "Replace with the verb that names the action the product actually performs."
+    },
+    {
+      "id": "TST-43",
+      "title": "Typographic Quote Marks, Not ASCII",
+      "rule": "Quoted copy uses real curly quotes or none at all. Straight ASCII quotes in set copy are a typing artefact showing through the design.",
+      "source": "references/marketing-surfaces.md#quotes",
+      "when": [
+        "marketing",
+        "quote"
+      ],
+      "severity": "advisory",
+      "check": {
+        "type": "straight_quotes"
+      },
+      "fix": "Replace the ASCII quotes with typographic ones, or drop the marks and carry the quote with layout."
+    },
+    {
+      "id": "TST-44",
+      "title": "The Page Carries Real Images",
+      "rule": "A pure-text page is incomplete work, not minimalism. Even a restrained editorial page needs a hero visual and two or three supporting images. Generated first, then real photography with a descriptive seed, then labelled placeholder slots handed back with the work.",
+      "source": "references/marketing-surfaces.md#imagery",
+      "check": {
+        "type": "image_presence",
+        "min": 3
+      },
+      "fix": "Generate the section assets, or source them, or leave labelled slots and say in the handover exactly which placements need a real image."
+    },
+    {
+      "id": "TST-45",
+      "title": "Placeholder Photography Resolves",
+      "rule": "A bare source.unsplash.com URL is a broken image waiting to happen, and via.placeholder.com is a grey rectangle with a size written on it. Seeded picsum, a real asset, or a generated file.",
+      "source": "references/marketing-surfaces.md#imagery",
+      "when": [
+        "marketing",
+        "image"
+      ],
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "source\\.unsplash\\.com|via\\.placeholder\\.com|placehold\\.(it|co)|placekitten|dummyimage\\.com|loremflickr",
+        "message": "placeholder image host that does not hold"
+      },
+      "fix": "Move to https://picsum.photos/seed/{descriptive-seed}/{w}/{h} with a seed naming the section, or to a real asset."
+    },
+    {
+      "id": "TST-46",
+      "title": "A Logo Wall Uses Real Marks",
+      "rule": "Styled text wordmarks in a row read as placeholder. Simple Icons for known brands, devicon for stacks, a generated monogram for an invented one, and every mark legible in both themes.",
+      "source": "references/marketing-surfaces.md#logo-walls",
+      "when": [
+        "marketing",
+        "logo-wall"
+      ],
+      "check": {
+        "type": "logo_wall_marks"
+      },
+      "fix": "Replace the text with real marks from https://cdn.simpleicons.org/{slug}/{hex}, or draw a simple monogram for an invented brand."
+    },
+    {
+      "id": "TST-47",
+      "title": "A Logo Wall Carries Logos And Nothing Else",
+      "rule": "No industry or category label under each mark: not Vercel over hosting, not Stripe over payments. The logo is the credibility and the label adds nothing the reader does not already have. Brand name as alt text, optionally a link.",
+      "source": "references/marketing-surfaces.md#logo-walls",
+      "when": [
+        "marketing",
+        "logo-wall"
+      ],
+      "check": {
+        "type": "logo_wall_labels"
+      },
+      "fix": "Delete the category labels and let the marks stand."
+    },
+    {
+      "id": "TST-48",
+      "title": "No Hand-Rolled Decorative SVG",
+      "rule": "Custom illustrations and decorative marks drawn as path data. Icons come from one library, and a missing glyph means a second library or a composition from primitives. A simple geometric mark or an explicitly requested drawing is the exception.",
+      "source": "references/marketing-surfaces.md#imagery",
+      "when": [
+        "marketing",
+        "svg"
+      ],
+      "check": {
+        "type": "handrolled_svg",
+        "max_path_commands": 40
+      },
+      "fix": "Replace the drawing with a real image, a library glyph, or a simple geometric mark."
+    },
+    {
+      "id": "TST-49",
+      "title": "No Scroll Listener",
+      "rule": "window.addEventListener('scroll') runs on every scroll frame, batches nothing, and janks. Motion's useScroll, GSAP's ScrollTrigger, IntersectionObserver, or CSS animation-timeline instead.",
+      "source": "references/marketing-surfaces.md#scroll-and-state",
+      "when": "html",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "addEventListener\\(\\s*[\"']scroll[\"']|onscroll\\s*=|window\\.onscroll",
+        "message": "raw scroll listener"
+      },
+      "fix": "Move to useScroll(), ScrollTrigger, IntersectionObserver, or animation-timeline: view()."
+    },
+    {
+      "id": "TST-50",
+      "title": "Continuous Input Values Are Not React State",
+      "rule": "Pointer position, scroll progress, and magnetic hover physics held in useState re-render the tree on every frame and collapse on mobile. Motion values carry them instead.",
+      "source": "references/marketing-surfaces.md#scroll-and-state",
+      "when": "react",
+      "severity": "blocker",
+      "check": {
+        "type": "react_continuous_state"
+      },
+      "fix": "Replace the state with useMotionValue / useTransform, or a ref the animation reads directly."
+    },
+    {
+      "id": "TST-51",
+      "title": "Animation Frame Loops Do Not Set State",
+      "rule": "A requestAnimationFrame loop that calls a setter is the same defect as a scroll listener in React state: a render per frame for a value nothing else reads.",
+      "source": "references/marketing-surfaces.md#scroll-and-state",
+      "when": "react",
+      "check": {
+        "type": "raf_state"
+      },
+      "fix": "Write the value to a motion value or a ref inside the loop and let the animation read it."
+    },
+    {
+      "id": "TST-52",
+      "title": "Animation Effects Clean Up",
+      "rule": "An effect that starts a listener, a timer, an observer, or an animation frame returns the function that stops it. Without it the loop outlives the component and the count climbs on every route change.",
+      "source": "references/marketing-surfaces.md#scroll-and-state",
+      "when": "react",
+      "check": {
+        "type": "effect_cleanup"
+      },
+      "fix": "Return a cleanup from the effect that removes the listener, clears the timer, disconnects the observer, or cancels the frame."
+    },
+    {
+      "id": "TST-53",
+      "title": "Motion Lives In A Client Leaf",
+      "rule": "A component using motion, scroll position, or pointer physics is an isolated leaf carrying its own client directive. Smearing it across a server tree pulls the whole branch onto the client for one animated element.",
+      "source": "references/marketing-surfaces.md#scroll-and-state",
+      "when": [
+        "react",
+        "framer"
+      ],
+      "check": {
+        "type": "client_leaf_motion"
+      },
+      "fix": "Add the client directive at the top of the animated leaf, and keep its parents as server components."
+    },
+    {
+      "id": "TST-54",
+      "title": "Grain Is Fixed And Inert",
+      "rule": "Grain and noise overlays sit on a fixed, pointer-events-none layer. On a scrolling container they repaint continuously and take the frame rate with them on mobile.",
+      "source": "references/marketing-surfaces.md#page-mechanics",
+      "when": "css",
+      "check": {
+        "type": "grain_overlay"
+      },
+      "fix": "Move the grain to a fixed inset-0 pointer-events-none pseudo-element on its own layer."
+    },
+    {
+      "id": "TST-55",
+      "title": "Grid, Not Flex Percentage Math",
+      "rule": "A width computed as a percentage minus a gap is a grid written the long way, and it breaks at every breakpoint the arithmetic did not anticipate.",
+      "source": "references/marketing-surfaces.md#page-mechanics",
+      "when": "css",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "w-\\[calc\\([^\\]]*%|width:\\s*calc\\(\\s*\\d+(\\.\\d+)?%\\s*[-+]|basis-\\[calc\\([^\\]]*%",
+        "message": "flex percentage arithmetic"
+      },
+      "fix": "Replace with a grid: grid grid-cols-1 md:grid-cols-3 gap-6."
+    },
+    {
+      "id": "TST-56",
+      "title": "Fonts Are Not A Google Fonts Link",
+      "rule": "A stylesheet link to a third-party font host blocks render on a domain the page does not control. Self-hosted files or the framework's font pipeline.",
+      "source": "references/marketing-surfaces.md#page-mechanics",
+      "when": "font",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<link[^>]+fonts\\.(googleapis|gstatic)\\.com|@import\\s+url\\([\"']?https://fonts\\.googleapis",
+        "message": "render-blocking font link"
+      },
+      "fix": "Self-host the files with font-display: swap, or load them through next/font."
+    },
+    {
+      "id": "TST-57",
+      "title": "Every Import Is In package.json",
+      "rule": "An import of a package the manifest does not carry is the most common way a generated page fails to build at all, and it fails at install time rather than in review.",
+      "source": "references/marketing-surfaces.md#dependencies",
+      "when": "web-build",
+      "severity": "blocker",
+      "check": {
+        "type": "dependency_verified"
+      },
+      "fix": "Install the package, or import from one the project already has."
+    },
+    {
+      "id": "TST-58",
+      "title": "One Design System Per Project",
+      "rule": "Material beside shadcn, Carbon beside Radix Themes, Bootstrap beside Tailwind utilities. Two systems in one tree argue about tokens, radius, and control height, and the interface loses.",
+      "source": "references/marketing-surfaces.md#dependencies",
+      "when": "web-build",
+      "check": {
+        "type": "design_system_mix"
+      },
+      "fix": "Choose one system and remove the other's dependency and imports."
+    },
+    {
+      "id": "TST-59",
+      "title": "System Components Are Not Left In Their Default State",
+      "rule": "A component library shipped unmodified is the library's design, not the project's. Radius, colour, shadow, control height, and type are brought onto the project's tokens.",
+      "source": "references/marketing-surfaces.md#dependencies",
+      "when": "react",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Bring the library's theme onto the project's tokens and record which values were changed."
+    },
+    {
+      "id": "TST-60",
+      "title": "The Navigation Renders On One Line",
+      "rule": "Items that do not fit at 1024px get shorter labels, fewer secondary entries, or a disclosure. A two-line nav at desktop is broken.",
+      "source": "references/marketing-surfaces.md#nav-shape",
+      "when": [
+        "marketing",
+        "nav"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "layout_probe",
+        "dimension": "nav-lines"
+      },
+      "fix": "Shorten the labels, drop the secondary items into a menu, or move the whole bar to a disclosure at that width."
+    },
+    {
+      "id": "TST-61",
+      "title": "Navigation Height Caps At Eighty Pixels",
+      "rule": "The bar sits at 64 to 72 pixels by default and stops at 80. A bar eating a sixth of the viewport is a habit rather than a decision.",
+      "source": "references/marketing-surfaces.md#nav-shape",
+      "when": [
+        "marketing",
+        "nav"
+      ],
+      "check": {
+        "type": "layout_probe",
+        "dimension": "nav-height"
+      },
+      "fix": "Reduce the bar's vertical padding until it measures 80px or less."
+    },
+    {
+      "id": "TST-62",
+      "title": "The Design Read Is Recorded Before The Work",
+      "rule": "Page kind, audience, the vibe words the brief used, the references it named, the brand assets that already exist, and any constraint that outranks aesthetics. The audience picks the aesthetic; a run that skips this step reaches for a default one instead.",
+      "source": "references/marketing-surfaces.md#design-read",
+      "kinds": [
+        "web-ui",
+        "slides"
+      ],
+      "severity": "blocker",
+      "check": {
+        "type": "design_read"
+      },
+      "fix": "design-pass.py read --page-kind <landing|portfolio|editorial|product> --audience <who> --vibe <words> --constraint <what outranks taste>"
+    },
+    {
+      "id": "TST-63",
+      "title": "The Direction Differs From The Last Run Of Its Genre",
+      "rule": "Two premium-consumer pages in a row do not share a palette family, and two editorial pages do not share a serif. The reflex is invisible from inside one project and obvious across three.",
+      "source": "references/marketing-surfaces.md#rotation",
+      "kinds": [
+        "web-ui",
+        "slides"
+      ],
+      "check": {
+        "type": "genre_rotation"
+      },
+      "fix": "Change the palette family or the display face, then record the new direction on the run's design read."
+    }
+  ]
+}

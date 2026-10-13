@@ -1,0 +1,65 @@
+{
+  "group": "Environment Variables",
+  "prefix": "ENV",
+  "description": "Where a project keeps the things it cannot hold in source. Two failures live here and they point opposite ways: a variable the code needs and the environment does not have, and a secret the environment has and the browser can read.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "env_refs",
+    "severity": "blocker",
+    "source": "references/environment.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "ENV-01",
+      "title": "Every Variable The Code Reads Exists In Every Environment",
+      "rule": "Each variable named in source is set for development, preview and production. A variable present in production and missing in preview turns every branch deployment into a broken one, and the failure looks like the branch rather than the setting.",
+      "check": {"type": "probe", "probe": "env.coverage"},
+      "fix": "Add the missing variables per environment, then probe again. Anything genuinely local-only is named in the note."
+    },
+    {
+      "id": "ENV-02",
+      "title": "No Secret Sits Behind A Public Prefix",
+      "rule": "Nothing secret is named VITE_ or NEXT_PUBLIC_. Those prefixes are an instruction to the bundler to inline the value into the client, so the prefix does not protect the value, it publishes it.",
+      "when": "always",
+      "check": {"type": "public_prefix_secrets"},
+      "fix": "Rename the variable without the prefix and read it server-side, or replace it with a key that is meant to be public."
+    },
+    {
+      "id": "ENV-03",
+      "title": "No Key Shape Survives Into The Built Client Bundle",
+      "rule": "The built output carries no service role key, no secret key and no private key. This is checked against the build rather than the source, because a value can reach the bundle through a re-export, a config object or a logging line that reads nothing like a leak.",
+      "when": "always",
+      "severity": "blocker",
+      "check": {"type": "bundle_secrets"},
+      "fix": "Build, find which module pulled the value in, and move that work to the server. Rotate anything that has already shipped."
+    },
+    {
+      "id": "ENV-04",
+      "title": "env.example Lists Every Variable And No Value",
+      "rule": "The example file names every variable the code reads and carries none of their values. It is the only description of what a fresh clone needs, and a stale one turns a five-minute setup into an afternoon of guessing.",
+      "when": "always",
+      "severity": "required",
+      "check": {"type": "env_example"},
+      "fix": "Regenerate it from what the source references, with empty values."
+    },
+    {
+      "id": "ENV-05",
+      "title": "Nothing Real Is Committed",
+      "rule": "No .env file holding real values is tracked by git, and none appears in the history. A secret removed in a later commit is still published; the fix is rotation, not deletion.",
+      "when": "always",
+      "severity": "blocker",
+      "check": {"type": "env_committed"},
+      "fix": "Untrack the file, add it to .gitignore, and rotate every value it carried."
+    },
+    {
+      "id": "ENV-06",
+      "title": "Every Secret Has A Copy In CryptoFort",
+      "rule": "Each secret this project depends on is stored in the vault, so an environment that has to be rebuilt can be. A value that exists only in a Vercel settings page is a value one deleted project away from being gone.",
+      "when": "always",
+      "severity": "required",
+      "check": {"type": "manual"},
+      "fix": "credential_put each one, then name in the note which credentials were filed and under what names. Never paste a value into the note."
+    }
+  ]
+}

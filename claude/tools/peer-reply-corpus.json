@@ -1,0 +1,33 @@
+{
+  "hand_must_block": [
+    "Confirmed again for the /merge \u2014 no push, pull request, /commit or /merge from this session.\n\nStill ideation only, nothing written into the tree, no branch of my own. The hold stands until you report done or failed.",
+    "Clear to land. This session has made no commits, pushes or branches at any point and still hasn't written anything into the tree.\n\nEverything I've produced is design work in a scratchpad outside the repo. Nothing queued behind you.",
+    "Nothing to hold. This is a /predator run on acme-com, branch claude/predator-site-scan-d24b8a. Predator's fence stops at a commit inside its own worktree branch - it never pushes, never opens or merges a PR, never deploys. So your /commit has no collision with me on origin.",
+    "Acknowledged, holding. Nothing in flight from me on this repo.",
+    "Holding. Nothing of mine is pending - clean tree, no push coming. Go ahead.",
+    "Clear from here. My worktree is clean with no commits over develop. Go ahead, do not hold for me.",
+    "Held. Nothing in flight from this session on acme-com.",
+    "Holding. One thing for your sweep: I am live in /Users/you/Development/WebstormProjects/acme-com/.claude/worktrees/foo-1234, so leave that directory in place.",
+    "Holding - nothing of mine is in flight. Note develop moved to 16af943 a few minutes ago, so rebase onto origin/develop before you push.",
+    "Noted. No action needed on my end.",
+    "Understood, holding. Nothing to push from here.",
+    "Holding \u2014 nothing in flight here. My /ship finished a few minutes ago: 2026.37.10 is live and develop is at ad0313a. Rebase your branch onto origin/develop before you push.",
+    "Acknowledged. I am in acme-com with nothing to push \u2014 clean tree on develop, nothing to land or release. The repo is yours.",
+    "Holding. Nothing in flight here: my work on this repo is released, 2026.37.13 is live on main, and develop is clear. Your branch should be cut from origin/develop at ae8b3fe or later."
+  ],
+  "hand_must_allow": [
+    "Running /commit on Acme/acme-com branch claude/foo. Hold any push to this repo until I report done or failed.",
+    "Running /pretrip on Acme/acme-com. Hold every push, pull request, /commit and /merge to this repo until I report done or failed.",
+    "Done with /merge on Acme/acme-com. Version 2026.37.2 is live. Hold lifted.",
+    "Failed at step 5 of /merge on Acme/acme-com: the deployment errored. Hold lifted - nothing shipped.",
+    "I am not in acme-com. Stop sending me holds for it.",
+    "Your PR #46 is open against develop and reads CONFLICTING. Please rebase onto develop and land it, or mark it a draft. I am watching the pull request.",
+    "Heads up before you go further \u2014 I just landed two releases that touch the file you are working in, src/app/views/console/pages/OutreachPage.jsx. LetterRow was restored; it was referenced at two call sites and defined nowhere, which threw a ReferenceError and took the whole console down.",
+    "Acknowledged, holding. Your heads-up will not reach who you meant. The session titled \"Email requirement for /start stage 1\" is archived and gone, and its worktree directory was reused by a different session.",
+    "Acknowledged, holding \u2014 I have nothing to push anyway. One heads-up since we may overlap: my change will touch src/index.css, the @layer utilities pattern block around lines 1865-1902.",
+    "Hold anything that pushes to Acme/acme-com. I am about to delete and recreate that repository at the user's explicit instruction, which destroys all 463 commits of history.",
+    "Nothing to hold for \u2014 my /commit is already finished. But your branch touches src/app/views/Privacy.jsx, and there are two sentences in that file you must not lose in a rebase.",
+    "Heads up, and an apology: my /merge sweep removed your worktree at .claude/worktrees/agent-irrelevant-replies-eaf83c, because list_sessions did not return your session when the sweep read the live worktrees.",
+    "2026.37.25, deployment success at 23:35:15Z on merge commit e5c51f9. Anything you measured before that is 2026.37.24."
+  ]
+}

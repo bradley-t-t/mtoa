@@ -1,0 +1,130 @@
+{
+  "group": "Headers",
+  "prefix": "HDR",
+  "description": "Page headers, section heads, and table heads. A header is the thing a reader checks to know where they are, so its job is orientation before decoration - and its rhythm has to be the same on every surface, or the product reads as assembled from parts.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "when": "html",
+    "severity": "required",
+    "source": "references/code/tables-and-headers.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "HDR-01",
+      "title": "Every Surface Uses The Same Header Rhythm",
+      "rule": "Title, then supporting chips or counts, then a spacer, then actions - in that order, at the same height and padding, on every page of the product. A header that reorders itself per section makes each section feel like a different application.",
+      "severity": "blocker",
+      "check": {
+        "type": "cohesion_component",
+        "component": "header",
+        "properties": [
+          "padding",
+          "min-height",
+          "height"
+        ]
+      },
+      "fix": "Extract one header component and compose the per-page differences as props."
+    },
+    {
+      "id": "HDR-02",
+      "title": "A Sticky Header Is Opaque And Layered",
+      "rule": "A header that sticks carries an opaque background, a bottom rule or shadow to separate it from what scrolls beneath, and a z-index from the named scale above in-page sticky elements.",
+      "severity": "blocker",
+      "check": {
+        "type": "sticky_header_surface"
+      },
+      "fix": "Give the sticky header an opaque surface token, a bottom border, and the nav layer from the z-index scale."
+    },
+    {
+      "id": "HDR-03",
+      "title": "One Sticky Thing At The Top",
+      "rule": "A page header and a section header both sticking at top: 0 overlap, and the one deeper in the DOM paints over the other. Secondary sticky elements offset by the header's height.",
+      "severity": "blocker",
+      "check": {
+        "type": "sticky_top_zero"
+      },
+      "fix": "Define a header height token and offset every secondary sticky element to it."
+    },
+    {
+      "id": "HDR-04",
+      "title": "The Header Does Not Shrink The Content Behind It",
+      "rule": "A fixed or sticky header reserves its height on the scrolling content, so the first row is not hidden underneath it on load or after an anchor jump.",
+      "severity": "blocker",
+      "check": {
+        "type": "sticky_offset"
+      },
+      "fix": "Add scroll-margin-top on anchor targets and padding matching the header height on the scroll container."
+    },
+    {
+      "id": "HDR-05",
+      "title": "The Title Is The Loudest Thing In It",
+      "rule": "One h1 per page, at the top of the header, heavier and larger than everything beside it. A header where the action button outweighs the title tells the reader the button is where they are.",
+      "severity": "blocker",
+      "check": {
+        "type": "heading_order"
+      },
+      "fix": "Set the title's weight and size above the chips and controls beside it."
+    },
+    {
+      "id": "HDR-06",
+      "title": "Header Counts Are Tabular",
+      "rule": "Counts and figures in a header use tabular figures, so the header does not reflow every time a number ticks.",
+      "check": {
+        "type": "tabular_nums"
+      },
+      "fix": "Add font-variant-numeric: tabular-nums to the count element."
+    },
+    {
+      "id": "HDR-07",
+      "title": "Header Actions Are Right, Title Is Left",
+      "rule": "Title and context on the leading edge, actions on the trailing edge, separated by a flexible spacer rather than a fixed margin. Actions that drift with the title's length are actions the reader has to hunt for.",
+      "fix": "Put a flex-1 spacer between the title group and the action group."
+    },
+    {
+      "id": "HDR-08",
+      "title": "Header Actions Survive A Narrow Viewport",
+      "rule": "Labels collapse to icons or into an overflow control below the breakpoint, and the header never wraps into two rows of controls or pushes its title out of view.",
+      "severity": "blocker",
+      "fix": "Hide the label text at narrow widths with the icon carrying the action, keeping the accessible name."
+    },
+    {
+      "id": "HDR-09",
+      "title": "Header Controls Are Vertically Centred",
+      "rule": "The header row declares align-items: center with line-height 1 on the items that have intrinsic height. Default flex stretch makes a button taller than the title beside it and breaks the baseline.",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Set align-items: center on the header row."
+    },
+    {
+      "id": "HDR-10",
+      "title": "Section Heads Stack, They Do Not Sit Beside",
+      "rule": "An eyebrow, number, or kicker goes directly above its heading in the same column, never in a column beside it. The side-by-side arrangement reads as a templated editorial tell within seconds. The same tell wearing a different shape: a big left-aligned headline with a small explainer paragraph floating in the section head's top-right corner, aligned to nothing. Stack it under the headline at a 65ch measure, or give the right column a real visual.",
+      "severity": "blocker",
+      "fix": "Flatten the head wrapper to a single column, and move any floating corner paragraph under the headline."
+    },
+    {
+      "id": "HDR-11",
+      "title": "Header Height Is A Token",
+      "rule": "The header's height is a named value, because sticky offsets, scroll padding, and anchor margins all have to agree with it. Three hardcoded copies of 64px drift the first time one changes.",
+      "check": {
+        "type": "header_height_token"
+      },
+      "fix": "Define a header height token and reference it from the header, the offsets, and the scroll padding."
+    },
+    {
+      "id": "HDR-12",
+      "title": "Breadcrumbs And Back Sit In The Header",
+      "rule": "Where a page is reached from somewhere, the way back lives in the header at a consistent position, not invented per page.",
+      "when": "nav",
+      "severity": "advisory",
+      "fix": "Add the back or breadcrumb slot to the shared header component."
+    }
+  ]
+}

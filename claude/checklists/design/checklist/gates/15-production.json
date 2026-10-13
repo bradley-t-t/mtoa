@@ -1,0 +1,284 @@
+{
+  "group": "Production Site Hygiene",
+  "prefix": "PROD",
+  "description": "What Stripe, Apple, Linear, Vercel, and Anthropic ship on every marketing site and what an audit of thirteen owned sites did not. Derived from the 2026-08 site audit: a rewrite that returns 200 for every unknown path, a canonical pointing at the deployment host instead of the branded domain, a robots.txt served as the HTML shell, an og:image that is the logo file, a footer that reads '(c) 2026 . All rights reserved.' with an empty variable, and dev routes in the public bundle are what separated the audited sites from world-class ones.",
+  "defaults": {
+    "severity": "required",
+    "kinds": [
+      "web-ui"
+    ],
+    "when": "html"
+  },
+  "gates": [
+    {
+      "id": "PROD-01",
+      "title": "Real 404 On Unknown Paths",
+      "rule": "A GET to a path that does not exist returns HTTP 404, not the SPA shell with 200. Stripe, Apple, Linear, Vercel, and Anthropic all return a real 404 status; a client-routed rewrite that maps every unknown path to /index.html leaves crawlers, monitors, and typoed shares unable to tell a real page from a miss, and search engines index the shell as content.",
+      "source": "site audit 2026-08, spa-catch-all",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "For Vercel or Netlify SPAs, add a not-found route that responds with a 404 status, and remove any catch-all rewrite to /index.html that lacks a status. Verify: curl -s -o /dev/null -w '%{http_code}' https://<site>/$(uuidgen) — must be 404."
+    },
+    {
+      "id": "PROD-02",
+      "title": "robots.txt Is A Real File, Not The SPA Shell",
+      "rule": "/robots.txt returns text/plain, not text/html. On four audited sites the SPA catch-all swallowed the request and returned the app shell instead; a bot expecting text/plain and getting HTML stops parsing.",
+      "source": "site audit 2026-08, robots-shell",
+      "severity": "required",
+      "check": {
+        "type": "require_file",
+        "paths": [
+          "public/robots.txt",
+          "static/robots.txt",
+          "app/robots.ts",
+          "app/robots.js"
+        ],
+        "message": "No real robots.txt found under public/, static/, or app/."
+      },
+      "fix": "Add public/robots.txt (or app/robots.ts). Verify content-type after deploy: curl -sI https://<site>/robots.txt | grep -i content-type — must be text/plain."
+    },
+    {
+      "id": "PROD-02B",
+      "title": "sitemap.xml Is A Real File, Not The SPA Shell",
+      "rule": "/sitemap.xml returns application/xml, not text/html. Every <loc> in it uses the site's production origin, not the deployment host. clientfive.org's sitemap listed eight URLs on a domain that does not resolve.",
+      "source": "site audit 2026-08, sitemap-shell",
+      "severity": "required",
+      "check": {
+        "type": "require_file",
+        "paths": [
+          "public/sitemap.xml",
+          "static/sitemap.xml",
+          "app/sitemap.ts",
+          "app/sitemap.js"
+        ],
+        "message": "No real sitemap.xml found under public/, static/, or app/."
+      },
+      "fix": "Add public/sitemap.xml (or app/sitemap.ts) whose entries derive from the site's public origin env var. Verify: curl -sI https://<site>/sitemap.xml | grep -i content-type — must be application/xml."
+    },
+    {
+      "id": "PROD-03",
+      "title": "OG And Twitter Card Meta Present",
+      "rule": "Every landing page ships og:title, og:description, og:image, og:url, and twitter:card. Without them shared links render as a blank card with a hostname — a two-second signal to the reader that no one polished this. Four audited sites shipped one or none.",
+      "source": "site audit 2026-08, og-twitter-missing",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "mode": "all",
+        "patterns": [
+          "og:image",
+          "og:title",
+          "og:url",
+          "twitter:card"
+        ],
+        "message": "One or more of og:image, og:title, og:url, twitter:card is missing from the HTML head."
+      },
+      "fix": "Add the four meta tags to the head. og:image must be a raster PNG or JPG at 1200x630; SVG is unreliable across social platforms."
+    },
+    {
+      "id": "PROD-04",
+      "title": "Canonical URL Points To The Public Origin",
+      "rule": "<link rel=\"canonical\">, og:url, twitter:image, and every <loc> in sitemap.xml carry the site's production origin, not the deployment host. clienttwo.com shipped every one of these pointing at clienttwo.vercel.app, so Google consolidated signals onto the wrong subdomain and every social share linked to the unbranded URL.",
+      "source": "site audit 2026-08, canonical-wrong-host",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(rel=[\"']canonical[\"'][^>]*href=[\"'][^\"']*\\.vercel\\.app|(og|twitter):(url|image)[\"'][^>]*content=[\"'][^\"']*\\.vercel\\.app|<loc>[^<]*\\.vercel\\.app)",
+        "message": "A canonical, og:url, twitter:image, or sitemap loc points at *.vercel.app instead of the production domain."
+      },
+      "fix": "Set the site's public origin as an env var (NEXT_PUBLIC_SITE_URL) and derive every canonical, OG URL, and sitemap entry from it. Never hardcode the deployment host."
+    },
+    {
+      "id": "PROD-05",
+      "title": "Apple Touch Icon At Web Root",
+      "rule": "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\"> is declared in the head AND the file exists at /apple-touch-icon.png as a 180x180 PNG. iOS fetches the root path directly before parsing HTML; a 404 costs the home-screen icon. Three of four audited flagship sites lacked the file at the root path.",
+      "source": "site audit 2026-08, apple-touch-missing",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "apple-touch-icon"
+        ],
+        "message": "No apple-touch-icon link tag in the head."
+      },
+      "fix": "Add <link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/apple-touch-icon.png\"> and drop the 180x180 PNG at public/apple-touch-icon.png. Verify: curl -sI https://<site>/apple-touch-icon.png — must return 200 and image/png."
+    },
+    {
+      "id": "PROD-06",
+      "title": "Privacy And Terms Are Linked And Reachable",
+      "rule": "The footer links to /privacy and /terms, both routes return 200, and both render the site's header and footer. Six audited sites lacked one or both entirely, including a game distributor that requires account signup with no ToS anywhere.",
+      "source": "site audit 2026-08, privacy-terms-missing",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "mode": "all",
+        "patterns": [
+          "/privacy",
+          "/terms"
+        ],
+        "message": "No link to /privacy or /terms found in the rendered HTML or router."
+      },
+      "fix": "Add both pages as real routes with the site's normal header and footer. Verify: curl -s -o /dev/null -w '%{http_code}' https://<site>/privacy — must be 200; view-source must show the site's nav and footer landmarks."
+    },
+    {
+      "id": "PROD-07",
+      "title": "Static Shell For The Bots",
+      "rule": "The pre-JS HTML body contains the site's H1, nav, and footer landmarks — not an empty <div id=\"root\"></div> and not a single line telling the visitor to enable JavaScript. Four audited SPAs rendered only that sentence; Stripe, Linear, and Anthropic all serve a static or SSR'd shell that is legible without JS.",
+      "source": "site audit 2026-08, blank-flash",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<body[^>]*>\\s*<div\\s+id=[\"']root[\"']\\s*>\\s*</div>\\s*</body>|<noscript>\\s*You need to enable JavaScript to run this app\\.?\\s*</noscript>",
+        "message": "The pre-JS body is either an empty root div or the default 'enable JavaScript' warning."
+      },
+      "fix": "Turn on SSR (Next.js), pre-render with vite-plugin-ssr / astro, or hand-write a static shell with the H1, nav, and footer inline in index.html."
+    },
+    {
+      "id": "PROD-08",
+      "title": "Footer Names The Entity And The Year Comes From Date",
+      "rule": "The copyright line names a non-empty legal entity and the year is computed from new Date().getFullYear(). rootrise shipped '(c) 2026 . All rights reserved.' - an unresolved template variable to unauthenticated visitors; impressiva and clientfour hardcoded 2026 as a string literal that will go stale on 2027-01-01. A marketing footer also carries no build string: v1.4.2, Build 0048, and last sync are devtool fixtures, held by TST-27.",
+      "source": "site audit 2026-08, footer-entity-year",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(\\(c\\)|©|&copy;)\\s*(20\\d{2}\\s*\\.\\s*|\\{[a-zA-Z_$][a-zA-Z0-9_$]*\\}\\s*\\.\\s*|\\s*\\.)\\s*All [Rr]ights [Rr]eserved|(\\(c\\)|©|&copy;)\\s*20\\d{2}[^\\n]*<!--\\s*hardcoded",
+        "message": "Footer copyright is missing an entity name, missing the year source, or hardcodes the year."
+      },
+      "fix": "Use new Date().getFullYear() for the year and pass a non-empty entity name into the footer component. Test the logged-out render: an unauthenticated visitor must see the entity, not an empty span. Strip any version or build string from a marketing footer."
+    },
+    {
+      "id": "PROD-09",
+      "title": "No Placeholder Tokens In The Shipped Bundle",
+      "rule": "No REPLACE_ME, TODO, FIXME, XXX, lorem ipsum, or example.com appears in HTML or JS served to the browser. clientone's Instagram and TikTok footer links pointed at https://instagram.com/REPLACE_ME in production.",
+      "source": "site audit 2026-08, placeholder-tokens",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "REPLACE_ME|LOREM\\s+IPSUM|lorem\\s+ipsum|placeholder-text|example\\.com/[a-z]|\\bTODO:|\\bFIXME:|\\bXXX:"
+      },
+      "fix": "Grep the built bundle before deploy and fail the build on any hit."
+    },
+    {
+      "id": "PROD-10",
+      "title": "No Coming Soon In Production",
+      "rule": "No 'coming soon', 'under construction', or 'TBD' in shipped copy. If the feature is not ready, do not render its card. clientone shipped a 'Coming Soon' feature card live.",
+      "source": "site audit 2026-08, coming-soon",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "coming\\s+soon|under\\s+construction|\\btbd\\b|to\\s+be\\s+determined"
+      },
+      "fix": "Remove the card, or gate it behind a feature flag that stays false until it is real."
+    },
+    {
+      "id": "PROD-11",
+      "title": "No Dev, Admin, Or Staging Routes In The Public Bundle",
+      "rule": "The client bundle does not declare /dev, /admin, /staging, /debug, or /internal routes. clientone shipped /dev-upload and eight /admin/* routes into the public bundle, all discoverable by reading the JS. Admin surfaces belong on a separate deployment, subdomain, or behind an auth-gated route the marketing build does not know about.",
+      "source": "site audit 2026-08, dev-routes-leaked",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "path:\\s*[\"']/(dev|admin|staging|debug|internal)(/|[\"'])|<Route[^>]*path=[\"']/(dev|admin|staging|debug|internal)(/|[\"'])|href=[\"']/(dev|admin|staging|debug|internal)/"
+      },
+      "fix": "Move admin routes into a separate app, a separate deployment, or a route group the marketing build does not compile. If the route must live in the same repo, exclude it from the production build."
+    },
+    {
+      "id": "PROD-12",
+      "title": "Title Names The Page And The Brand",
+      "rule": "<title> contains a separator (|, —, ·) or a descriptor beyond the brand name — 'Riverside Raceway | Go-Kart Racing in Springfield, TX', not 'Smyrna Tools'. A one-word title costs the search-result subtitle and reads as unfinished.",
+      "source": "site audit 2026-08, single-word-title",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<title>\\s*[A-Za-z][A-Za-z0-9]*(\\s+[A-Za-z][A-Za-z0-9]*){0,1}\\s*</title>",
+        "message": "The <title> is one or two words with no descriptor or separator."
+      },
+      "fix": "Extend the title with a separator and a phrase that names what the page is or does."
+    },
+    {
+      "id": "PROD-13",
+      "title": "No Meta Keywords",
+      "rule": "No <meta name=\"keywords\"> in the head. Google stopped honoring it in 2009; Stripe, Apple, Linear, Vercel, and Anthropic do not ship one. Shipping one reads as SEO cargo-culting.",
+      "source": "site audit 2026-08, meta-keywords",
+      "severity": "advisory",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<meta[^>]*name=[\"']keywords[\"']"
+      },
+      "fix": "Delete the tag. Real SEO lives in the title, description, structured data, and content."
+    },
+    {
+      "id": "PROD-14",
+      "title": "Custom 404 With The Site's Chrome",
+      "rule": "A request to a non-existent path renders a custom 404 page with the site's header, footer, and a link home — not the framework default or a bare 'Not Found'. clientfour ships one; three others render the default Vercel or CRA error page.",
+      "source": "site audit 2026-08, custom-404",
+      "severity": "required",
+      "check": {
+        "type": "require_file",
+        "paths": [
+          "app/not-found.tsx",
+          "app/not-found.jsx",
+          "app/not-found.js",
+          "pages/404.tsx",
+          "pages/404.jsx",
+          "pages/404.js",
+          "src/pages/404.tsx",
+          "src/routes/404.tsx",
+          "NotFound.tsx",
+          "NotFound.jsx",
+          "404.html",
+          "src/pages/NotFound.tsx"
+        ],
+        "message": "No custom 404 route or component found in the target."
+      },
+      "fix": "Add app/not-found.tsx (Next) or a NotFound component wired to a catch-all route. It must render the site's header, footer, and a link to /."
+    },
+    {
+      "id": "PROD-15",
+      "title": "OG Image Is A 1200x630 Raster Share Card",
+      "rule": "og:image is a raster PNG or JPG at 1200x630, purpose-built as a share card — not the logo file, not an SVG. LinkedIn and Slack do not render SVG previews reliably, and a bare logo strands the reader with no context.",
+      "source": "site audit 2026-08, og-image-quality",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(og:image|twitter:image)[\"'][^>]*content=[\"'][^\"']*(\\.svg[\"']|/logo\\.(png|jpg|jpeg)[\"'])",
+        "message": "og:image is an SVG or the logo file rather than a 1200x630 share card."
+      },
+      "fix": "Design a 1200x630 PNG that names the page or product, save it as public/og.png, and reference it from og:image and twitter:image."
+    },
+    {
+      "id": "PROD-16",
+      "title": "TLS Serves The Right Cert",
+      "rule": "https://<site> completes the TLS handshake without a SNI mismatch and returns a real body, not a domain-parking page. One client's domain failed TLSV1_ALERT_UNRECOGNIZED_NAME and its A record pointed at a Sedo parking IP — the site had effectively been offline for weeks and nobody noticed.",
+      "source": "site audit 2026-08, tls-parking",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Verify with `openssl s_client -servername <host> -connect <host>:443 </dev/null` and `curl -sI https://<host>`. Wire the site into ~/error-reporting so a red uptime shows up in Discord instead of getting found by an audit."
+    },
+    {
+      "id": "PROD-17",
+      "title": "GitHub Repo Homepage Points At The Live Site",
+      "rule": "The repo's `homepageUrl` on GitHub resolves and matches the actual live site. One client's repo listed a dead domain while the site lived at another — every tool that walks repo metadata probed the wrong host.",
+      "source": "site audit 2026-08, stale-repo-homepage",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "gh repo edit <owner>/<repo> --homepage https://<live-url>. Verify: gh repo view <owner>/<repo> --json homepageUrl."
+    },
+    {
+      "id": "PROD-18",
+      "title": "Form Inputs Have Real Labels",
+      "rule": "Every <input>, <select>, and <textarea> has an associated <label for> or aria-label. Placeholder text is not a label — it disappears when the user starts typing and fails screen readers. Two audited sites used placeholder-only inputs on numeric and search fields. See also FLD-03 which enforces this on component libraries.",
+      "source": "site audit 2026-08, placeholder-labels",
+      "severity": "required",
+      "check": {
+        "type": "placeholder_only_label"
+      },
+      "fix": "Add a visible <label htmlFor=\"...\">Name</label> or aria-label to every input, select, and textarea."
+    }
+  ]
+}

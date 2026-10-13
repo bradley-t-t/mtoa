@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Sunday</title>
+<link rel="stylesheet" href="canvas.css">
+</head>
+<body>
+  <main class="sheet" id="sheet">
+    <div class="rim"></div>
+    <div class="scroll" id="scroll">
+      <div class="inner" id="inner">
+        <header class="top">
+          <div class="brand">
+            <span class="orb" id="orb"></span>
+            <span class="name">Details</span>
+            <span class="state" id="state"></span>
+            <span class="bars" id="bars"><i></i><i></i><i></i><i></i></span>
+          </div>
+          <button class="close" id="close" type="button" title="Close" aria-label="Close">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <h1 class="title" id="title"></h1>
+        <p class="subtitle" id="subtitle"></p>
+        <p class="asked" id="asked"></p>
+        <p class="said" id="said"></p>
+        <div class="blocks" id="blocks"></div>
+        <div class="writing" id="writing" hidden></div>
+        <footer class="hint">Say &ldquo;close that&rdquo; or press <span class="key">Esc</span> to close.</footer>
+      </div>
+    </div>
+  </main>
+  <script src="vendor/markdown-it.min.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script src="vendor/highlight.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="canvas.js"></script>
+</body>
+</html>

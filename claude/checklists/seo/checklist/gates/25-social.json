@@ -1,0 +1,38 @@
+{
+  "group": "Share Cards",
+  "prefix": "SOC",
+  "description": "What a link becomes when somebody pastes it somewhere. The card is the whole first impression in a feed, a chat, and a message, and its absence is silent - the link still works, it just arrives as raw text.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "pages",
+    "severity": "required",
+    "source": "references/head-metadata.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "SOC-01",
+      "title": "Every Route Carries The Open Graph Set",
+      "rule": "og:title, og:description, og:image, og:url and og:type on every route. A partial set is worse than none: the card renders with a gap where the image should be.",
+      "check": {"type": "open_graph"},
+      "fix": "Set the five properties per route, or the framework's openGraph metadata object."
+    },
+    {
+      "id": "SOC-02",
+      "title": "og:image Is An Absolute URL",
+      "rule": "Every og:image is an absolute URL. The card is built by a service fetching the tag away from the page, so a relative path resolves against nothing and the image is dropped.",
+      "when": "always",
+      "severity": "blocker",
+      "check": {"type": "og_image_absolute"},
+      "fix": "Prefix each image path with the full origin, or build it from the site URL constant."
+    },
+    {
+      "id": "SOC-03",
+      "title": "A Twitter Card Type Is Declared",
+      "rule": "twitter:card names the card shape. Without it the link falls back to a bare text row while every other link in the timeline carries an image.",
+      "when": "always",
+      "check": {"type": "twitter_card"},
+      "fix": "Set twitter:card to summary_large_image, and the title, description and image alongside it."
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "group": "Images And Embeds",
+  "prefix": "IMG",
+  "description": "Images are usually the heaviest thing a page sends and the easiest to send wrongly. Every rule here changes which file a given device receives, never which picture it shows.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "image",
+    "severity": "required",
+    "source": "references/media.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "IMG-01",
+      "title": "A Phone Receives A Phone-Sized File",
+      "rule": "Every content image offers widths through srcset with a sizes attribute that describes its layout. Serving one desktop-width file to a 390 point screen spends four times the bytes to draw the same picture.",
+      "check": {"type": "responsive_srcset"},
+      "fix": "Generate the widths at build time and declare srcset and sizes. The rendered result is identical; only the file chosen changes."
+    },
+    {
+      "id": "IMG-02",
+      "title": "The Largest Image Loads Eagerly And First",
+      "rule": "The hero is not lazy and carries fetchpriority high. Lazy loading the element the browser will measure as the largest paint delays the metric by exactly the time it takes to discover it.",
+      "check": {"type": "lcp_image_eager"},
+      "fix": "Remove loading=lazy from the hero and set fetchpriority=high on it."
+    },
+    {
+      "id": "IMG-03",
+      "title": "Everything Below The Fold Is Lazy",
+      "rule": "Images that start off screen declare loading=lazy. They compete for bandwidth with the first screen otherwise, and the reader may never reach them.",
+      "check": {"type": "below_fold_lazy"},
+      "fix": "Add loading=lazy to every image that is not on the first screen. Leave the first screen eager."
+    },
+    {
+      "id": "IMG-04",
+      "title": "Every Image Reserves Its Space",
+      "rule": "Each image declares intrinsic width and height, or an aspect ratio in CSS. Without them the page reflows the moment each file lands, which is layout shift the reader sees as the page jumping while they read.",
+      "check": {"type": "image_dimensions"},
+      "fix": "Set width and height attributes to the file's real pixel dimensions, or an aspect-ratio on the element."
+    },
+    {
+      "id": "IMG-05",
+      "title": "Files Are In A Modern Format",
+      "rule": "Photographs are served as AVIF or WebP with the older format only as a fallback. The same picture at the same quality is roughly a third of the bytes.",
+      "check": {"type": "modern_format"},
+      "fix": "Encode AVIF and WebP derivatives and offer them through a picture element or the platform's image pipeline."
+    },
+    {
+      "id": "IMG-06",
+      "title": "No Image Is Larger Than It Is Displayed",
+      "rule": "No file arrives at more than twice the pixel dimensions it is drawn at. The excess is decoded and thrown away, and decoding happens on the main thread.",
+      "check": {"type": "oversized_image"},
+      "fix": "Resize the source to the largest size it is actually displayed at, then generate the responsive widths from that."
+    },
+    {
+      "id": "IMG-07",
+      "title": "Embeds Load On Demand",
+      "rule": "Video players, maps and social embeds are represented by a still image until the reader asks for them. A third-party player iframe costs more than the rest of the page put together and most readers never press play.",
+      "when": "embed",
+      "check": {"type": "embed_facade"},
+      "fix": "Show a thumbnail with the player's own controls drawn on it, and mount the real embed on click."
+    },
+    {
+      "id": "IMG-08",
+      "title": "Total Image Weight Is Under Budget",
+      "rule": "The images the first screen loads stay under 500KB together. A gallery that eagerly loads twenty photographs is a slow page regardless of how each one was encoded.",
+      "check": {"type": "image_budget", "max": 500},
+      "fix": "Lazy load the gallery, paginate it, or load it behind an interaction."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "group": "Legal Surface",
+  "prefix": "LEG",
+  "description": "The pages a public site is expected to have and a visitor is expected to be able to find. Each one is a small piece of work and a large absence.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "public_site",
+    "severity": "required",
+    "source": "references/legal.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "LEG-01",
+      "title": "Privacy, Terms And Contact Exist",
+      "rule": "All three routes are served. A site collecting an email address without a privacy page is collecting it without saying what happens to it.",
+      "check": {"type": "legal_routes"},
+      "fix": "Add the routes and write them for this business rather than pasting a template."
+    },
+    {
+      "id": "LEG-02",
+      "title": "They Are Linked From The Footer",
+      "rule": "Each of the three is reachable from the site's own footer. A page that exists and is linked from nowhere is a page nobody finds when they go looking, which is the only time anybody looks.",
+      "check": {"type": "legal_linked"},
+      "fix": "Add the links to the site footer. This is the site's footer, not the {agency_bar}, which carries no client links."
+    },
+    {
+      "id": "LEG-03",
+      "title": "Analytics Comes With A Notice",
+      "rule": "Where the site loads analytics or any other tracker, a cookie notice is present. Where it loads none, no notice is added: a consent banner on a site that sets no cookies is theatre and costs every visitor a click.",
+      "when": "analytics",
+      "check": {"type": "cookie_notice"},
+      "fix": "Add the notice, defaulting to the most privacy-preserving option, or drop the tracker."
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "group": "Indexing",
+  "prefix": "IDX",
+  "description": "Whether the pages that matter are in Google's index, under the URL they were meant to rank at. Submission is not indexing and a correct file is not a crawled one: the SEO checklist can prove a canonical tag is in the markup, and only the URL Inspection API can say which URL Google chose instead. Every gate here answers to what Google reports about a live URL rather than to what the repository contains.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/indexing.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "IDX-01",
+      "title": "The Pages That Matter Are Indexed",
+      "rule": "Every page the site depends on for traffic reports as indexed, not merely submitted. The home page, the service or product pages, and the contact page are the set that pays for the site, and a sitemap entry says nothing about whether any of them can be found.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "idx.indexed_status"},
+      "fix": "Inspect each URL in Search Console, read the reason it gives, and fix that reason. Request indexing once the page serves correctly."
+    },
+    {
+      "id": "IDX-02",
+      "title": "Google's Chosen Canonical Matches The Declared One",
+      "rule": "The user-declared canonical and the Google-selected canonical are the same URL for every page that matters. When they differ, the page ranks under an address the site never chose, and the analytics, the internal links and the backlinks all point at the other one.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "idx.canonical_match"},
+      "fix": "Read what Google chose instead and remove the reason it preferred that copy: a duplicate route, a parameterised twin, or a stronger internal link to the wrong address. Canonical markup itself belongs to seo-checklist."
+    },
+    {
+      "id": "IDX-03",
+      "title": "No Page That Should Rank Sits In Discovered, Not Indexed",
+      "rule": "No page the site depends on carries the coverage state Google labels \"Discovered - currently not indexed\". That state means Google knows the URL and has chosen not to spend a crawl on it, which is a judgement about the page's value rather than a queue position.",
+      "check": {"type": "probe", "probe": "idx.discovered_not_indexed"},
+      "fix": "Link the page from somewhere Google crawls often, give it content that is not a near-copy of a neighbouring page, and request indexing. Thin or duplicate content is a finding for seo-checklist."
+    },
+    {
+      "id": "IDX-04",
+      "title": "No Page That Should Rank Sits In Crawled, Not Indexed",
+      "rule": "No page the site depends on carries the coverage state Google labels \"Crawled - currently not indexed\". Google fetched the page, read it, and declined to index it, which points at the content rather than at access.",
+      "check": {"type": "probe", "probe": "idx.crawled_not_indexed"},
+      "fix": "Compare the page against the ones Google did index and against the pages it competes with. Rewrite it to say something those do not, then request indexing. Hand the content work to seo-checklist."
+    },
+    {
+      "id": "IDX-05",
+      "title": "No Page That Should Rank Is Blocked From Indexing",
+      "rule": "No page meant to rank carries a noindex directive or is disallowed in robots.txt, whether the block arrives in the markup, in an X-Robots-Tag header, or from a host-level rule. This is the one defect that removes a page outright while every report about it still looks ordinary.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "idx.robots_verdict"},
+      "fix": "Remove the header at the host or the platform setting that adds it. A noindex or a Disallow line living in the repository is a finding for seo-checklist."
+    },
+    {
+      "id": "IDX-06",
+      "title": "Dead URLs Return 404 Or 410, Not A Soft 404",
+      "rule": "A URL that no longer has a page returns 404 or 410. A page that answers 200 with an empty shell or a redirect to the home page is a soft 404: Google keeps requesting it, keeps it in the reports, and treats the redirect target as diluted.",
+      "check": {"type": "probe", "probe": "idx.soft_404"},
+      "fix": "Return the real status at the host or the framework's not-found route. Where the content moved, redirect to the page that replaced it rather than to the home page."
+    },
+    {
+      "id": "IDX-07",
+      "title": "Redirects Resolve In One Hop",
+      "rule": "Every redirect reaches its destination in a single hop and lands on a 200. Chains lose a share of the signal at each step and a loop loses the page entirely, and both are invisible to anyone testing the final URL directly.",
+      "check": {"type": "probe", "probe": "idx.redirect_chain"},
+      "fix": "Collapse each chain into one rule pointing at the final URL. Check the http to https and the www to apex rules together, since those two stack into a two-hop chain by default."
+    },
+    {
+      "id": "IDX-08",
+      "title": "Every Sitemap URL Answers 200",
+      "rule": "Each URL the sitemap lists returns 200 at the canonical host. A sitemap carrying redirects, 404s or a stale host teaches Google that the file is unreliable and lowers how closely the rest of it is read.",
+      "check": {"type": "probe", "probe": "idx.sitemap_url_status"},
+      "fix": "Remove or correct the failing entries. Where the generator emits them, the generator is a finding for seo-checklist."
+    },
+    {
+      "id": "IDX-09",
+      "title": "New Pages Are Submitted, Not Waited On",
+      "rule": "A page published as part of a release is inspected and submitted for indexing that day. Discovery through crawling alone takes weeks on a low-traffic site, and a page nobody submitted is indistinguishable from one Google rejected.",
+      "check": {"type": "attest"},
+      "fix": "Search Console > URL Inspection, paste the new URL, then Request Indexing. Do it once per page; repeat requests move nothing."
+    },
+    {
+      "id": "IDX-10",
+      "title": "Preview And Staging Hosts Refuse Indexing",
+      "rule": "Every deploy preview, staging host and platform-generated domain serves noindex or blocks crawling outright. An indexed preview competes with the production site for the same content and often outranks it, because it carries the same pages under a host nobody is watching.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "idx.preview_noindex"},
+      "fix": "Set an X-Robots-Tag: noindex header for preview deployments at the host, or point the preview domains at a robots.txt that disallows everything. Remove any already indexed through Search Console > Removals."
+    },
+    {
+      "id": "IDX-11",
+      "title": "The Last Crawl Is Recent",
+      "rule": "Google's last crawl of the home page and the main section pages is inside the last month. A crawl date months old means the index holds a copy of the site as it was, so recent changes rank against nothing and read as though they were never made.",
+      "check": {"type": "probe", "probe": "idx.last_crawl_age"},
+      "fix": "Publish or update something the sitemap dates, keep lastmod honest, and request indexing on the pages that changed. A site that never changes is crawled as though it never changes."
+    }
+  ]
+}

@@ -1,0 +1,868 @@
+{
+  "group": "UX Guidelines",
+  "prefix": "UX",
+  "description": "The intelligence library's guideline set, scoped by what the deliverable actually contains. Guidelines already carried by a Pointer, Polish, or Slop gate are not repeated here.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "severity": "required",
+    "source": "references/intelligence.md#quick-reference",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "UXA-01",
+      "title": "Alt Text On Meaningful Images",
+      "rule": "Every image that carries meaning has descriptive alt text; decorative images have empty alt.",
+      "when": "image",
+      "severity": "blocker",
+      "check": {
+        "type": "img_alt"
+      }
+    },
+    {
+      "id": "UXA-02",
+      "title": "Icon-Only Buttons Have Accessible Names",
+      "rule": "aria-label on icon-only buttons, accessibilityLabel in native. An unlabelled icon button is invisible to a screen reader.",
+      "when": "interactive",
+      "severity": "blocker",
+      "check": {
+        "type": "icon_button_label"
+      }
+    },
+    {
+      "id": "UXA-03",
+      "title": "Tab Order Matches Visual Order",
+      "rule": "Full keyboard operation, and the tab sequence follows the reading order. No positive tabindex.",
+      "when": "interactive",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXA-04",
+      "title": "Form Labels Are Real Labels",
+      "rule": "Every field has a visible label element bound with for. Placeholder-only labelling fails as soon as the field has content.",
+      "when": "form",
+      "severity": "blocker",
+      "check": {
+        "type": "form_label"
+      }
+    },
+    {
+      "id": "UXA-05",
+      "title": "Skip Link To Main Content",
+      "rule": "A keyboard user can jump past the navigation to the main content.",
+      "when": "nav",
+      "severity": "required"
+    },
+    {
+      "id": "UXA-06",
+      "title": "Heading Hierarchy Is Sequential",
+      "rule": "h1 through h6 in order, no skipped level, one h1 per page.",
+      "when": "html",
+      "severity": "required",
+      "check": {
+        "type": "heading_order"
+      }
+    },
+    {
+      "id": "UXA-07",
+      "title": "Colour Is Never The Only Signal",
+      "rule": "Error, success, selected, and required states carry an icon, shape, or word alongside the colour.",
+      "when": "html",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXA-08",
+      "title": "Text Scaling Does Not Break Layout",
+      "rule": "The layout survives system text scaling and Dynamic Type at its largest setting without truncation or overlap.",
+      "when": "css"
+    },
+    {
+      "id": "UXA-09",
+      "title": "Screen Reader Order And Roles Are Right",
+      "rule": "Reading order is logical, roles and states (selected, disabled, expanded) are announced, and hints are meaningful.",
+      "when": "interactive",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXA-10",
+      "title": "Modals And Multi-Step Flows Have An Escape",
+      "rule": "A visible cancel or back route out of every modal and every step of a flow, plus Escape on desktop.",
+      "when": "modal",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXA-11",
+      "title": "System And Accessibility Shortcuts Preserved",
+      "rule": "Nothing overrides system or assistive shortcuts, and drag-and-drop has a keyboard alternative.",
+      "when": "interactive"
+    },
+    {
+      "id": "UXA-12",
+      "title": "Focus Moves To Main On Route Change",
+      "rule": "After a page transition, focus lands on the main content region so screen reader users are not stranded at the top.",
+      "when": "router"
+    },
+    {
+      "id": "UXT-01",
+      "title": "8px Between Touch Targets",
+      "rule": "Neighbouring targets keep at least 8px of separation so a near-miss does not fire the wrong control.",
+      "when": "interactive"
+    },
+    {
+      "id": "UXT-02",
+      "title": "Primary Actions Do Not Depend On Hover",
+      "rule": "Anything essential is reachable by click or tap. Hover-only affordances do not exist on touch.",
+      "when": "interactive",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXT-03",
+      "title": "Errors Appear Next To Their Cause",
+      "rule": "The error message sits by the thing that caused it, in plain words, with the way out.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXT-04",
+      "title": "No Horizontal Swipe On Main Content",
+      "rule": "Main content scrolls vertically. Horizontal swipe is reserved for carousels and back gestures, and never fights them.",
+      "when": "interactive"
+    },
+    {
+      "id": "UXT-05",
+      "title": "Platform Gestures Behave As Expected",
+      "rule": "Swipe-back, pinch-zoom, and pull-to-refresh keep their standard meanings, and system gestures are not blocked.",
+      "when": "mobile"
+    },
+    {
+      "id": "UXT-06",
+      "title": "Gestures Have A Visible Alternative",
+      "rule": "Nothing critical is gesture-only. Swipe actions show an affordance - a chevron, a label, a peek.",
+      "when": "mobile",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXT-07",
+      "title": "Safe Areas Are Respected",
+      "rule": "Primary targets stay clear of the notch, Dynamic Island, gesture bar, and screen edges.",
+      "when": "mobile",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXT-08",
+      "title": "No Pixel-Perfect Precision Required",
+      "rule": "No tap depends on hitting a small icon or a thin edge exactly.",
+      "when": "interactive"
+    },
+    {
+      "id": "UXT-09",
+      "title": "Haptics Are Used Sparingly",
+      "rule": "Haptic feedback confirms important actions and nothing else.",
+      "when": "mobile",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXP-01",
+      "title": "Images Are Optimised And Responsive",
+      "rule": "WebP or AVIF, srcset and sizes for the widths in play, lazy loading below the fold, eager and fetchpriority high on the LCP image.",
+      "when": "image",
+      "severity": "required",
+      "check": {
+        "type": "img_lazy"
+      }
+    },
+    {
+      "id": "UXP-02",
+      "title": "Images Declare Their Box",
+      "rule": "width and height attributes or an aspect-ratio, so nothing shifts as they load.",
+      "when": "image",
+      "severity": "blocker",
+      "check": {
+        "type": "img_dimensions"
+      }
+    },
+    {
+      "id": "UXP-03",
+      "title": "Fonts Load Without Blanking Text",
+      "rule": "font-display: swap or optional, space reserved to limit shift, and only genuinely critical faces preloaded.",
+      "when": "font",
+      "severity": "required",
+      "check": {
+        "type": "font_display"
+      }
+    },
+    {
+      "id": "UXP-04",
+      "title": "Above-The-Fold CSS Is Prioritised",
+      "rule": "Critical CSS is inline or loaded first; the rest does not block the first paint.",
+      "when": "web-build",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXP-05",
+      "title": "Non-Critical Code Is Split Out",
+      "rule": "Route-level or feature-level splitting, dynamic import for anything below the fold or behind an interaction.",
+      "when": "web-build",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXP-06",
+      "title": "Third-Party Scripts Are Async And Audited",
+      "rule": "Every third-party tag is async or defer, and every one still on the page has a reason to be.",
+      "when": "web-build"
+    },
+    {
+      "id": "UXP-07",
+      "title": "Async Content Reserves Its Space",
+      "rule": "Space is held for content that arrives late, so nothing below it jumps.",
+      "when": "fetch",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXP-08",
+      "title": "Long Lists Are Virtualised",
+      "rule": "Past roughly 50 items, the list virtualises rather than rendering everything.",
+      "when": "list"
+    },
+    {
+      "id": "UXP-09",
+      "title": "Frame Budget Is Respected",
+      "rule": "Per-frame work stays under 16ms; heavy work moves off the main thread. High-frequency events are debounced or throttled.",
+      "when": "motion"
+    },
+    {
+      "id": "UXP-10",
+      "title": "Offline And Slow Networks Degrade Gracefully",
+      "rule": "An offline state says so, and slow connections get lower-resolution images and less motion rather than a hang.",
+      "when": "fetch",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXS-01",
+      "title": "Style Matches The Product Type",
+      "rule": "The visual language is chosen for what this product is, from the intelligence library, not picked by habit.",
+      "when": "always",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXS-02",
+      "title": "One Style Across Every Screen",
+      "rule": "The same style language, effects, radii, and shadow scale hold across every page and component in the deliverable.",
+      "when": "always"
+    },
+    {
+      "id": "UXS-03",
+      "title": "Palette Comes From The Product Or Brand",
+      "rule": "The palette is drawn from the brand, or from the product and industry via the palette library - never invented mid-build.",
+      "when": "always",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXS-04",
+      "title": "Effects Match The Chosen Style",
+      "rule": "Shadow, blur, and radius agree with the style. Glass effects on a flat design are two designs fighting.",
+      "when": "css"
+    },
+    {
+      "id": "UXS-05",
+      "title": "Elevation Follows One Scale",
+      "rule": "Cards, sheets, and modals sit on a consistent elevation scale. Random shadow values are the tell.",
+      "when": "css"
+    },
+    {
+      "id": "UXS-06",
+      "title": "Platform Idioms Are Respected",
+      "rule": "iOS follows HIG, Android follows Material - navigation, controls, typography, and motion each follow their platform.",
+      "when": "mobile"
+    },
+    {
+      "id": "UXS-07",
+      "title": "Native Controls Preferred Over Custom",
+      "rule": "System controls unless branding genuinely requires a custom one; a custom control inherits none of the accessibility work.",
+      "when": "interactive"
+    },
+    {
+      "id": "UXS-08",
+      "title": "Blur Means Dismissal, Not Decoration",
+      "rule": "Background blur signals that the layer behind is dismissable. It is not a texture.",
+      "when": "modal"
+    },
+    {
+      "id": "UXS-09",
+      "title": "One Primary Action Per Screen",
+      "rule": "A single primary CTA; everything else is visually subordinate. Two primaries is none.",
+      "when": "always",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXS-10",
+      "title": "Light And Dark Are Designed Together",
+      "rule": "The dark variant is designed, not derived by inversion - desaturated tonal variants, contrast verified separately.",
+      "when": "css",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXL-01",
+      "title": "Viewport Meta Is Correct And Zoom Is Not Disabled",
+      "rule": "width=device-width, initial-scale=1, and no maximum-scale or user-scalable=no.",
+      "when": "html",
+      "severity": "blocker",
+      "check": {
+        "type": "viewport_meta"
+      }
+    },
+    {
+      "id": "UXL-02",
+      "title": "Mobile First, Then Scaled Up",
+      "rule": "Base styles are the small screen; breakpoints add rather than undo.",
+      "when": "css"
+    },
+    {
+      "id": "UXL-03",
+      "title": "Breakpoints Are Systematic",
+      "rule": "One breakpoint set across the deliverable - 375, 768, 1024, 1440 or the project's own - not a new width per component.",
+      "when": "css"
+    },
+    {
+      "id": "UXL-04",
+      "title": "Body Text Is At Least 16px On Mobile",
+      "rule": "Under 16px, iOS zooms the page on focus and the text is hard to read anyway.",
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "min_font_size",
+        "min_px": 16
+      }
+    },
+    {
+      "id": "UXL-05",
+      "title": "Line Length Is Controlled",
+      "rule": "35-60 characters on mobile, 60-75 on desktop.",
+      "when": "css"
+    },
+    {
+      "id": "UXL-06",
+      "title": "Consistent Container Width",
+      "rule": "One max-width for content on desktop, applied consistently rather than per section.",
+      "when": "css"
+    },
+    {
+      "id": "UXL-07",
+      "title": "Z-Index Comes From A Scale",
+      "rule": "A named layer scale - base, dropdown, sticky, overlay, modal, toast. No 9999.",
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "zindex_scale"
+      }
+    },
+    {
+      "id": "UXL-08",
+      "title": "Fixed Bars Reserve Space For Content",
+      "rule": "A fixed nav or bottom bar has matching padding on the scroll container, so nothing hides underneath it.",
+      "when": "sticky",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXL-09",
+      "title": "No Nested Scroll Traps",
+      "rule": "Inner scroll regions do not fight the page scroll.",
+      "when": "css"
+    },
+    {
+      "id": "UXL-10",
+      "title": "Dynamic Viewport Units On Mobile",
+      "rule": "min-h-dvh rather than 100vh, so the mobile browser chrome does not cut the layout.",
+      "when": "css",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "\\b100vh\\b",
+        "message": "100vh on a mobile-facing layout."
+      }
+    },
+    {
+      "id": "UXL-11",
+      "title": "Landscape Is Usable",
+      "rule": "The layout stays readable and operable in landscape, including on a short viewport.",
+      "when": "mobile"
+    },
+    {
+      "id": "UXL-12",
+      "title": "Core Content Comes First On Mobile",
+      "rule": "The important content is above the fold on a phone; secondary content folds or moves down.",
+      "when": "css"
+    },
+    {
+      "id": "UXL-13",
+      "title": "Hierarchy Is Not Carried By Colour Alone",
+      "rule": "Size, weight, and spacing establish the hierarchy; colour reinforces it.",
+      "when": "always"
+    },
+    {
+      "id": "UXL-14",
+      "title": "Gutters Adapt By Width",
+      "rule": "Horizontal insets grow with the viewport rather than holding a phone gutter on a desktop.",
+      "when": "css"
+    },
+    {
+      "id": "UXY-01",
+      "title": "Body Line-Height Is 1.5-1.75",
+      "rule": "Tighter than 1.5 on body copy is a wall of text.",
+      "when": "css",
+      "check": {
+        "type": "line_height_range",
+        "min": 1.4,
+        "max": 1.8
+      }
+    },
+    {
+      "id": "UXY-02",
+      "title": "Type Scale Is Consistent",
+      "rule": "One scale - 12, 14, 16, 18, 24, 32 or the project's own - used everywhere. Sizes off the scale are arbitrary.",
+      "when": "css"
+    },
+    {
+      "id": "UXY-03",
+      "title": "Heading And Body Faces Pair",
+      "rule": "The two faces have compatible personalities, from the pairing library rather than picked apart.",
+      "when": "css"
+    },
+    {
+      "id": "UXY-04",
+      "title": "Weight Reinforces Hierarchy",
+      "rule": "600-700 headings, 400 body, 500 labels. Weight is doing work, not decoration.",
+      "when": "css"
+    },
+    {
+      "id": "UXY-05",
+      "title": "Semantic Colour Tokens In Components",
+      "rule": "Components reference primary, surface, on-surface, error - never a raw value.",
+      "when": "css",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXY-06",
+      "title": "Wrapping Preferred Over Truncation",
+      "rule": "Text wraps where it can. Where it must truncate, an ellipsis plus the full text on hover or expand.",
+      "when": "css"
+    },
+    {
+      "id": "UXY-07",
+      "title": "Tabular Figures For Data",
+      "rule": "Prices, timers, and data columns use tabular numerals so digits do not jitter as they change.",
+      "when": "data"
+    },
+    {
+      "id": "UXY-08",
+      "title": "Letter-Spacing Left Alone On Body",
+      "rule": "Platform defaults on body copy; tracking adjustments belong to display type only.",
+      "when": "css",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXY-09",
+      "title": "Whitespace Groups And Separates",
+      "rule": "Space is used to group related items and separate unrelated ones, not distributed evenly to fill.",
+      "when": "always"
+    },
+    {
+      "id": "UXF-01",
+      "title": "Helper Text Is Persistent",
+      "rule": "Complex fields carry helper text below them, not inside the placeholder where it vanishes on focus.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-02",
+      "title": "Validation Fires On Blur",
+      "rule": "Errors appear once the user has finished the field, not on every keystroke.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-03",
+      "title": "Semantic Input Types",
+      "rule": "email, tel, number, url - so the mobile keyboard matches the field.",
+      "when": "form",
+      "severity": "blocker",
+      "check": {
+        "type": "input_types"
+      }
+    },
+    {
+      "id": "UXF-04",
+      "title": "Autocomplete Attributes Present",
+      "rule": "autocomplete or textContentType on name, email, address, and payment fields so the system can fill them.",
+      "when": "form",
+      "severity": "required",
+      "check": {
+        "type": "autocomplete_attr"
+      }
+    },
+    {
+      "id": "UXF-05",
+      "title": "Password Fields Have A Show Toggle",
+      "rule": "A visible show/hide control on every password field.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-06",
+      "title": "Required Fields Are Marked",
+      "rule": "Required is indicated visually and in the accessibility tree.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-07",
+      "title": "Submit Has Loading Then Result",
+      "rule": "The submit control moves through pending to success or error; it never sits idle after a click.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-08",
+      "title": "Errors Announce Themselves",
+      "rule": "role=\"alert\" or an aria-live region on validation errors, so a screen reader hears them.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-09",
+      "title": "Focus Moves To The First Invalid Field",
+      "rule": "After a failed submit, focus lands on the first field that needs fixing.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-10",
+      "title": "Multiple Errors Get A Summary",
+      "rule": "More than one error shows a summary at the top with anchor links to each field.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-11",
+      "title": "Error Text Says Cause And Fix",
+      "rule": "Not 'Invalid input'. What is wrong, and what to do about it.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-12",
+      "title": "Destructive Actions Confirm",
+      "rule": "A confirmation before anything destructive, in the danger colour, spatially separated from the primary action.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-13",
+      "title": "Destructive And Bulk Actions Offer Undo",
+      "rule": "An undo path, not just a confirmation dialog, wherever the action can be reversed.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-14",
+      "title": "Empty States Say What To Do",
+      "rule": "An empty list explains why it is empty and offers the action that fills it.",
+      "when": "fetch",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-15",
+      "title": "Toasts Auto-Dismiss And Do Not Steal Focus",
+      "rule": "3-5 seconds, aria-live polite, focus stays where the user left it.",
+      "when": "toast"
+    },
+    {
+      "id": "UXF-16",
+      "title": "Long Forms Autosave",
+      "rule": "A long form keeps a draft so an accidental dismissal does not cost the work, and a sheet with unsaved changes confirms before closing.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-17",
+      "title": "Complexity Is Revealed Progressively",
+      "rule": "Advanced options unfold rather than greeting the user all at once.",
+      "when": "form",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXF-18",
+      "title": "Related Fields Are Grouped",
+      "rule": "fieldset and legend, or a clear visual grouping, for fields that belong together.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-19",
+      "title": "Read-Only Differs From Disabled",
+      "rule": "Read-only reads as information; disabled reads as unavailable. They do not look the same.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-20",
+      "title": "Mobile Inputs Are At Least 44px Tall",
+      "rule": "Input height meets the touch target floor, and matches the height of adjacent buttons.",
+      "when": "form",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-21",
+      "title": "Multi-Step Flows Show Progress And Go Back",
+      "rule": "A step indicator, and backward navigation that keeps what was entered.",
+      "when": "form"
+    },
+    {
+      "id": "UXF-22",
+      "title": "Timeouts Say So And Offer Retry",
+      "rule": "A request that times out reports it and offers the retry, rather than spinning.",
+      "when": "fetch",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-23",
+      "title": "Autofill Does Not Repaint The Field",
+      "rule": "A browser-autofilled input paints its own background — the yellow in Chrome and Safari, a blue in some builds — straight over the field's surface token, and it survives a plain background-color rule. Untreated, every returning visitor sees a form that does not match the page, and in dark mode the autofilled text goes near-invisible on it. Override it in all three themes.",
+      "source": "references/code/shadcn-theming.md#autofilled-fields",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "form",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "-webkit-autofill",
+          "autofill:"
+        ],
+        "message": "No :-webkit-autofill override on a deliverable with input fields."
+      },
+      "fix": "Cover the paint with an inset shadow and set the text colour explicitly: input:-webkit-autofill { box-shadow: inset 0 0 0 100px var(--surface); -webkit-text-fill-color: var(--ink); caret-color: var(--ink); transition: background-color 0s 600000s; } and repeat it for :hover, :focus, and :active."
+    },
+    {
+      "id": "UXV-01",
+      "title": "Current Location Is Visible In The Nav",
+      "rule": "The active destination is marked by colour, weight, or an indicator - never left to the user to work out.",
+      "when": "nav",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXV-02",
+      "title": "Navigation Stays In The Same Place",
+      "rule": "Placement does not change between page types.",
+      "when": "nav",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXV-03",
+      "title": "Nav Items Carry Icon And Label",
+      "rule": "Icon-only navigation costs discoverability. Bottom navigation caps at five items.",
+      "when": "nav"
+    },
+    {
+      "id": "UXV-04",
+      "title": "Primary And Secondary Nav Are Separated",
+      "rule": "Tabs or bottom bar for top-level; drawer or settings for secondary. Not mixed at the same level.",
+      "when": "nav"
+    },
+    {
+      "id": "UXV-05",
+      "title": "Back Is Predictable And Restores State",
+      "rule": "Back returns to where the user was, with scroll position, filters, and input intact. The stack is never silently reset.",
+      "when": "router",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXV-06",
+      "title": "Every Key Screen Has A URL",
+      "rule": "Deep-linkable and shareable; no state that exists only after a click path.",
+      "when": "router"
+    },
+    {
+      "id": "UXV-07",
+      "title": "Modals Are Not Navigation",
+      "rule": "A modal is a detour, not a step in the primary path.",
+      "when": "modal"
+    },
+    {
+      "id": "UXV-08",
+      "title": "Modals Have A Clear Dismiss",
+      "rule": "A visible close, Escape on desktop, swipe-down on mobile.",
+      "when": "modal",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXV-09",
+      "title": "Search Is Reachable And Helpful",
+      "rule": "Search sits in the top bar or a tab, and offers recent or suggested queries.",
+      "when": "search"
+    },
+    {
+      "id": "UXV-10",
+      "title": "Breadcrumbs Past Three Levels",
+      "rule": "Hierarchies three or more levels deep show where the user is.",
+      "when": "nav",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXV-11",
+      "title": "Overflow Menu Rather Than Cramming",
+      "rule": "Actions beyond the available space go into an overflow menu.",
+      "when": "nav"
+    },
+    {
+      "id": "UXV-12",
+      "title": "Large Screens Get A Sidebar",
+      "rule": "At 1024px and up, a sidebar; below, bottom or top navigation.",
+      "when": "nav",
+      "severity": "advisory"
+    },
+    {
+      "id": "UXV-13",
+      "title": "Destructive Items Sit Apart In Menus",
+      "rule": "Delete account and logout are separated from ordinary navigation, visually and spatially.",
+      "when": "nav",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXV-14",
+      "title": "Unavailable Destinations Explain Themselves",
+      "rule": "A destination the user cannot reach says why rather than vanishing.",
+      "when": "nav"
+    },
+    {
+      "id": "UXV-15",
+      "title": "Core Navigation Stays Reachable",
+      "rule": "Navigation is not hidden entirely inside sub-flows.",
+      "when": "nav"
+    },
+    {
+      "id": "UXV-16",
+      "title": "A New Page Opens At The Top",
+      "rule": "Navigating to a new page puts the reader at the top of it. Client-side routing keeps the scroll position by default, so arriving at a page already scrolled halfway down is the norm unless something resets it - and the reader has no idea they are looking at the middle of something. Going back is the exception: that restores the position it was left at.",
+      "when": "router",
+      "severity": "blocker",
+      "check": {
+        "type": "scroll_to_top"
+      },
+      "fix": "Scroll to the top on pathname change - ScrollRestoration in React Router, or a useEffect on the pathname calling window.scrollTo({ top: 0 }) - while leaving back and forward to restore their own positions."
+    },
+    {
+      "id": "UXD-01",
+      "title": "Chart Type Matches The Data",
+      "rule": "Trend to line, comparison to bar, proportion to pie or donut - and no pie past five categories.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-02",
+      "title": "Chart Colours Are Colourblind-Safe",
+      "rule": "No red/green-only pairing, and colour is supplemented by pattern, texture, or shape.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-03",
+      "title": "A Table Alternative Exists",
+      "rule": "The data is available as a table or text summary, since a chart alone is unreadable to a screen reader.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-04",
+      "title": "Legend Is Visible And Near The Chart",
+      "rule": "Not detached below a scroll fold. Where series can be toggled, the legend does it.",
+      "when": "chart"
+    },
+    {
+      "id": "UXD-05",
+      "title": "Values Are Reachable Without Hover",
+      "rule": "Tooltips work on tap, and their content is keyboard-reachable. Small datasets label directly.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-06",
+      "title": "Axes Are Labelled And Readable",
+      "rule": "Units named, ticks not cramped, labels not rotated into illegibility on mobile, time granularity stated.",
+      "when": "chart"
+    },
+    {
+      "id": "UXD-07",
+      "title": "Charts Reflow On Small Screens",
+      "rule": "Horizontal bars instead of vertical, fewer ticks, simplified series - not a squeezed desktop chart.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-08",
+      "title": "Empty, Loading, And Failed Chart States",
+      "rule": "No-data says so with guidance, loading shows a shaped skeleton rather than a bare axis frame, and a failure offers retry.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-09",
+      "title": "Chart Contrast Meets Threshold",
+      "rule": "Data marks clear 3:1 against the background; data labels clear 4.5:1. Gridlines stay low-contrast so they do not compete.",
+      "when": "chart",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXD-10",
+      "title": "Chart Interactivity Is Keyboard-Reachable",
+      "rule": "Points, bars, and slices are focusable, with a text summary naming the chart's key insight.",
+      "when": "chart"
+    },
+    {
+      "id": "UXD-11",
+      "title": "Large Datasets Aggregate",
+      "rule": "Past a thousand points, aggregate or sample and offer drill-down rather than rendering everything.",
+      "when": "chart"
+    },
+    {
+      "id": "UXD-12",
+      "title": "Numbers Are Locale-Formatted",
+      "rule": "Numbers, dates, and currencies formatted for the locale on axes and labels.",
+      "when": "chart"
+    },
+    {
+      "id": "UXD-13",
+      "title": "Data Over Decoration",
+      "rule": "No heavy gradients or shadows on data marks. Density is capped; split rather than cram.",
+      "when": "chart"
+    },
+    {
+      "id": "UXD-14",
+      "title": "Chart Touch Targets Clear 44pt",
+      "rule": "Interactive points and segments have a 44pt tap area or expand on touch.",
+      "when": "chart"
+    },
+    {
+      "id": "UXR-01",
+      "title": "Sortable Tables Announce Their Sort",
+      "rule": "aria-sort reflects the current column and direction.",
+      "when": "table"
+    },
+    {
+      "id": "UXR-02",
+      "title": "Tables Have A Small-Screen Answer",
+      "rule": "A table on a phone stacks, scrolls inside its own container, or drops to the columns that matter - it does not overflow the page.",
+      "when": "table",
+      "severity": "blocker"
+    },
+    {
+      "id": "UXF-24",
+      "title": "Action Feedback Is A Transient Toast, Bottom Right",
+      "rule": "The outcome of an action the visitor just took - a sign-in refused, an account made, something added to a cart, a record saved - is reported by a transient toast in the bottom-right corner, raised through one shared host and gone on its own. Not an inline banner pushed into the page: a coloured strip above a form moves every field below it the instant it appears, stays until some other code clears it, and reads as part of the page rather than as an answer to the click. Not a per-page one-off either, because that is how one product ends up with a green bar at the top of one route, a red panel inline on another, and no two of them behaving alike. One host, one corner, one lifetime.",
+      "when": "components",
+      "severity": "required",
+      "check": {
+        "type": "toast_channel"
+      },
+      "fix": "Put one toast host in the shell and raise everything through it. Anchor it bottom right, give each toast a lifetime that clears it without being touched, and use the assertive live region for failures and the polite one for successes. Delete the inline banners and the per-page fixed one-offs as you go; leaving one behind is what the gate counts."
+    }
+  ]
+}

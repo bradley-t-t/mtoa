@@ -1,0 +1,8 @@
+[Unit]
+Description=Index Claude Code chat transcripts from this host and the Mac for the voice assistant
+
+[Service]
+Type=oneshot
+User=@USER@
+Environment=HOME=@HOME@
+ExecStart=/usr/bin/python3 @HOME@/voice-assistant/transcripts.py sync

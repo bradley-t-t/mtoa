@@ -1,0 +1,68 @@
+{
+  "group": "Dependencies",
+  "prefix": "DEP",
+  "description": "What the project pulled in, and what of it is still earning its place. Every entry here is weight, surface and a thing that can be abandoned upstream while the project keeps installing it.",
+  "defaults": {
+    "kinds": [
+      "*"
+    ],
+    "when": "node",
+    "severity": "required",
+    "source": "references/dependencies.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "DEP-01",
+      "title": "Nothing Is Declared And Unused",
+      "rule": "Every dependency is imported somewhere. An unused one is installed on every machine and in every build, and it stays in the audit surface long after the code that needed it went.",
+      "check": {
+        "type": "unused_deps"
+      },
+      "fix": "Remove them. Anything used only by a config file or a script is named in the note."
+    },
+    {
+      "id": "DEP-02",
+      "title": "One Copy Of The Framework In The Tree",
+      "rule": "React, Next or the framework in use resolves to a single version. Two copies break hooks and context in ways that read as application bugs, and the error names neither package.",
+      "when": "framework",
+      "severity": "blocker",
+      "check": {
+        "type": "duplicate_framework"
+      },
+      "fix": "Dedupe, or add an override pinning the one version."
+    },
+    {
+      "id": "DEP-03",
+      "title": "No Git Or Path Pins",
+      "rule": "No dependency is pinned to a git URL or a local path. Both build on the machine that has them and fail in CI, and a git pin can move under the project without the lockfile changing meaningfully.",
+      "when": "always",
+      "check": {
+        "type": "vcs_pins"
+      },
+      "fix": "Publish the package, or vendor the code into the repository."
+    },
+    {
+      "id": "DEP-04",
+      "title": "The Audit Is Clean At High",
+      "rule": "npm audit reports nothing at high or critical. Lower severities are a judgement call; these two are not.",
+      "check": {
+        "type": "probe",
+        "probe": "deps.audit"
+      },
+      "fix": "Update the offending packages, or state in the note why an advisory does not reach this project."
+    },
+    {
+      "id": "DEP-05",
+      "title": "Nothing In The Tree Is Deprecated Upstream",
+      "rule": "No direct dependency has been marked deprecated by its author. A deprecation is the maintainer saying they have stopped, which means the next advisory against it will not be fixed.",
+      "check": {
+        "type": "probe",
+        "probe": "deps.deprecated"
+      },
+      "fix": "Move to whatever the deprecation notice names."
+    }
+  ]
+}

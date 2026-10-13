@@ -1,0 +1,215 @@
+{
+  "group": "Universal",
+  "prefix": "UNI",
+  "description": "The five principles, plus the standing rules that outrank any domain guidance.",
+  "gates": [
+    {
+      "id": "UNI-01",
+      "title": "Three Themes: Dark, Light, Gray",
+      "rule": "Every colour, border, shadow, and surface reads correctly in dark, light, AND gray. All three are defined and all three are looked at. A colour that only works in one theme is a defect, not a preference.",
+      "source": "SKILL.md#five-principles (2)",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "require_any_regex",
+        "patterns": [
+          "\\[data-theme=[\"']?gray",
+          "\\.gray\\b[^{]*\\{",
+          "--theme-gray",
+          "data-theme=\"gray\""
+        ],
+        "files": [
+          "css",
+          "style"
+        ],
+        "message": "No gray theme found. Dark and light alone are two of three."
+      },
+      "fix": "Add the gray theme token block alongside dark and light, and re-check every surface in it."
+    },
+    {
+      "id": "UNI-02",
+      "title": "No Hardcoded Colour Outside The Token Block",
+      "rule": "No hex, rgb(), hsl(), or oklch() literal appears outside :root / [data-theme]. Every colour in markup and components references a named token. A literal is a colour that breaks in one of the three themes.",
+      "source": "SKILL.md#five-principles (2); slop gate 48",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex_outside_tokens",
+        "pattern": "#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(",
+        "message": "Colour literal outside the token block."
+      },
+      "fix": "Lift the value into the token block as a named variable, then reference var(--name)."
+    },
+    {
+      "id": "UNI-03",
+      "title": "UI Labels Are Title Case",
+      "rule": "Menu items, dropdown entries, buttons, tabs, and column headings are Title Case — 'Plugin Library', 'Join Our Discord', 'Get in Touch'; short prepositions and articles stay lowercase. Sentence case on a control label is a defect. Sentences, descriptions, blurbs, helper text, and prose headlines stay sentence case.",
+      "source": "SKILL.md#five-principles (5); INTELLIGENCE.md",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides",
+        "banner",
+        "social",
+        "email"
+      ],
+      "when": "copy",
+      "severity": "blocker",
+      "check": {
+        "type": "label_case"
+      },
+      "fix": "Retitle the label. Check every control label in the deliverable, including ones you did not write."
+    },
+    {
+      "id": "UNI-04",
+      "title": "No Emojis Anywhere",
+      "rule": "No emoji in the deliverable, its copy, its code, its comments, or its filenames. Not as an icon, not as a bullet, not as decoration.",
+      "source": "INTELLIGENCE.md#operating-principles; slop gate 30b",
+      "kinds": [
+        "*"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_emoji"
+      },
+      "fix": "Replace with an SVG icon from the page's single icon library, or drop it and lead with typography."
+    },
+    {
+      "id": "UNI-05",
+      "title": "Behaviour Preserved On Redesign",
+      "rule": "When redesigning existing code, only presentation changes. Routes, handlers, data contracts, side effects, and component ownership stay identical. State the files touched before touching them; deletions need explicit confirmation.",
+      "source": "SKILL.md#five-principles (3); implementation safety rail",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "redesign",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Diff the behaviour surface; revert anything that is not presentation."
+    },
+    {
+      "id": "UNI-06",
+      "title": "Changed Only What Was Asked",
+      "rule": "The deliverable changes what the user asked for and nothing else. Nothing was swapped in to replace something they asked to have removed. Improvements they did not request are offered in a sentence at the end, not shipped.",
+      "source": "INTELLIGENCE.md#operating-principles",
+      "kinds": [
+        "*"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Revert the unrequested change and put it in the closing note instead."
+    },
+    {
+      "id": "UNI-07",
+      "title": "Semantic Tokens, Not Ad-Hoc Values",
+      "rule": "Spacing, radius, shadow, z-index, and type sizes come from the named scale. Arbitrary values (padding: 17px, z-index: 9999, a one-off shadow) are tells.",
+      "source": "references/system/_overview.md; slop gate 24",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "required",
+      "check": {
+        "type": "spacing_scale"
+      },
+      "fix": "Round to the nearest step on the 4px scale, or add the step to the scale if it is genuinely missing."
+    },
+    {
+      "id": "UNI-08",
+      "title": "Accessible Contrast In All Three Themes",
+      "rule": "Body text clears 4.5:1 against its computed background; large text, icons, and focus rings clear 3:1. Checked per theme, not inferred from one. The usual misses: text in a card that switched surface, muted text on a tinted surface, a focus ring that clears the element but not the page.",
+      "source": "references/intelligence.md#1-accessibility; slop gates 40, 41",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides",
+        "banner",
+        "social",
+        "email"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pair each colour declaration with its effective background and measure. Fix the failing pair, then re-check the other two themes."
+    },
+    {
+      "id": "UNI-09",
+      "title": "One Icon Family, Vector Only",
+      "rule": "One icon library across the deliverable (Lucide, Phosphor, or Heroicons — not two), consistent stroke width, consistent size tokens, filled and outline never mixed at the same hierarchy level. SVG, never raster, never emoji.",
+      "source": "references/intelligence.md#icons--visual-elements; slop gate 30a",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides",
+        "banner",
+        "social"
+      ],
+      "when": "icons",
+      "severity": "required",
+      "check": {
+        "type": "icon_library_mix"
+      },
+      "fix": "Pick one library and convert the strays, or hand-build the odd one out as SVG in the same visual language."
+    },
+    {
+      "id": "UNI-10",
+      "title": "Brand Assets Used Correctly",
+      "rule": "The real logo file, at an approved variant for its background, with its clear space and minimum size respected, unmodified in colour or proportion. No guessed logo paths, no recolouring.",
+      "source": "references/brand/logo-usage-rules.md; approval-checklist",
+      "kinds": [
+        "*"
+      ],
+      "when": "brand_asset",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Point at the real asset in the brand directory and restore its clear space."
+    },
+    {
+      "id": "UNI-11",
+      "title": "The Logo And Favicon Carry No Background Of Their Own",
+      "rule": "The mark and the favicon the site ships are transparent: a PNG or WebP with a real alpha channel and non-opaque corners, an SVG with no full-bleed rect and no background in its style, or an icon whose largest image carries alpha. A JPEG logo is wrong by format, having no alpha at all. A mark with a baked-in plate sits in a filled rectangle on every surface whose colour is not the one baked into it, which is every dark theme the site has, and a favicon with one sits in a plate on every tab strip that is not that colour. apple-touch-icon is the one exception and is left out: iOS composites it onto its own ground and renders a transparent one black.",
+      "source": "references/logo-design.md",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides",
+        "banner",
+        "social",
+        "brand",
+        "email"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "logo_transparent"
+      },
+      "fix": "Re-export the mark with a transparent ground, or strip the background rect from the SVG. AST-01 covers the same thing for a run that is producing the logo; this one covers a run that is only using it."
+    }
+  ]
+}

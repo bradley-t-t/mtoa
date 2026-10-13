@@ -1,0 +1,435 @@
+{
+  "group": "Motion & Polish",
+  "prefix": "POL",
+  "description": "The animation framework and the review checklist from references/polish.md, plus the loading-state rules.",
+  "gates": [
+    {
+      "id": "POL-01",
+      "title": "No transition: all",
+      "rule": "Transitions name their properties. transition: all animates whatever happens to change, including layout properties, and costs frames for effects nobody asked for.",
+      "source": "references/polish.md#review-checklist; slop gate 10",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "css",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "transition:\\s*all|transition-all",
+        "message": "transition: all"
+      },
+      "fix": "Specify: transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out)."
+    },
+    {
+      "id": "POL-02",
+      "title": "Nothing Animates From scale(0)",
+      "rule": "Entrances start at scale(0.9) or higher with opacity. Nothing in the real world vanishes to a point and reappears from one.",
+      "source": "references/polish.md#never-animate-from-scale0",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "scale\\(0\\)|scale\\(0\\.0*\\)|scale-0\\b",
+        "message": "scale(0) entry animation"
+      },
+      "fix": "Start from scale(0.95) with opacity: 0."
+    },
+    {
+      "id": "POL-03",
+      "title": "No ease-in On UI",
+      "rule": "ease-in starts slow, which delays movement at exactly the moment the user is watching. Entering and exiting use ease-out; on-screen movement uses ease-in-out; hover and colour use ease; constant motion uses linear.",
+      "source": "references/polish.md#what-easing-should-it-use",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "(?<![-a-z])ease-in(?![-a-z])",
+        "message": "ease-in on a UI transition"
+      },
+      "fix": "Switch to ease-out or the project's custom curve."
+    },
+    {
+      "id": "POL-04",
+      "title": "Custom Easing Curves, Defined As Tokens",
+      "rule": "The built-in CSS easings are too weak to read as intentional. Define --ease-out: cubic-bezier(0.23, 1, 0.32, 1), --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1), and the drawer curve, and reference them.",
+      "source": "references/polish.md#what-easing-should-it-use",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "cubic-bezier",
+          "--ease-"
+        ],
+        "message": "No custom easing tokens."
+      },
+      "fix": "Add the easing tokens to :root and point every transition at them."
+    },
+    {
+      "id": "POL-05",
+      "title": "No Overshoot Easing On UI State",
+      "rule": "Bouncy cubic-beziers belong to physical interactions \u2014 a dragged sheet, a pulled refresh. On a button, modal, or tooltip they read as a toy.",
+      "source": "slop gate 12",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "overshoot_bezier"
+      },
+      "fix": "Replace with the standard ease-out token on UI state changes."
+    },
+    {
+      "id": "POL-06",
+      "title": "UI Motion Stays Under 300ms",
+      "rule": "Button press 100\u2013160ms; tooltips and small popovers 125\u2013200ms; dropdowns and selects 150\u2013250ms; modals and drawers 200\u2013500ms. Nothing else on the interface exceeds 300ms.",
+      "source": "references/polish.md#how-fast-should-it-be",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "duration_cap",
+        "max_ms": 300,
+        "exempt": [
+          "modal",
+          "drawer",
+          "sheet",
+          "marquee",
+          "hero",
+          "page"
+        ]
+      },
+      "fix": "Bring the duration into 150\u2013250ms."
+    },
+    {
+      "id": "POL-07",
+      "title": "Only transform And opacity Animate",
+      "rule": "width, height, top, left, margin, and padding trigger layout and paint. transform and opacity run on the GPU. Position changes go through transform.",
+      "source": "references/polish.md#only-animate-transform-and-opacity; slop gate 14",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "motion",
+      "severity": "blocker",
+      "check": {
+        "type": "animated_layout_property"
+      },
+      "fix": "Rewrite the animation onto transform/opacity; use scale or translate instead of size and position."
+    },
+    {
+      "id": "POL-08",
+      "title": "Keyboard-Initiated Actions Do Not Animate",
+      "rule": "Command palettes, shortcut-driven toggles, and anything a user hits a hundred times a day open with no animation at all. Animation there reads as lag.",
+      "source": "references/polish.md#should-this-animate-at-all",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Remove the animation from the keyboard path; keep it on the mouse path only if it earns its place."
+    },
+    {
+      "id": "POL-09",
+      "title": "Every Animation Has A Stated Purpose",
+      "rule": "Spatial consistency, state indication, explanation, feedback, or preventing a jarring change. 'It looks cool' on something seen daily is not a purpose.",
+      "source": "references/polish.md#what-is-the-purpose",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Name the purpose per animation, or delete it."
+    },
+    {
+      "id": "POL-10",
+      "title": "Popovers Are Origin-Aware",
+      "rule": "A popover scales from its trigger, not from its own centre. Radix and Base UI expose the transform-origin variable; use it. Modals are exempt and stay centred.",
+      "source": "references/polish.md#make-popovers-origin-aware; slop checklist",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "modal",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Set transform-origin to var(--radix-popover-content-transform-origin) or the equivalent."
+    },
+    {
+      "id": "POL-11",
+      "title": "Exit Is Faster Than Enter",
+      "rule": "Exit runs at roughly 60\u201370% of the enter duration. Matching them makes dismissal feel like the interface is arguing with the user.",
+      "source": "references/polish.md#asymmetric-enterexit-timing",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Shorten the exit transition."
+    },
+    {
+      "id": "POL-12",
+      "title": "Lists Stagger, They Do Not Arrive At Once",
+      "rule": "Grid and list entrances stagger 30\u201380ms per item. Everything appearing on the same frame reads as a page repaint, not an arrival.",
+      "source": "references/polish.md#stagger-animations",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "advisory",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Add a per-index delay of 30\u201380ms, capped so long lists do not crawl."
+    },
+    {
+      "id": "POL-13",
+      "title": "CSS Transitions For Interruptible UI",
+      "rule": "Rapidly-triggered elements use transitions, not keyframes \u2014 a keyframe animation restarted mid-flight snaps. Predetermined motion goes in CSS (off main thread); dynamic interruptible motion goes in JS.",
+      "source": "references/polish.md#use-css-transitions-over-keyframes-for-interruptible-ui",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Convert the keyframe animation on the hot element to a transition."
+    },
+    {
+      "id": "POL-14",
+      "title": "Framer Motion Uses Full Transform Strings",
+      "rule": "The x, y, and scale shorthands are not hardware accelerated \u2014 they run on the main thread and drop frames under load. animate={{ transform: 'translateX(100px)' }} does not.",
+      "source": "references/polish.md#framer-motion-hardware-acceleration-caveat",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "framer",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "animate=\\{\\{[^}]*\\b(x|y|scale)\\s*:",
+        "message": "Framer Motion shorthand transform prop."
+      },
+      "fix": "Use the full transform string."
+    },
+    {
+      "id": "POL-15",
+      "title": "Reduced Motion Has A Real Fallback",
+      "rule": "Every transform and keyframe has an answer under @media (prefers-reduced-motion: reduce). Reduced motion means fewer and gentler, not none \u2014 keep opacity and colour transitions that aid comprehension, drop movement.",
+      "source": "references/polish.md#prefers-reduced-motion; slop gate 27",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "motion",
+      "severity": "blocker",
+      "check": {
+        "type": "motion_coverage"
+      },
+      "fix": "Add the reduced-motion block; strip transforms, keep fades."
+    },
+    {
+      "id": "POL-16",
+      "title": "Unknown, Empty, And Failed Are Three Different States",
+      "rule": "Data starts as null (unknown), not [] (empty). The empty state waits until the server has actually answered. A failed request shows a failure, never a skeleton that shimmers forever.",
+      "source": "references/polish.md#keep-three-states-apart",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "fetch",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Initialise to null, branch on unknown vs empty vs failed, and give the failure its own message and retry."
+    },
+    {
+      "id": "POL-17",
+      "title": "One Skeleton Primitive, Shaped Like Its Content",
+      "rule": "A single Skeleton primitive and one Loading composition, reused. Each placeholder matches the real box \u2014 chart height, row height \u2014 so nothing shifts when it resolves. Per-screen bespoke skeletons are how a codebase ends up with nine.",
+      "source": "references/polish.md#skeletons-are-uniform-and-shaped-like-their-content",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "fetch",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Extract the shared primitive and match the placeholder box to the real one."
+    },
+    {
+      "id": "POL-18",
+      "title": "Content Animates In When Its Skeleton Resolves",
+      "rule": "Content does not snap in. It animates once, with the same entrance used for page changes.",
+      "source": "references/polish.md#content-animates-in-when-its-skeleton-resolves",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "fetch",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Apply the shared entrance to the resolved content, once."
+    },
+    {
+      "id": "POL-19",
+      "title": "Loading Shows After 300ms, Not Before",
+      "rule": "Work under 300ms shows nothing \u2014 a flashed spinner is worse than a brief wait. Past 300ms, show the skeleton. Past a second, show progress.",
+      "source": "references/intelligence.md#7-animation (loading-states)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "fetch",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Delay the loading indicator by 300ms."
+    },
+    {
+      "id": "POL-20",
+      "title": "No Toast For A Visible Success",
+      "rule": "Toasts are for failures and for effects the user cannot see. Confirming something they are already looking at is noise.",
+      "source": "slop gate 16",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "toast",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Delete the success toast where the effect is on screen; keep it for background work."
+    },
+    {
+      "id": "POL-21",
+      "title": "Tooltip Delays Differ For Hover And Focus",
+      "rule": "Hover delays 800\u20131000ms; focus opens at 0ms. Once one tooltip is open, subsequent ones in the same group skip the delay and the animation.",
+      "source": "slop gate 17; references/polish.md#tooltips-skip-delay-on-subsequent-hovers",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "tooltip",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Split the two delays and add the skip-delay window."
+    },
+    {
+      "id": "POL-22",
+      "title": "Auto-Rotating Content Pauses On Hover And Focus",
+      "rule": "Carousels, rotating banners, and cycling stats stop when the pointer or keyboard reaches them. WCAG 2.2.2.",
+      "source": "slop gate 18",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "carousel",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pause on mouseenter and focusin; resume on leave and blur."
+    },
+    {
+      "id": "POL-23",
+      "title": "Navigation Motion Follows Its Own Rules",
+      "rule": "Nav bars, menus, dropdowns, sidebars, hamburger morphs, and active indicators use the per-element timings, stagger, and easing in references/navigation-menus.md rather than the generic transition.",
+      "source": "references/navigation-menus.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "nav",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Read navigation-menus.md and apply the timings for the element in question."
+    },
+    {
+      "id": "POL-24",
+      "title": "Motion Is Interruptible And Never Blocks Input",
+      "rule": "A tap or gesture cancels an in-flight animation immediately, and the interface stays interactive throughout. An animation the user has to wait out is a modal nobody asked for.",
+      "source": "references/intelligence.md#7-animation (interruptible, no-blocking-animation)",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "motion",
+      "severity": "required",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Use transitions or interruptible springs; never gate input on animation completion."
+    },
+    {
+      "id": "POL-25",
+      "title": "At Most Two Elements Animate Per View",
+      "rule": "One or two key elements carry the motion in any given view. Everything moving at once is a screensaver.",
+      "source": "references/intelligence.md#7-animation (excessive-motion)",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "motion",
+      "severity": "advisory",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Pick the two that matter and still the rest."
+    }
+  ]
+}

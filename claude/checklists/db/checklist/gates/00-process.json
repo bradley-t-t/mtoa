@@ -1,0 +1,63 @@
+{
+  "group": "Run Protocol",
+  "prefix": "PRC",
+  "description": "The bookkeeping that stops the checklist becoming a survey. These gates answer to the run's own state rather than to an attestation, so a run cannot close by saying it is finished.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PRC-01",
+      "title": "The Run Was Opened Before The Work",
+      "rule": "A run exists and the changes are recorded against it. A schema change made outside a run is a change nothing compared against the code, and afterwards it looks exactly like one that was checked.",
+      "check": {"type": "run_opened"},
+      "fix": "db-pass.py start --target <path> --project-ref <ref>"
+    },
+    {
+      "id": "PRC-02",
+      "title": "The Database Was Read, Not Reasoned About",
+      "rule": "The schema came from a query against the live database in this run. Migrations describe what was intended; only the catalogue says what is there. A table created by hand, an index dropped in the dashboard, and a policy edited in the console are all invisible to a repository read.",
+      "check": {"type": "probe_filed"},
+      "fix": "scripts/probe.py all --root <path> --out /tmp/db-probe.json, then db-pass.py probe --file /tmp/db-probe.json"
+    },
+    {
+      "id": "PRC-03",
+      "title": "Every Table Was Ruled On",
+      "rule": "Each table in the probe ends either kept with its reader named, or removed. A table nobody looked at and a table considered and kept are indistinguishable without this, and the second is the whole point of the run.",
+      "check": {"type": "table_coverage"},
+      "fix": "db-pass.py tables, then for each one either drop it or table-clear it naming what reads it."
+    },
+    {
+      "id": "PRC-04",
+      "title": "Nothing Was Dropped Without A Backup",
+      "rule": "Every table this run removes was exported first and the run records where the export went. A drop is the one action here with no undo, and a restore nobody can find is the same as no backup at all.",
+      "check": {"type": "backup_filed"},
+      "fix": "Export the rows, then db-pass.py backup --path <where> --tables <names>, or answer n/a when the run dropped nothing."
+    },
+    {
+      "id": "PRC-05",
+      "title": "What Belongs To Another Checklist Was Handed Over",
+      "rule": "This checklist asks whether the database and the code agree, and nothing else. Whether a service answers belongs to the stack checklist, how long a page takes to the performance checklist. Each is named and handed over, never resolved here and never dropped.",
+      "severity": "required",
+      "check": {"type": "delegation"},
+      "fix": "db-pass.py delegate --to <stack|perf|design|seo> --note \"<what was found>\", or answer n/a when nothing outside this checklist came up."
+    },
+    {
+      "id": "PRC-06",
+      "title": "Every Applicable Gate Is Answered",
+      "rule": "No gate is left silent. A gate that is not met is work to do; the only ways past one are changing the database or the code, or naming the condition that puts it out of scope.",
+      "check": {"type": "all_resolved"},
+      "fix": "db-pass.py status lists what is open."
+    },
+    {
+      "id": "PRC-07",
+      "title": "The Filled Checklist Was Rendered",
+      "rule": "The run ends with the whole checklist shown - every gate, its verdict, the evidence, what was delegated, and a section listing anything answered not applicable and why.",
+      "check": {"type": "report_emitted"},
+      "fix": "db-pass.py report"
+    }
+  ]
+}

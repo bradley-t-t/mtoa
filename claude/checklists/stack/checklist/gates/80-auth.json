@@ -1,0 +1,61 @@
+{
+  "group": "Auth Wiring",
+  "prefix": "AUT",
+  "description": "Whether the thing that decides who may see what is actually in the path. Every failure in this group looks identical to working software from the outside, right up until somebody changes a URL by hand.",
+  "defaults": {
+    "kinds": [
+      "*"
+    ],
+    "when": "auth",
+    "severity": "blocker",
+    "source": "references/auth.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "AUT-01",
+      "title": "The Middleware Matcher Covers Every Protected Route",
+      "rule": "Each route that requires a session is reached by the middleware's matcher. A matcher written when the app had four routes silently stops covering the nine added since, and the uncovered ones serve to anybody. A project with no server to intercept a request answers instead through its row policies.",
+      "check": {
+        "type": "middleware_matcher"
+      },
+      "fix": "Widen the matcher, or invert it to cover everything and list the public exceptions.",
+      "when": [
+        "auth",
+        "server_routes"
+      ]
+    },
+    {
+      "id": "AUT-02",
+      "title": "Trust Decisions Read The Verified Session",
+      "rule": "Anything deciding access reads getClaims or getUser, never getSession. getSession returns what the cookie says without verifying it, so a decision made on it is a decision made on user input.",
+      "when": "supabase_auth",
+      "check": {
+        "type": "session_api"
+      },
+      "fix": "Replace every trust-bearing getSession call. It is fine for knowing whether to render a signed-in shell, and never for authorisation."
+    },
+    {
+      "id": "AUT-03",
+      "title": "Access Is Enforced In The Database, Not The Query",
+      "rule": "Row visibility comes from RLS policies rather than a filter the client sends. A client-side filter is a suggestion: the key is in the browser, and the request can be made again without it.",
+      "when": "supabase",
+      "check": {
+        "type": "client_side_filter"
+      },
+      "fix": "Write the policy, then let the query stop carrying the filter that was pretending to be one."
+    },
+    {
+      "id": "AUT-04",
+      "title": "The Service Role Key Is Never On A Client Path",
+      "rule": "No module the client bundle can reach imports the service role key. That key bypasses every policy in the database by design, which is the whole reason it exists and the whole reason it cannot ship.",
+      "when": "supabase",
+      "check": {
+        "type": "service_role_reachable"
+      },
+      "fix": "Move the work behind an API route or an edge function, and rotate the key if it has ever been built into a client bundle."
+    }
+  ]
+}

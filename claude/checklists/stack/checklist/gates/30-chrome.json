@@ -1,0 +1,97 @@
+{
+  "group": "Brand Chrome",
+  "prefix": "CHR",
+  "description": "The marks that say whose site this is. This group asks whether they are present, current and pointing at the right places. How they look is the design checklist's question, and metadata and share cards are the SEO checklist's; anything found here that belongs to either is delegated rather than fixed.",
+  "defaults": {
+    "kinds": [
+      "*"
+    ],
+    "when": [
+      "pages",
+      "agency_bar"
+    ],
+    "severity": "required",
+    "source": "references/brand-chrome.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "CHR-01",
+      "title": "The Standard Footer Bar Is On Every Route",
+      "rule": "The {agency} status bar renders at the bottom of every route the site serves, not on the home page alone. A visitor who lands on a deep link is the visitor most likely to want to know who built the thing.",
+      "severity": "blocker",
+      "check": {
+        "type": "footer_present"
+      },
+      "fix": "Mount the bar in the shell that wraps every route rather than in each page."
+    },
+    {
+      "id": "CHR-02",
+      "title": "It Is The Shared Bar, Not A Copy Of It",
+      "rule": "The bar is the {agency_bar_component} component, imported rather than reimplemented. A hand-rolled copy per project is how nine sites end up with nine slightly different bars and no way to change any of them at once.",
+      "check": {
+        "type": "footer_shared"
+      },
+      "fix": "Replace the local markup with the shared component. If the project needs something the shared one cannot do, change the shared one."
+    },
+    {
+      "id": "CHR-03",
+      "title": "Its Links Resolve",
+      "rule": "Both links the bar carries answer: {agency_domain} and the status page. A signature pointing at a 404 is worse than no signature.",
+      "check": {
+        "type": "probe",
+        "probe": "chrome.links"
+      },
+      "fix": "Correct the URLs in the shared component, not in the project."
+    },
+    {
+      "id": "CHR-04",
+      "title": "The Year Is Derived, Not Typed",
+      "rule": "Any year the chrome shows is computed at render. A hardcoded year is correct for one year and quietly wrong for every year after, on every site at once.",
+      "when": "always",
+      "check": {
+        "type": "hardcoded_year"
+      },
+      "fix": "Compute it from the current date."
+    },
+    {
+      "id": "CHR-05",
+      "title": "The Bar Names No Colour Of Its Own",
+      "rule": "The bar carries no literal colour beyond the one brand accent. It takes its ink from the page it lands on, which is what lets one component sit on a white brochure site and a dark dashboard without a per-project palette.",
+      "check": {
+        "type": "footer_no_literals"
+      },
+      "fix": "Mix every tone from the inherited ink: color-mix(in oklab, currentColor N%, transparent). If the page needs a different accent, set {agency_bar_accent} rather than editing the bar."
+    },
+    {
+      "id": "CHR-07",
+      "title": "Its Ground Is The Page's, Not The System's",
+      "rule": "The bar paints no ground of its own and takes no tone from a system colour. Canvas, Window and their siblings answer to the browser's colour-scheme preference rather than to the page, so a bar built on them renders a white glass under a dark site whenever the visitor's system is set to light. A transparent ground with tones mixed from currentColor matches the page by construction.",
+      "check": {
+        "type": "footer_ground"
+      },
+      "fix": "Set background: transparent and color-scheme: inherit, and mix any wash from currentColor rather than naming Canvas."
+    },
+    {
+      "id": "CHR-08",
+      "title": "The Rail Takes The Footer's Palette",
+      "rule": "The bar names no colour of its own, so it shows whatever palette it was mounted in. Mounted at the app root it inherits the page body, which under a dark footer is a pale strip matching nothing above it. The markup is identical either way, so this answers to a rendered reading taken with rail-probe.js and never to an attestation.",
+      "check": {
+        "type": "rail_palette"
+      },
+      "fix": "The bar names no colour of its own, so it shows whatever palette it was mounted in. Mounted at the app root it inherits the page body, which under a dark footer is a pale strip matching nothing above it. The markup is identical either way, so this answers to a rendered reading taken with rail-probe.js and never to an attestation."
+    },
+    {
+      "id": "CHR-06",
+      "title": "The Icon Set Is Present And Is Not The Framework Default",
+      "rule": "A favicon, an apple-touch-icon and a web manifest exist and belong to this project. The default Vite or Next icon shipping to production is the clearest possible signal that nobody finished. The share-card image is the SEO checklist's gate, not this one.",
+      "when": "always",
+      "check": {
+        "type": "icon_set"
+      },
+      "fix": "Add the three, built from the project's own mark. Hand anything about the share card to /seo-checklist."
+    }
+  ]
+}

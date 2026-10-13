@@ -1,0 +1,9 @@
+[Unit]
+Description=Keep the voice assistant's transcript index current
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

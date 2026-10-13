@@ -1,0 +1,47 @@
+{
+  "group": "Locale & Place",
+  "prefix": "LOC",
+  "description": "Gates that only apply when the run declares them, because a single-locale site and one whose translations are not built yet are indistinguishable in source. Open the run with --flag international or --flag local to bring these in.",
+  "defaults": {
+    "kinds": ["*"],
+    "severity": "required",
+    "source": "references/locale-and-place.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "LOC-01",
+      "title": "hreflang Covers Every Locale And x-default",
+      "rule": "Every locale points at every other, and an x-default catches the rest. A set without x-default sends a visitor whose locale is unlisted nowhere in particular.",
+      "when": "international",
+      "severity": "blocker",
+      "check": {"type": "hreflang_reciprocal"},
+      "fix": "Emit the full reciprocal set on every localised route, including x-default."
+    },
+    {
+      "id": "LOC-02",
+      "title": "Locale Codes Are Well Formed",
+      "rule": "Each hreflang is a two-letter language, optionally with a two-letter region in caps. A malformed code is not partially honoured - the whole annotation is dropped.",
+      "when": "international",
+      "check": {"type": "locale_format"},
+      "fix": "Correct each code to the language or language-REGION form."
+    },
+    {
+      "id": "LOC-03",
+      "title": "One Phone Number Across The Site",
+      "rule": "Name, address and phone appear identically everywhere. Citations are matched on exact strings, so a second phone number splits one business into two as far as the match is concerned.",
+      "when": "local",
+      "check": {"type": "nap_consistency"},
+      "fix": "Move the contact details into one constant and render every appearance from it."
+    },
+    {
+      "id": "LOC-04",
+      "title": "LocalBusiness Markup Is Complete",
+      "rule": "A LocalBusiness node carrying address, telephone, openingHours and geo. A node missing any of them is a partial answer to the question a local result is built from.",
+      "when": "local",
+      "severity": "blocker",
+      "check": {"type": "localbusiness_schema"},
+      "fix": "Add the missing properties from the same source the rendered contact block uses."
+    }
+  ]
+}

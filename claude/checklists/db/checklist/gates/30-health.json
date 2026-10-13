@@ -1,0 +1,65 @@
+{
+  "group": "What The Instance Is Carrying",
+  "prefix": "HLT",
+  "description": "The failures here do not announce themselves as database problems. They arrive as an intermittent error on an unrelated page, because one relation nothing looks at is making every query alongside it wait. These gates read the counters that say so.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "probe",
+    "severity": "required",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "HLT-01",
+      "title": "No Relation Is Mostly Empty Space",
+      "rule": "No table holds a small number of live rows in a large file. A delete frees space for reuse and never returns it, so a table that once grew keeps its size for good - and every scan, every autovacuum pass, and every cleanup job reads all of it. A gigabyte holding a megabyte of rows is the shape.",
+      "severity": "blocker",
+      "check": {"type": "bloat"},
+      "fix": "vacuum full <relation> to reclaim it, then schedule the prune that stops it returning."
+    },
+    {
+      "id": "HLT-02",
+      "title": "The Housekeeping Tables Are Pruned",
+      "rule": "The tables the platform writes to on its own - the cron run log, the stored HTTP responses, the storage and auth logs - have something removing old rows. None of them prune themselves, and none of them are anybody's feature, so they grow until they are the largest thing in the database.",
+      "severity": "blocker",
+      "check": {"type": "housekeeping_pruned"},
+      "fix": "Schedule a prune and a vacuum behind it, in a migration."
+    },
+    {
+      "id": "HLT-03",
+      "title": "Autovacuum Has Run Recently On Every Busy Table",
+      "rule": "Every table taking writes has been autovacuumed recently. One that has not is either quiet or blocked, and the second is what precedes the bloat above. A long transaction or a stalled replication slot is the usual reason.",
+      "check": {"type": "autovacuum_recent"},
+      "fix": "Find what is holding the transaction horizon back - a stalled slot, an idle transaction - and clear it."
+    },
+    {
+      "id": "HLT-04",
+      "title": "No Statement Is Running Long Enough To Block Others",
+      "rule": "No statement's worst execution approaches the statement timeout. One that does will not merely fail itself; it holds a connection while everything else queues behind it, and the errors surface on unrelated pages. The counters behind this are cumulative since they were last reset, so a statement fixed this morning still shows its worst run from last month - check the statement still exists before treating it as live, and dispute the gate with that reading rather than recording a pass the counter does not support.",
+      "severity": "blocker",
+      "check": {"type": "slow_statements"},
+      "fix": "Index it, bound it, or move it off the request path. A timeout raised to hide it moves the failure rather than fixing it."
+    },
+    {
+      "id": "HLT-05",
+      "title": "No Table Is Rewritten Far More Than It Is Read",
+      "rule": "No table shows a row-update count wildly out of proportion to its size and its readers. Hundreds of updates per row is an import re-writing rows that have not changed, which costs write throughput and vacuum work continuously.",
+      "check": {"type": "write_amplification"},
+      "fix": "Make the import write only what differs, or slow its schedule to what the data actually changes at."
+    },
+    {
+      "id": "HLT-06",
+      "title": "Replication Slots Are Alive And Caught Up",
+      "rule": "Every replication slot is active and close to the write position. An inactive slot holds write-ahead log for a reader that has gone, which fills the disk and stops vacuum reclaiming anything.",
+      "check": {"type": "slots_healthy"},
+      "fix": "Drop the abandoned slot, or restore the consumer that owns it."
+    },
+    {
+      "id": "HLT-07",
+      "title": "No Index Is Carried For Nothing",
+      "rule": "Every non-unique index has been scanned. One that never has costs write time and storage on every insert and gives nothing back. Read this against a counter that has been running long enough to mean something.",
+      "check": {"type": "unused_indexes"},
+      "fix": "Drop the index in a migration, or record that the counter is too young to judge it."
+    }
+  ]
+}

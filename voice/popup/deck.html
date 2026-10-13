@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src ws:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; img-src 'self' data:">
+<title>Sunday</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body class="deck">
+  <div class="hud" id="hud">
+    <div class="corners"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
+    <div class="topbar">
+      <div class="brand">
+        <svg viewBox="0 0 30 30" fill="none" stroke="#35e0ff" aria-hidden="true">
+          <circle cx="15" cy="15" r="13" stroke-width="1.6"/>
+          <path d="M15 2a13 13 0 0 1 13 13" stroke-width="3"/>
+          <circle cx="15" cy="15" r="4.5" fill="#35e0ff" stroke="none"/>
+        </svg>
+        <span class="wordmark">Sunday</span>
+      </div>
+      <div class="clock"><div class="time" id="time"></div><div class="date label" id="date"></div></div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="scrim"></div>
+      <div class="lens"><div class="reactor idle" id="reactor"></div></div>
+      <div class="live">
+        <div class="state-label" id="stateLabel"></div>
+        <div class="asked" id="asked"></div>
+        <div class="said" id="said"></div>
+        <div class="wave" id="wave"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="hints" id="hints"></div>
+    </div>
+    <div class="focus-hint" id="focusHint"></div>
+  </div>
+  <script src="deck.js"></script>
+</body>
+</html>

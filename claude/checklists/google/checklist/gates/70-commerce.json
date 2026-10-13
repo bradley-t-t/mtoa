@@ -1,0 +1,101 @@
+{
+  "group": "Shopping And Ads",
+  "prefix": "CMR",
+  "description": "The Google accounts a site needs once it sells or advertises: Merchant Center holding the product feed, and Google Ads holding the conversions that decide what a campaign bids on. Nothing here lives in the repository. A feed can be rejected while every product page is perfect, and a conversion action can count page loads for a year while the reports look healthy. The whole group is gated on selling or advertising, so a brochure site never sees it.",
+  "defaults": {
+    "kinds": ["ecommerce", "product"],
+    "when": "ecommerce",
+    "severity": "required",
+    "source": "references/commerce.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "CMR-01",
+      "title": "The Merchant Account Holds A Verified And Claimed Website",
+      "rule": "One Merchant Center account has the store domain verified and claimed to it. An unclaimed domain blocks every free listing and every Shopping campaign, and the account shows products it will never serve.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "cmr.website_claim"},
+      "fix": "In Merchant Center under Business Info, verify the domain by the same method Search Console uses, then claim it. A domain claimed by another account has to be released there first."
+    },
+    {
+      "id": "CMR-02",
+      "title": "The Product Feed Is Submitted And Fetching Cleanly",
+      "rule": "A primary feed exists, its last scheduled fetch succeeded, and the item count matches the catalogue. A feed that stopped fetching keeps serving its last successful pull until the items expire, so the failure surfaces as products vanishing weeks later.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "cmr.feed_fetch"},
+      "fix": "Read the feed's fetch history in Merchant Center, correct the URL or the credentials behind the failure, and refetch. Move the schedule earlier than the 30-day item expiry."
+    },
+    {
+      "id": "CMR-03",
+      "title": "No Item In The Feed Is Disapproved",
+      "rule": "The Diagnostics page reports zero disapproved items and no account-level issue. A disapproved item is invisible in both free listings and Shopping ads, and a single policy breach can suspend the account for the whole catalogue.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "cmr.disapprovals"},
+      "fix": "Pull the item-level issues through the Merchant API, fix the attribute the issue names, and resubmit. Request review only after the feed carries the corrected values."
+    },
+    {
+      "id": "CMR-04",
+      "title": "Automatic Item Updates Are On",
+      "rule": "Automatic item updates are enabled so Google corrects price and availability from the structured data on the product page. Without it, a price change on the site and a stale feed put the account into a price mismatch disapproval instead of a silent correction.",
+      "check": {"type": "probe", "probe": "cmr.item_updates"},
+      "fix": "Turn on automatic item updates in Merchant Center under Automated Improvements, and confirm the product pages carry Product markup with price and availability for it to read."
+    },
+    {
+      "id": "CMR-05",
+      "title": "Shipping And Returns Policies Are Configured",
+      "rule": "The account holds shipping rates for every country it sells to and a returns policy. Missing shipping settings disapprove items outright in most markets, and a missing returns policy withholds the annotations that shopping results show.",
+      "check": {"type": "probe", "probe": "cmr.policies"},
+      "fix": "Set the shipping services and rates per target country in Merchant Center, and add the returns window and method under the returns policy settings."
+    },
+    {
+      "id": "CMR-06",
+      "title": "Feed Values Match The Live Product Page",
+      "rule": "Price, currency and availability in the feed agree with what the product page serves to a visitor. Google compares the two on crawl, and a mismatch disapproves the item however correct each side is on its own.",
+      "check": {"type": "probe", "probe": "cmr.feed_page_parity"},
+      "fix": "Fetch a sample of product URLs and compare against the feed row. Where the page is right, refresh the feed from the same source the page reads; where the page is stale, hand the rendering to seo-checklist."
+    },
+    {
+      "id": "CMR-07",
+      "title": "One Merchant Account Holds The Domain",
+      "rule": "No second or abandoned Merchant Center account claims the same store domain. Duplicate accounts split reporting, compete for the same claim, and are a suspension cause in their own right.",
+      "check": {"type": "probe", "probe": "cmr.account_dupes"},
+      "fix": "List the accounts under the business manager, keep the one serving live campaigns, and close or unclaim the others."
+    },
+    {
+      "id": "CMR-08",
+      "title": "Merchant Center And Ads Are Linked",
+      "rule": "The Merchant account is linked to the Ads account that runs the Shopping campaigns, and the link is accepted at both ends. A pending link leaves campaigns with no inventory to serve.",
+      "check": {"type": "probe", "probe": "cmr.merchant_ads_link"},
+      "fix": "Send the link request from Merchant Center under Linked Accounts and accept it in Google Ads under Linked Accounts."
+    },
+    {
+      "id": "CMR-09",
+      "title": "Every Conversion Action Is Recording",
+      "rule": "Each conversion action in the Ads account has recorded conversions within the last seven days and none reports a tagging error. A conversion action that stopped firing leaves bidding optimising against nothing while the campaign keeps spending.",
+      "when": "ads",
+      "kinds": ["*"],
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "cmr.conversion_health"},
+      "fix": "Read the conversion action status through the Ads API, find which tag stopped firing, and repair the tag or the consent configuration behind it."
+    },
+    {
+      "id": "CMR-10",
+      "title": "Conversions Carry Values Rather Than Counting Page Loads",
+      "rule": "Purchase and lead conversions send a value and a currency, and no conversion action is a bare page-load count on a thank-you URL. Value-free conversions give smart bidding one signal where it needs two, and it optimises for the cheapest conversion rather than the most valuable.",
+      "when": "ads",
+      "kinds": ["*"],
+      "check": {"type": "probe", "probe": "cmr.conversion_values"},
+      "fix": "Send the transaction value and currency with the purchase event, and give lead conversions a value reflecting what a lead is worth. Replace page-load conversions with the event the page actually represents."
+    },
+    {
+      "id": "CMR-11",
+      "title": "Ads And The Analytics Property Are Linked",
+      "rule": "The Ads account is linked to the GA4 property for the same site, with auto-tagging on. Without the link, paid sessions land in the analytics property as unattributed traffic and no audience built there reaches a campaign.",
+      "when": "ads",
+      "kinds": ["*"],
+      "check": {"type": "probe", "probe": "cmr.ads_ga4_link"},
+      "fix": "Create the link from the GA4 admin under Google Ads Links, accept it in Ads, and confirm auto-tagging is enabled in the Ads account settings."
+    }
+  ]
+}

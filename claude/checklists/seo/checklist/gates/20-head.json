@@ -1,0 +1,110 @@
+{
+  "group": "Head Metadata",
+  "prefix": "HED",
+  "description": "The four lines a result is built from. A crawler that reaches the page reads these before it reads anything else, and a person in a results list reads nothing but these.",
+  "defaults": {
+    "kinds": [
+      "*"
+    ],
+    "when": "pages",
+    "severity": "required",
+    "source": "references/head-metadata.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "HED-01",
+      "title": "Every Route Sets A Title",
+      "rule": "Each route sets its own title, whether by a title tag or the framework's metadata. A route with no title of its own inherits the layout's, and a whole site ranks under one name.",
+      "severity": "blocker",
+      "check": {
+        "type": "title_present"
+      },
+      "fix": "Set a title per route - a title tag, a metadata export, or whatever this stack uses."
+    },
+    {
+      "id": "HED-02",
+      "title": "Titles Fit The Result",
+      "rule": "A title runs 30 to 60 characters. Under 30 it wastes the most valuable line on the page; over 60 Google truncates it mid-phrase and the reader never sees the end.",
+      "check": {
+        "type": "title_length",
+        "min": 30,
+        "max": 60
+      },
+      "fix": "Rewrite the long ones to lead with the subject and put the brand last."
+    },
+    {
+      "id": "HED-03",
+      "title": "No Two Routes Share A Title",
+      "rule": "Every title is distinct. Two routes with one title are two results a person cannot tell apart, and two pages the crawler treats as candidates for the same query.",
+      "when": "multipage",
+      "check": {
+        "type": "title_unique"
+      },
+      "fix": "Give each route a title naming what that route is, not what the site is."
+    },
+    {
+      "id": "HED-04",
+      "title": "Every Route Sets A Description",
+      "rule": "Each route sets a meta description. Without one the result shows whatever fragment of body copy happens to match the query, which is rarely the sentence worth showing.",
+      "severity": "blocker",
+      "check": {
+        "type": "description_present"
+      },
+      "fix": "Write a description per route saying what the page does and why to open it."
+    },
+    {
+      "id": "HED-05",
+      "title": "Descriptions Fit The Result",
+      "rule": "A description runs 120 to 160 characters. Shorter leaves the snippet half empty; longer is cut at the truncation point, which is usually mid-sentence.",
+      "check": {
+        "type": "description_length",
+        "min": 120,
+        "max": 160
+      },
+      "fix": "Trim or extend each one so the whole sentence survives the cut."
+    },
+    {
+      "id": "HED-06",
+      "title": "No Two Routes Share A Description",
+      "rule": "Every description is distinct. A description repeated across a site describes the site, which is not what a person scanning results is deciding between.",
+      "when": "multipage",
+      "check": {
+        "type": "description_unique"
+      },
+      "fix": "Rewrite the duplicates around what each route specifically offers."
+    },
+    {
+      "id": "HED-07",
+      "title": "The Document Declares Its Language",
+      "rule": "The root element carries a lang attribute. Screen readers pick a voice from it, hreflang is meaningless without it, and a mismatched language is a reason to be shown to the wrong audience.",
+      "when": "always",
+      "check": {
+        "type": "html_lang"
+      },
+      "fix": "Set lang on the html element in the document shell."
+    },
+    {
+      "id": "HED-08",
+      "title": "The Document Declares Its Charset",
+      "rule": "A charset declaration sits in the head. Without it the browser guesses, and a guess that lands wrong turns every non-ASCII character in a title into noise.",
+      "when": "always",
+      "check": {
+        "type": "charset"
+      },
+      "fix": "Add `<meta charset=\"utf-8\">` as the first element in the head."
+    },
+    {
+      "id": "HED-09",
+      "title": "The Document Declares Its Viewport",
+      "rule": "The shell sets a viewport. Mobile is the primary crawler, and a page without one renders at desktop width on a phone and is judged on that.",
+      "when": "always",
+      "check": {
+        "type": "viewport"
+      },
+      "fix": "Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` to the shell."
+    }
+  ]
+}

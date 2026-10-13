@@ -1,0 +1,89 @@
+{
+  "group": "Brand Presence",
+  "prefix": "PRS",
+  "description": "What somebody who already knows the brand sees when they search for it by name. This is the result the owner looks at, the one clients judge the work by, and the one no amount of on-page markup guarantees: Google chooses the site name, the favicon, the sitelinks and the knowledge panel from signals it weighs itself. Gates here are settled against live search results and Google's own rendering of the brand, never against the repository.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/presence.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PRS-01",
+      "title": "The Brand Query Returns The Site First",
+      "rule": "A search for the business name returns the site as the first organic result. Losing a brand query means directory listings, social profiles or a competitor stand between the business and people already looking for it.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "prs.brand_query"},
+      "fix": "Confirm the home page is indexed and canonical, strengthen the entity markup and the profile links through seo-checklist, and check no other property on the same brand outranks it."
+    },
+    {
+      "id": "PRS-02",
+      "title": "The Site Name Google Shows Is The One The Business Uses",
+      "rule": "The site name above the result is the business name as written everywhere else, not a domain, a tagline or a truncated page title. Google picks it from WebSite markup, the title, the Open Graph name and the header, and it settles on whichever is most consistent.",
+      "check": {"type": "probe", "probe": "prs.site_name"},
+      "fix": "Make the name identical in the WebSite node, the home page title, og:site_name and the visible header, hand those edits to seo-checklist, then wait for a recrawl."
+    },
+    {
+      "id": "PRS-03",
+      "title": "The Favicon Google Shows Is The Site's Own",
+      "rule": "The icon beside the result is the site's icon, square, at least 48 pixels, and crawlable. A missing or rejected favicon leaves a generic globe, which is the single clearest signal in a result that nobody is looking after the site.",
+      "check": {"type": "probe", "probe": "prs.favicon"},
+      "fix": "Serve a square icon of at least 48 pixels referenced from the home page, confirm robots.txt allows its path, and hand the markup to seo-checklist. Google refreshes it on its own schedule."
+    },
+    {
+      "id": "PRS-04",
+      "title": "Sitelinks Resolve To Pages Worth Landing On",
+      "rule": "The sitelinks under the brand result point to pages a visitor would choose, not to a login screen, a legal page or a dead route. Sitelinks are chosen from internal linking and traffic, so a weak set is a symptom of a navigation that buries what matters.",
+      "check": {"type": "probe", "probe": "prs.sitelinks"},
+      "fix": "Fetch the brand result and read the sitelinks. Where one is wrong, strengthen the internal links to the page that belongs there and demote the one that does not; where one is dead, fix or redirect the route."
+    },
+    {
+      "id": "PRS-05",
+      "title": "A Knowledge Panel Exists Where The Business Qualifies",
+      "rule": "A business with a physical location, an established profile or coverage elsewhere has a knowledge panel on its brand query. The panel is the largest thing on the result page, and a business without one looks smaller than one with one.",
+      "when": "local",
+      "kinds": ["local-business", "site"],
+      "check": {"type": "probe", "probe": "prs.knowledge_panel"},
+      "fix": "Complete the Business Profile, give the site an Organization or LocalBusiness node with sameAs links to the profiles Google can corroborate, and claim the panel through the entity verification flow once it appears."
+    },
+    {
+      "id": "PRS-06",
+      "title": "The Panel's Facts Agree With The Site",
+      "rule": "Every fact in the knowledge panel matches the site: the name, the founding, the category, the logo and the linked profiles. Google assembles the panel from third parties as readily as from the site, so a wrong fact is one it read somewhere else and preferred.",
+      "check": {"type": "probe", "probe": "prs.panel_facts"},
+      "fix": "Correct the fact at its source, whether that is a directory, a profile or the site itself, then submit feedback on the panel. A claimed panel accepts suggested edits directly."
+    },
+    {
+      "id": "PRS-07",
+      "title": "The Contact Details Google Shows Match The Site",
+      "rule": "The phone number, address and hours Google displays are the ones on the site's own contact page. A stale number in a result is answered by nobody, and the visitor never reaches the site to find the right one.",
+      "when": "local",
+      "kinds": ["local-business", "site"],
+      "check": {"type": "probe", "probe": "prs.contact_parity"},
+      "fix": "Update the Business Profile to the site's values, then correct the aggregators feeding the same details, since Google reconciles across them."
+    },
+    {
+      "id": "PRS-08",
+      "title": "The Brand's Own Profiles Are Claimed And Linked",
+      "rule": "The social and directory profiles Google shows for the brand are ones the business controls and links to from its own markup. An unclaimed profile ranking on the brand query is a page nobody can correct.",
+      "check": {"type": "probe", "probe": "prs.sameas"},
+      "fix": "Claim the profiles appearing on the brand query, make each link back to the site, and list them in the sameAs array through seo-checklist."
+    },
+    {
+      "id": "PRS-09",
+      "title": "No Retired Domain Or Former Name Outranks The Current One",
+      "rule": "No previous domain, staging host or former trading name ranks above the live site on the brand query. A retired property left indexed splits the brand's signals and sends people to a site nobody maintains.",
+      "check": {"type": "probe", "probe": "prs.legacy_domain"},
+      "fix": "Redirect the retired host to its match on the live site with a permanent redirect, keep the redirect in place, and submit the new URLs for indexing rather than deleting the old domain outright."
+    },
+    {
+      "id": "PRS-10",
+      "title": "The Snippet Google Writes For The Home Page Describes The Business",
+      "rule": "The description under the brand result says what the business does. Google writes the snippet itself and only sometimes uses the meta description, so a snippet built out of navigation labels means the home page has no prose worth quoting.",
+      "check": {"type": "probe", "probe": "prs.home_snippet"},
+      "fix": "Give the home page a plain sentence stating what the business is and who it serves, near the top and in real text, and hand the copy to seo-checklist."
+    }
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "group": "Loading Placeholders",
+  "prefix": "SKL",
+  "description": "A placeholder is a promise about the box that replaces it. These gates hold it to that promise in every dimension - size, position, layout, count, shape, and rhythm - require one wherever content arrives late, and settle the measurable ones from a browser capture rather than an assurance.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "when": "fetch",
+    "severity": "required",
+    "source": "references/polish.md#loading-states-and-skeletons",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "SKL-01",
+      "title": "One Component Renders Both States",
+      "rule": "The placeholder and the content it stands in for come from the same component, branching on the loading state. A separately authored skeleton is correct on the day it is written and drifts from that day onward - the content gains a row, the placeholder does not, and nothing points it out.",
+      "severity": "blocker",
+      "fix": "Move the placeholder into the component that renders the real thing, so the same layout code produces both."
+    },
+    {
+      "id": "SKL-02",
+      "title": "Placeholder Box Matches The Content Box",
+      "rule": "Each placeholder's rendered width and height match the box that replaces it, within 2px or 1%, whichever is larger. Measured in the browser at the same viewport, not estimated from the source.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "box"
+      },
+      "fix": "Capture both states with scripts/code/skeleton-probe.js, then size the placeholder from the same tokens the content uses rather than a chosen height."
+    },
+    {
+      "id": "SKL-03",
+      "title": "Placeholder Sits Where The Content Sits",
+      "rule": "Each placeholder's top-left lands within 2px of its content's, so nothing slides sideways or upward as the request returns.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "position"
+      },
+      "fix": "Give the placeholder the content's own wrapper, padding, and margins instead of a substitute container."
+    },
+    {
+      "id": "SKL-04",
+      "title": "Same Container, Same Layout",
+      "rule": "The placeholder renders inside the same grid or flex container as the content, with the same template, gap, alignment, and direction. A three-column grid that loads as a stack rearranges the page in front of the reader.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "gap"
+      },
+      "fix": "Render the placeholders as children of the real container rather than wrapping them in one of their own."
+    },
+    {
+      "id": "SKL-05",
+      "title": "Placeholder Count Matches What Arrives",
+      "rule": "The number of placeholders equals the number of items that land, or the page-size the request asks for. Where the count is genuinely unknown, the placeholder block is sized to the viewport and the arriving list extends it downward - never a fixed three that becomes twenty.",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "count"
+      },
+      "fix": "Drive the placeholder count from the same page-size constant the request uses."
+    },
+    {
+      "id": "SKL-06",
+      "title": "Text Placeholders Match Line Count And Line Height",
+      "rule": "A paragraph placeholder has as many bars as the text has lines, each the height of the real line box, spaced by the same line-height. A single tall block where three lines will land is a different shape arriving.",
+      "fix": "Set the bar height from the line-height token and repeat it per expected line."
+    },
+    {
+      "id": "SKL-07",
+      "title": "The Last Text Line Is Short",
+      "rule": "Real paragraphs end mid-line. A stack of equal-width bars reads as a barcode; the closing bar runs 40-70% width so the block reads as text before it is text.",
+      "severity": "advisory",
+      "fix": "Shorten the final bar in the group."
+    },
+    {
+      "id": "SKL-08",
+      "title": "Radius And Shape Match",
+      "rule": "Corner radius, circularity, and border weight match what arrives. A square placeholder that resolves into a round avatar is a visible pop even when the box is the right size.",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "radius"
+      },
+      "fix": "Take the radius from the same token the content uses."
+    },
+    {
+      "id": "SKL-09",
+      "title": "Image Placeholders Hold The Aspect Ratio",
+      "rule": "A placeholder standing in for an image declares the image's aspect-ratio, so the box is right before the file's dimensions are known.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "aspect"
+      },
+      "fix": "Set aspect-ratio on the placeholder from the same value the image element declares."
+    },
+    {
+      "id": "SKL-10",
+      "title": "Padding And Margins Are The Content's",
+      "rule": "The placeholder inherits the content's own spacing rather than approximating it. Padding that differs by a step moves every row below it when the data lands.",
+      "fix": "Apply the content's spacing tokens to the placeholder, or render it inside the content's own padded wrapper."
+    },
+    {
+      "id": "SKL-11",
+      "title": "Responsive Behaviour Matches At Every Breakpoint",
+      "rule": "The placeholder reflows at the same widths the content does, checked at 375, 768, and 1280. A placeholder that keeps three columns where the content collapses to one is only correct on a desktop.",
+      "severity": "blocker",
+      "fix": "Let the shared container's media queries drive both states, then re-capture at each width."
+    },
+    {
+      "id": "SKL-12",
+      "title": "Placeholder Colours Come From Tokens",
+      "rule": "The placeholder fill and its highlight are named tokens resolving in dark, light, and gray. A hardcoded pale grey is invisible on one theme and glaring on another.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_tokens"
+      },
+      "fix": "Define the placeholder fill and highlight as tokens in all three theme blocks and reference them."
+    },
+    {
+      "id": "SKL-13",
+      "title": "Shimmer Animates Transform Or Opacity Only",
+      "rule": "The sweep moves a translated overlay or fades opacity. Animating background-position, width, or left runs paint or layout on every frame of something the reader is already waiting through.",
+      "check": {
+        "type": "skeleton_motion"
+      },
+      "fix": "Replace the animated background-position with a translated gradient overlay, or fade the fill."
+    },
+    {
+      "id": "SKL-14",
+      "title": "Shimmer Stops Under Reduced Motion",
+      "rule": "Under prefers-reduced-motion the sweep stops and the placeholder holds a static fill. It still reads as pending; it just stops moving.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_reduced_motion"
+      },
+      "fix": "Add the reduced-motion block that sets the placeholder animation to none."
+    },
+    {
+      "id": "SKL-15",
+      "title": "Placeholders Are Hidden From Screen Readers",
+      "rule": "The placeholder block carries aria-hidden or sits inside an aria-busy region, and the wait is announced once through a live region. Without it a screen reader recites a row of empty boxes.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_aria"
+      },
+      "fix": "Add aria-hidden=\"true\" to the placeholders and aria-busy plus a polite live region to the container."
+    },
+    {
+      "id": "SKL-16",
+      "title": "Nothing Shifts When It Resolves",
+      "rule": "The layout shift from placeholder to content is zero. Everything below the block stays where it was - the whole reason a placeholder exists rather than a spinner.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "shift"
+      },
+      "fix": "Fix whichever of SKL-02 through SKL-10 the capture shows moving, then re-capture."
+    },
+    {
+      "id": "SKL-17",
+      "title": "One Placeholder Primitive, Not One Per Screen",
+      "rule": "A single Skeleton primitive and one Loading composition, reused. Bespoke placeholders per screen is how a codebase ends up with nine of them, each wrong in its own way.",
+      "check": {
+        "type": "skeleton_primitive_count"
+      },
+      "fix": "Extract the shared primitive and compose the per-screen shapes from it."
+    },
+    {
+      "id": "SKL-18",
+      "title": "The Placeholder Never Outlives The Request",
+      "rule": "A failed or timed-out request replaces the placeholder with the failure and a way to retry. A placeholder that can shimmer forever is a loading state standing in for an error.",
+      "severity": "blocker",
+      "fix": "Branch the failure out of the loading state and give it its own message and retry."
+    },
+    {
+      "id": "SKL-19",
+      "title": "Every Loading Path Has A Placeholder",
+      "rule": "Anything that fetches shows a placeholder shaped like what it is fetching. Not a spinner, not an empty container that springs open, not a bare page that fills in. A request the reader waits on without a placeholder is the default this whole group exists to replace.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_presence"
+      },
+      "fix": "Add the placeholder branch to the component that owns the request, built from the shared primitive."
+    },
+    {
+      "id": "SKL-20",
+      "title": "Deferred And Lazy Content Reserves Its Box",
+      "rule": "Content that mounts late - a dynamically imported section, a below-fold block, anything behind Suspense or an intersection observer - holds its box before it arrives. Nothing is loading yet from the reader's side; the page still must not jump when it does.",
+      "severity": "blocker",
+      "when": "html",
+      "fix": "Give the deferred boundary a placeholder of the mounted component's size rather than a null fallback."
+    },
+    {
+      "id": "SKL-21",
+      "title": "Late-Measuring Widgets Reserve Their Box",
+      "rule": "Charts, maps, editors, video players, and embeds measure their container on mount and paint a frame later. Each one gets a reserved box at its final height, so the section does not grow under the reader after the page looks settled.",
+      "severity": "blocker",
+      "when": "html",
+      "check": {
+        "type": "skeleton_late_widgets"
+      },
+      "fix": "Wrap the widget in a container with an explicit height or aspect-ratio, and show the placeholder inside it until the widget paints."
+    },
+    {
+      "id": "SKL-22",
+      "title": "Appending Pages Show Placeholder Rows",
+      "rule": "A list fetching its next page shows placeholder rows at the tail, in the row's own shape. A spinner under the list tells the reader something is happening but not what is coming.",
+      "when": "list",
+      "fix": "Append the placeholder rows to the same list while the next page is in flight."
+    },
+    {
+      "id": "SKL-23",
+      "title": "Route And Tab Changes Keep The Frame",
+      "rule": "Switching route, tab, or filter holds the frame and fills it with placeholders rather than collapsing to nothing and rebuilding. This applies even when the data is already cached and nothing is actually loading - the frame staying put is what makes the change read as a change rather than a reload.",
+      "when": "html",
+      "fix": "Keep the container mounted across the switch and swap its contents, placeholders first."
+    },
+    {
+      "id": "SKL-24",
+      "title": "Images Hold A Placeholder Until They Decode",
+      "rule": "An image box carries a placeholder fill - the tokened surface, a blur hash, or a dominant colour - from first paint until the file decodes. A reserved but empty box is a hole in the layout for as long as the network takes.",
+      "when": "image",
+      "check": {
+        "type": "skeleton_image_placeholder"
+      },
+      "fix": "Set a token background on the image element or its wrapper, so the box is filled before the file lands."
+    },
+    {
+      "id": "SKL-25",
+      "title": "A View's Placeholders Resolve Together",
+      "rule": "Every placeholder in one view flips on one state change, from one loading boundary. Where each block waits on its own request, the top one lands first and everything below it jumps, then the next lands and it jumps again - the reader is being moved around while trying to read the part that already arrived. Hold the view until its data is in, or give each block a box so exact that its arrival moves nothing.",
+      "severity": "blocker",
+      "check": {
+        "type": "resolve_together"
+      },
+      "fix": "Gather the view's requests into one await or one Suspense boundary, so the placeholders come and go as a set."
+    },
+    {
+      "id": "SKL-26",
+      "title": "Nothing Already On Screen Moves When The Rest Lands",
+      "rule": "Measured across the whole resolution, not per block: the total shift from first placeholder to last arrival is zero. A block resolving early and shrinking pulls everything below it upward, which is the same defect as a late one growing - and neither shows up when each placeholder is checked on its own.",
+      "severity": "blocker",
+      "check": {
+        "type": "skeleton_probe",
+        "dimension": "cascade"
+      },
+      "fix": "Run skeletonProbe.watch() through the load, then fix whichever block reports movement - usually one whose placeholder is not the height of what replaces it."
+    },
+    {
+      "id": "SKL-27",
+      "title": "Content Animates In, It Does Not Appear",
+      "rule": "When a placeholder resolves, what replaces it animates in - the same entrance used for page changes, once, on the block rather than on each of its children. Content that simply appears reads as a repaint rather than an arrival, and it is the moment the reader is looking straight at.",
+      "severity": "blocker",
+      "check": {
+        "type": "content_entrance"
+      },
+      "fix": "Apply the shared entrance to the resolved block, keyed so it runs once, and stop it under reduced motion."
+    }
+  ]
+}

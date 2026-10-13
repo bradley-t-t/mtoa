@@ -1,0 +1,74 @@
+{
+  "group": "Responsiveness",
+  "prefix": "INP",
+  "description": "Interaction to Next Paint measures the worst delay between a reader acting and the screen answering. It is the metric a loading-focused pass leaves untouched and the one most likely to be rated poor, because it is paid on every tap rather than once at the start. Every rule here is about what occupies the main thread, never about what the interaction does.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "js",
+    "severity": "required",
+    "source": "references/interaction.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "INP-01",
+      "title": "Animation Runs On The Compositor",
+      "rule": "Continuous motion animates transform and opacity and nothing else. Animating width, height, top, left, margin or box-shadow makes the browser lay the page out again on every frame, on the same thread that has to answer the next tap.",
+      "when": "animation",
+      "check": {"type": "compositor_animation"},
+      "fix": "Express the same motion as a transform. A slide is translate, a grow is scale, a fade is opacity - the result on screen is identical."
+    },
+    {
+      "id": "INP-02",
+      "title": "Scroll Handlers Are Passive And Cheap",
+      "rule": "Every scroll, wheel and touch listener is registered passive and does no layout reading. A non-passive listener makes the browser wait for it before it may scroll at all.",
+      "check": {"type": "passive_listeners"},
+      "fix": "Pass {passive: true}. Where the handler measures the page, move the measurement to an IntersectionObserver or a ResizeObserver, which run off the main thread."
+    },
+    {
+      "id": "INP-03",
+      "title": "Nothing Loops Forever",
+      "rule": "Every requestAnimationFrame loop stops when its subject leaves the screen, when the tab is hidden, and when the reader has asked for reduced motion. A particle field that keeps drawing behind the footer competes with every interaction on the page for as long as the visit lasts.",
+      "when": "raf",
+      "check": {"type": "unbounded_raf"},
+      "fix": "Cancel the frame on intersection loss and on visibilitychange, and never start it under prefers-reduced-motion."
+    },
+    {
+      "id": "INP-04",
+      "title": "Layout Is Not Read And Written In The Same Pass",
+      "rule": "No code reads a measured property and then writes a style in the same loop. Each alternation forces a synchronous layout, and in a loop that is one full layout per iteration.",
+      "check": {"type": "layout_thrash"},
+      "fix": "Read every measurement first, then write. Where the loop is long, batch the writes into the next animation frame."
+    },
+    {
+      "id": "INP-05",
+      "title": "Input Handlers Yield Before Doing Work",
+      "rule": "A handler that does more than update what was touched gives the browser a chance to paint first. The measured delay ends at the next paint, so painting the response before doing the rest of the work is the whole difference.",
+      "check": {"type": "handler_yield"},
+      "fix": "Paint the immediate feedback, yield, then continue. Filtering, sorting and network calls belong after the yield."
+    },
+    {
+      "id": "INP-06",
+      "title": "Large Lists Are Not Rendered Whole",
+      "rule": "A list long enough to exceed the viewport several times over renders what is visible. Every row that exists is layout, style and memory the browser carries through every interaction.",
+      "when": "list",
+      "check": {"type": "long_list"},
+      "fix": "Windowing, pagination, or content-visibility: auto on the rows. The reader sees the same list."
+    },
+    {
+      "id": "INP-07",
+      "title": "Off-Screen Sections Are Skipped",
+      "rule": "Sections below the fold declare content-visibility so the browser can skip their layout and paint until they are approached. Every section costs style and layout at load whether or not anybody scrolls to it.",
+      "check": {"type": "content_visibility"},
+      "fix": "Set content-visibility: auto with a contain-intrinsic-size that matches the section's real height, so nothing shifts when it is skipped."
+    },
+    {
+      "id": "INP-08",
+      "title": "Third-Party Code Does Not Own The Main Thread",
+      "rule": "No embedded script runs long tasks during or after load. A tag manager and a chat widget are each capable of holding the thread for longer than the whole interaction budget.",
+      "when": "thirdparty",
+      "check": {"type": "thirdparty_main_thread"},
+      "fix": "Load it after the load event, on an interaction, or in a worker. Where it must run, budget it and measure what it costs."
+    }
+  ]
+}

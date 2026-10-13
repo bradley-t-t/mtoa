@@ -1,0 +1,107 @@
+{
+  "group": "Rich Results",
+  "prefix": "RCH",
+  "description": "What Google resolves out of a page's structured data, which is a different thing from what the page declares. The SEO checklist owns the markup in the repository and can prove it is valid JSON-LD carrying the right properties; only Google can say whether the item was parsed, whether it entered the enhancement reports clean, and whether the result type is one it still draws. Every gate here answers to Google's own reading of a live URL.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/rich-results.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "RCH-01",
+      "title": "The Declared Types Are Types Google Actually Renders",
+      "rule": "Every structured data type on the site maps to a rich result Google still draws for this kind of business. Markup for a result type that was never available to the site is weight in the page and nothing in the search result.",
+      "check": {"type": "probe", "probe": "rch.eligible"},
+      "fix": "Test each template URL against the Rich Results Test and drop any type it reports no eligibility for. Replace it with the live type covering the same content where one exists."
+    },
+    {
+      "id": "RCH-02",
+      "title": "Google Resolves The Markup The Page Sends",
+      "rule": "The items Google extracts from the rendered URL match the items the source emits, in count and in type. Markup injected after load, split across a hydration boundary, or built from data that arrives late is markup Google may never see.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "rch.resolved"},
+      "fix": "Compare the Rich Results Test rendered output against the source. Move the JSON-LD into the server-rendered document where the two disagree, and hand the rendering change to seo-checklist."
+    },
+    {
+      "id": "RCH-03",
+      "title": "No Item In The Enhancement Reports Is Invalid",
+      "rule": "The Search Console enhancement report for each type shows zero invalid items. An invalid item earns no rich result at all, and one bad template puts every URL built from it into the same bucket.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "rch.invalid_items"},
+      "fix": "Open the failing type in Search Console, read the error and the sample URLs, correct the template through seo-checklist, then use Validate Fix to start Google's recrawl of the affected set."
+    },
+    {
+      "id": "RCH-04",
+      "title": "No Item Is Valid Only With Warnings",
+      "rule": "The enhancement reports show no items carrying warnings. A warning names a recommended property Google wanted and did not get, and the item competes against items that supplied it.",
+      "check": {"type": "probe", "probe": "rch.warning_items"},
+      "fix": "Add the missing recommended properties to the template that produced them, taking the values from real data rather than filling them to clear the warning."
+    },
+    {
+      "id": "RCH-05",
+      "title": "Every Marked-Up Fact Appears On The Page",
+      "rule": "Nothing in the structured data describes content a visitor cannot see on that URL. Markup that outruns the page is the most common cause of a structured data manual action, and the penalty removes every rich result across the property rather than the one item.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "rch.page_parity"},
+      "fix": "Remove the properties describing absent content, or render the content. Hidden FAQ blocks, ratings held only in a database, and prices shown after a click all count as absent."
+    },
+    {
+      "id": "RCH-06",
+      "title": "Rich Result Images Meet Google's Size And Aspect Rules",
+      "rule": "Images referenced from structured data are at least 1200 pixels wide, are crawlable, and are supplied in the aspect ratios the result type accepts. An image Google rejects drops the item to a plain result with no error anywhere in the reports.",
+      "check": {"type": "probe", "probe": "rch.image_specs"},
+      "fix": "Publish 16x9, 4x3 and 1x1 crops of each image at 1200 pixels or wider, list all three in the image array, and confirm robots.txt allows the image path."
+    },
+    {
+      "id": "RCH-07",
+      "title": "No Retired Rich Result Type Is Marked Up",
+      "rule": "The site carries no HowTo, SpecialAnnouncement, ClaimReview, EstimatedSalary, CourseInfo or VehicleListing markup. Google withdrew these result types, so the items validate, report as valid, and produce nothing.",
+      "check": {"type": "probe", "probe": "rch.retired_types"},
+      "fix": "Delete the retired type from the template through seo-checklist. Keep the rendered content; only the markup is retired."
+    },
+    {
+      "id": "RCH-08",
+      "title": "The Local Business Result Is Earned",
+      "rule": "LocalBusiness markup on the site resolves with a name, address, phone and opening hours that match the Business Profile Google holds. A business whose site and profile disagree gets neither the rich result nor a stable map placement.",
+      "when": "local",
+      "kinds": ["local-business", "site"],
+      "check": {"type": "probe", "probe": "rch.local_eligible"},
+      "fix": "Align the markup with the Business Profile record, address line for address line, and give the profile the same URL the markup declares."
+    },
+    {
+      "id": "RCH-09",
+      "title": "Product Results Carry Price And Availability Google Accepts",
+      "rule": "Product items resolve with a currency, a price and an availability value from the schema.org vocabulary. A product result without a price is a plain link, and an availability string Google cannot parse invalidates the offer.",
+      "when": "ecommerce",
+      "kinds": ["ecommerce", "product"],
+      "check": {"type": "probe", "probe": "rch.product_eligible"},
+      "fix": "Emit priceCurrency, price and an availability enumeration URL on every Offer node, rendered server-side from the same source the page displays."
+    },
+    {
+      "id": "RCH-10",
+      "title": "Article Results Are Earned On Editorial Routes",
+      "rule": "Editorial URLs resolve as Article, BlogPosting or NewsArticle with a headline under 110 characters, a dated publication, a named author and an image. A post that resolves as an untyped page loses the image and the byline in the result.",
+      "when": "blog",
+      "kinds": ["blog", "site"],
+      "check": {"type": "probe", "probe": "rch.article_eligible"},
+      "fix": "Build the article markup from the post's own front matter so it cannot drift from the rendered post, and give the author a Person node with a URL."
+    },
+    {
+      "id": "RCH-11",
+      "title": "Breadcrumbs Resolve To A Trail Google Displays",
+      "rule": "BreadcrumbList items resolve with a position and a resolvable item URL on every route below the root. Google shows the trail in place of the raw URL, and a broken position sequence drops the whole list.",
+      "check": {"type": "probe", "probe": "rch.breadcrumb"},
+      "fix": "Number the positions from one with no gaps, give every entry an absolute item URL, and leave the final entry without a link only if the markup still names it."
+    },
+    {
+      "id": "RCH-12",
+      "title": "Review Snippets Are Claimed Only Where Policy Allows",
+      "rule": "No page marks up a review of the business that publishes it. Self-serving reviews on Organization and LocalBusiness earn no stars, and marking them anyway is a documented policy breach rather than a missed opportunity.",
+      "check": {"type": "probe", "probe": "rch.review_policy"},
+      "fix": "Remove aggregateRating and review from the site's own Organization or LocalBusiness node. Keep review markup on Product and on the specific items being reviewed."
+    }
+  ]
+}

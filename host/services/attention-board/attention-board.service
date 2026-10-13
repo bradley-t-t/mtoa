@@ -1,0 +1,16 @@
+[Unit]
+Description=Slack board for what needs a person
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=@USER@
+
+# The letters table is read with the service-role key, which with-credential.py
+# puts in this process's environment and renders nowhere. A credential the vault
+# cannot answer for is left unset and the board still runs: the three cases that
+# need no key keep reporting, and the letters read raises itself as unread.
+ExecStart=@HOME@/.claude/tools/with-credential.py \
+  supabase-service-role-sunday=SUPABASE_SERVICE_ROLE_KEY \
+  -- /usr/bin/python3 -u @HOME@/attention-board/attention_board.py

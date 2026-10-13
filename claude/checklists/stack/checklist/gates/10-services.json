@@ -1,0 +1,154 @@
+{
+  "group": "Service Liveness",
+  "prefix": "SVC",
+  "description": "The part source cannot answer. A project's code can be perfect against a Supabase that was paused for inactivity three weeks ago, a Clerk instance still holding development keys, and a Stripe webhook nobody registered. Every gate here is settled by a request, and none of them takes an attestation.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "source": "references/service-liveness.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "SVC-01",
+      "title": "The Supabase Project Is Awake",
+      "rule": "The project answers rather than sitting paused. A free-tier project pauses on its own after a week without traffic, and a paused project fails every request with the same shape as a bad key, so the site looks broken and the code looks wrong.",
+      "when": "supabase",
+      "check": {"type": "probe", "probe": "supabase.awake"},
+      "fix": "Resume the project in the Supabase dashboard, then probe again. If it pauses repeatedly, the plan is the fix, not the code."
+    },
+    {
+      "id": "SVC-02",
+      "title": "The Publishable Key Works Against A Real Query",
+      "rule": "A request carrying the key the client ships returns data, not a 401. Reading the key out of the environment proves it exists; only a query proves it is the right one for this project.",
+      "when": "supabase",
+      "check": {"type": "probe", "probe": "supabase.query"},
+      "fix": "Correct the key in Vercel for the environment that failed, redeploy, and probe again."
+    },
+    {
+      "id": "SVC-03",
+      "title": "Remote Migrations Match The Repository",
+      "rule": "Every migration in supabase/migrations is applied on the remote and the remote holds nothing the repository does not. A schema edited by hand in the dashboard leaves the repository describing a database that no longer exists, and the next environment built from it is a different database.",
+      "when": "supabase_migrations",
+      "check": {"type": "probe", "probe": "supabase.migrations"},
+      "fix": "supabase db push for what is missing; capture anything applied by hand as a migration and commit it."
+    },
+    {
+      "id": "SVC-04",
+      "title": "Every Table Has Row Level Security Enabled",
+      "rule": "RLS is on for every table in the public schema. The publishable key is in the browser of every visitor, so a table without RLS is a table the internet can read, and often write.",
+      "when": "supabase",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "supabase.rls"},
+      "fix": "ALTER TABLE ... ENABLE ROW LEVEL SECURITY, then write the policies. A table with RLS on and no policy denies everything, which is the safe end to start from."
+    },
+    {
+      "id": "SVC-05",
+      "title": "Every Edge Function Is Deployed And Answers",
+      "rule": "Each function under supabase/functions exists on the remote and returns a response. A function that was written, committed and never deployed fails only on the path that calls it, which is usually the path nobody tests.",
+      "when": "supabase_functions",
+      "check": {"type": "probe", "probe": "supabase.functions"},
+      "fix": "supabase functions deploy <name> for each one the probe could not reach."
+    },
+    {
+      "id": "SVC-06",
+      "title": "Every Storage Bucket Carries A Policy",
+      "rule": "No bucket is left with the default. A public bucket nobody meant to make public is the same mistake as a table without RLS, with the files already served over a CDN.",
+      "when": "supabase_storage",
+      "check": {"type": "probe", "probe": "supabase.storage"},
+      "fix": "Set the bucket to private and write the access policies it needs, or state that public is the intent."
+    },
+    {
+      "id": "SVC-10",
+      "title": "The Clerk Instance Is Live",
+      "rule": "The instance answers and the environment reaching it is the one that should. An application whose sign-in never loads reports nothing to the user beyond a spinner.",
+      "when": "clerk",
+      "check": {"type": "probe", "probe": "clerk.live"},
+      "fix": "Check the instance in the Clerk dashboard and the keys in Vercel for the failing environment."
+    },
+    {
+      "id": "SVC-11",
+      "title": "Production Runs On Production Keys",
+      "rule": "No pk_test or sk_test key is set for the production environment. Development keys work well enough to hide the mistake: sign-in succeeds, sessions issue, and the users land in the wrong instance.",
+      "when": "clerk",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "clerk.keymode"},
+      "fix": "Replace the production environment's keys with the live pair and redeploy."
+    },
+    {
+      "id": "SVC-12",
+      "title": "The Deployed Domain Is An Allowed Origin",
+      "rule": "The production domain appears in the instance's allowed origins and its redirect URLs. A domain missing from either list breaks the redirect back from sign-in, and it breaks it only in production.",
+      "when": "clerk",
+      "check": {"type": "probe", "probe": "clerk.origins"},
+      "fix": "Add the domain, with and without www as the site serves them, to both lists."
+    },
+    {
+      "id": "SVC-13",
+      "title": "The Webhook Is Registered And Signed",
+      "rule": "Where the application reads Clerk webhooks, the endpoint is registered against the deployed URL and its signing secret is set in the environment. An unsigned endpoint accepts anything that posts to it.",
+      "when": "clerk_webhook",
+      "check": {"type": "probe", "probe": "clerk.webhook"},
+      "fix": "Register the endpoint in the Clerk dashboard, put its signing secret in Vercel, and verify every request against it."
+    },
+    {
+      "id": "SVC-20",
+      "title": "The Stripe Key Mode Matches The Environment",
+      "rule": "Live keys in production, test keys everywhere else, and never the other way round. A test key in production takes payments that never arrive; a live key in preview takes real money from whoever is clicking through a branch.",
+      "when": "stripe",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "stripe.keymode"},
+      "fix": "Set the correct pair per environment in Vercel and redeploy."
+    },
+    {
+      "id": "SVC-21",
+      "title": "The Stripe Webhook Is Registered And Reachable",
+      "rule": "The endpoint exists in the account for this mode, points at the deployed URL, and answers. Payment succeeds without it and the application never learns, so the order is paid for and never fulfilled.",
+      "when": "stripe",
+      "check": {"type": "probe", "probe": "stripe.webhook"},
+      "fix": "Register the endpoint for the events the code handles, set the signing secret, and verify it answers."
+    },
+    {
+      "id": "SVC-22",
+      "title": "Every Price Referenced In Code Exists",
+      "rule": "Each price identifier the source names resolves in the account, in the mode that environment runs. A stale price id fails at the checkout call, which is the last place a visitor is willing to meet an error.",
+      "when": "stripe_prices",
+      "check": {"type": "probe", "probe": "stripe.prices"},
+      "fix": "Correct the identifiers, or create the prices. Read them from the environment rather than pinning them in source if they move between modes."
+    },
+    {
+      "id": "SVC-30",
+      "title": "The Repository Is Linked To A Vercel Project",
+      "rule": "The project is linked and the link names the project that actually serves the domain. A repository linked to nothing deploys nowhere; one linked to the wrong project deploys somewhere nobody is looking.",
+      "when": "vercel",
+      "check": {"type": "vercel_linked"},
+      "fix": "vercel link, and confirm the project name against the one serving the domain."
+    },
+    {
+      "id": "SVC-31",
+      "title": "The Domain Is Attached And Serving",
+      "rule": "The production domain is attached to the project and returns the site. A domain pointing at a project that no longer exists resolves, answers, and shows nothing of ours.",
+      "when": "vercel",
+      "check": {"type": "probe", "probe": "vercel.domain"},
+      "fix": "Attach the domain to the project and check the DNS records it asks for."
+    },
+    {
+      "id": "SVC-32",
+      "title": "Deployment Protection Is A Decision",
+      "rule": "The protection setting is what it is on purpose. Protection left on hides a public site behind a login wall; protection turned off on an internal tool publishes it. Either can be right, and the gate is that somebody chose.",
+      "when": "vercel",
+      "severity": "required",
+      "check": {"type": "probe", "probe": "vercel.protection"},
+      "fix": "Set it deliberately in the project settings and record which way and why."
+    },
+    {
+      "id": "SVC-33",
+      "title": "Production Serves The Commit main Points At",
+      "rule": "The current production deployment was built from the tip of main. A merged promotion that never built leaves a green pull request and an unchanged site, which is the exact state a release has already been reported finished in.",
+      "when": "vercel",
+      "check": {"type": "probe", "probe": "vercel.current"},
+      "fix": "Redeploy from the tip of main, and where the site is hosted from a second repository, push main to it: git push <deploy remote> origin/main:main."
+    }
+  ]
+}

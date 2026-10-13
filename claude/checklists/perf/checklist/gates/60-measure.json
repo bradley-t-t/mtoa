@@ -1,0 +1,56 @@
+{
+  "group": "Measurement",
+  "prefix": "MSR",
+  "description": "A performance change nobody measured is a guess. These gates hold the run to numbers taken the same way before and after, and to the distinction between what a lab run reports and what visitors actually experience.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/measuring.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "MSR-01",
+      "title": "Before And After Were Measured The Same Way",
+      "rule": "Both numbers come from the same tool, the same form factor and the same URL. A lab run compared against a field score, or a phone run against a desktop one, is two different questions with one answer written under them.",
+      "check": {"type": "measure_paired"},
+      "fix": "scripts/psi.py measure --url <url> --label after, then scripts/psi.py compare."
+    },
+    {
+      "id": "MSR-02",
+      "title": "Field Data Was Read, Not Only The Lab Score",
+      "rule": "The run read what real visitors experience at the 75th percentile. The lab score is a simulation on one throttled connection; the field record is the number that describes the site and the one that ranks it.",
+      "check": {"type": "field_data_read"},
+      "fix": "scripts/psi.py field --url <url>. Where a URL has too little traffic to have its own record, read the origin's."
+    },
+    {
+      "id": "MSR-03",
+      "title": "The Metric That Is Actually Failing Was Named",
+      "rule": "The run states which metric is out of threshold and worked on that one. Lab scores are dominated by loading, so a site rated poor on responsiveness can be optimised all day without the rating moving.",
+      "check": {"type": "failing_metric_named"},
+      "fix": "Read the field record: LCP good under 2.5s, INP good under 200ms, CLS good under 0.1. Work the one that is failing."
+    },
+    {
+      "id": "MSR-04",
+      "title": "The Measured URL Is The One People Reach",
+      "rule": "The measurement was taken against the host and path visitors actually land on. Measuring a host that redirects reports the redirect as part of the page, and measuring only the home page says nothing about the routes carrying the traffic.",
+      "check": {"type": "measured_canonical"},
+      "fix": "Measure the canonical host, and measure the busiest routes as well as the home page."
+    },
+    {
+      "id": "MSR-05",
+      "title": "Something Got Faster",
+      "rule": "The after numbers beat the before numbers on the metric the run set out to fix. A run that measured, changed the project and moved nothing has found that its theory was wrong, and that is a result to record rather than to leave unsaid.",
+      "check": {"type": "improvement_shown"},
+      "fix": "scripts/psi.py compare prints the delta per metric. Where nothing moved, say so and say what the next candidate is."
+    },
+    {
+      "id": "MSR-06",
+      "title": "A Budget Was Written Down",
+      "rule": "The project records the weights and timings it intends to hold, so the next change that breaks them is caught by something other than a person noticing the site feels slow.",
+      "check": {"type": "budget_recorded"},
+      "fix": "scripts/bundle-probe.py budget --write records the current weights as the ceiling."
+    }
+  ]
+}

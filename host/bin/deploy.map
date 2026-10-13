@@ -1,0 +1,28 @@
+# Every file this repository is the source of, and where it lives on the host,
+# relative to the service account's home. A file absent from this map does not
+# travel, which is why adding a service means adding its line here.
+#
+#   <source in this directory>|<directory on the host, under home>|<unit to restart>
+services/error-reporter/error_reporter.py|error-reporter/|error-reporter.service
+services/error-reporter/status_feed.py|error-reporter/|error-reporter.service
+services/error-reporter/server_feed.py|error-reporter/|error-reporter.service
+services/error-reporter/selftest_fingerprint.py|error-reporter/|
+services/error-reporter/selftest_history.py|error-reporter/|
+services/error-reporter/selftest_reader.py|error-reporter/|
+services/uptime-monitor/monitor.py|uptime-monitor/|
+services/status-board/status_board.py|status-board/|
+services/queue-board/queue_board.py|queue-board/|
+services/attention-board/attention_board.py|attention-board/|
+services/expiry-monitor/expiry_monitor.py|expiry-monitor/|
+services/lib/slack.py|lib/|
+services/lib/set_slack.py|lib/|
+services/lib/mtoa_config.py|lib/|
+services/error-monitor/error-monitor-run.sh|bin/|
+services/error-monitor/error-monitor-tick.sh|bin/|
+services/error-monitor/error-monitor.prompt.md|error-monitor/|
+services/routine-repair/routine-repair.sh|bin/|
+services/routine-repair/routine-repair-sweep.sh|bin/|
+services/routine-repair/routine-repair.prompt.md|routine-repair/|
+bin/routine-deliver.py|bin/|
+bin/routine-salvage.py|bin/|
+bin/work-sync.sh|bin/|

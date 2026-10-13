@@ -1,0 +1,29 @@
+{
+  "group": "AI Readers",
+  "prefix": "GEO",
+  "description": "Generative answers and agentic browsers read the same site, differently. Google's own position is that this is still SEO rather than a separate discipline, so these gates are the ones where an AI reader's needs diverge from a crawler's - and nothing here trades away search to get them.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/ai-readers.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "GEO-01",
+      "title": "The Site Takes A Position On AI Crawlers",
+      "rule": "robots.txt names the AI crawlers and allows or disallows them deliberately. Silence is not neutrality: it hands the decision to each company. Blocking Google-Extended does not affect Search, and blocking GPTBot does not stop ChatGPT citing the site through browsing.",
+      "check": {"type": "ai_crawler_policy"},
+      "fix": "Add a User-agent block per crawler with the stance the project actually wants."
+    },
+    {
+      "id": "GEO-02",
+      "title": "llms.txt Gives The Site's Shape",
+      "rule": "An llms.txt lists what the site is and where its substantial pages are. Google does not use it, so this is not a ranking gate - it is a one-fetch map for the readers that do.",
+      "severity": "recommended",
+      "check": {"type": "llms_txt"},
+      "fix": "Write llms.txt at the site root: a title, a one-line summary, and linked sections for the pages worth reading."
+    }
+  ]
+}

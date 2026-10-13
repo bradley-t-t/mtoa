@@ -1,0 +1,870 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src ws:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Sunday</title>
+<style>
+  :root {
+    --text: rgba(255, 255, 255, 0.94);
+    --text-dim: rgba(255, 255, 255, 0.58);
+    --text-faint: rgba(255, 255, 255, 0.42);
+    --text-reply: rgba(255, 255, 255, 0.84);
+    --tint: rgba(18, 20, 26, 0.22);
+    --edge: rgba(255, 255, 255, 0.16);
+    --sheen: rgba(255, 255, 255, 0.10);
+    --listen: #5ab0ff;
+    --think: #ffb547;
+    --speak: #5fe0a0;
+    --alert: #ff8a80;
+    --idle: rgba(255, 255, 255, 0.45);
+    --radius: 18px;
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; overflow: hidden; }
+  body {
+    font: 14px/1.38 -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    cursor: default;
+  }
+  .panel {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    border-radius: var(--radius);
+    background:
+      linear-gradient(180deg, var(--sheen), transparent 46%),
+      var(--tint);
+    box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: opacity 0.25s ease;
+  }
+  /* The panel stops at the window's height cap and the cards scroll inside it. */
+  .panel { display: flex; flex-direction: column; max-height: 640px; }
+  .cards { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+  .queue, .bar { flex: none; }
+  .cards::-webkit-scrollbar { width: 6px; }
+  .cards::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+  .cards:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
+  /* A faint shadow under the type keeps it legible over a bright window behind the glass. */
+  .card, .row, .bar .title { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22); }
+
+  .card { position: relative; padding: 12px 16px 13px; cursor: pointer; transition: opacity 0.3s ease; }
+  .card + .card::before, .queue::before {
+    content: ""; position: absolute; top: 0; left: 16px; right: 16px;
+    height: 1px; background: var(--edge);
+  }
+  .card.leaving, .row.leaving { opacity: 0; }
+  /* A card whose detail is up on the full-screen canvas: the canvas carries it meanwhile. */
+  .card.on-canvas { display: none; }
+
+  .head { position: relative; display: flex; align-items: center; gap: 9px; height: 18px; }
+  .orb {
+    position: relative; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--orb, var(--idle));
+    box-shadow: 0 0 10px var(--orb, transparent);
+    flex: none;
+    transition: background 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  }
+  .orb::before, .orb::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%;
+    border: 1.5px solid var(--orb, transparent); opacity: 0;
+  }
+  .listening .orb { --orb: var(--listen); }
+  .listening .orb::before { animation: ripple 1.8s ease-out infinite; }
+  .listening .orb::after { animation: ripple 1.8s ease-out 0.9s infinite; }
+  .thinking .orb { --orb: var(--think); animation: breathe 1.4s ease-in-out infinite; }
+  .speaking .orb { --orb: var(--speak); }
+  .answered .orb { --orb: var(--speak); opacity: 0.55; box-shadow: none; }
+  .alert .orb { --orb: var(--alert); }
+  .quiet .orb { --orb: var(--idle); box-shadow: none; }
+  @keyframes ripple { from { transform: scale(0.55); opacity: 0.85; } to { transform: scale(2.1); opacity: 0; } }
+  @keyframes breathe { 50% { transform: scale(0.72); opacity: 0.6; } }
+
+  .label {
+    flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: var(--text-dim);
+  }
+  .listening .label, .thinking .label, .speaking .label { color: rgba(255, 255, 255, 0.78); }
+  .alert .label { color: var(--alert); }
+  .chip {
+    flex: none; font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--text-dim);
+    padding: 1px 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--edge);
+  }
+  .chip:empty { display: none; }
+  .bars { display: none; gap: 2px; align-items: center; height: 12px; }
+  .speaking .bars { display: flex; }
+  .bars i {
+    width: 2.5px; height: 12px; border-radius: 2px; background: var(--speak);
+    transform: scaleY(0.33); animation: eq 0.9s ease-in-out infinite;
+  }
+  .bars i:nth-child(2) { animation-delay: -0.3s; }
+  .bars i:nth-child(3) { animation-delay: -0.6s; }
+  .bars i:nth-child(4) { animation-delay: -0.15s; }
+  @keyframes eq { 50% { transform: scaleY(1); } }
+  /* A thin current under the label while Sunday works something out. */
+  .flow {
+    position: absolute; left: 19px; right: 0; bottom: -6px; height: 1.5px;
+    overflow: hidden; border-radius: 1px; opacity: 0; transition: opacity 0.3s ease;
+  }
+  .thinking .flow { opacity: 0.75; }
+  .flow::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 34%;
+    background: linear-gradient(90deg, transparent, var(--think), transparent);
+    transform: translateX(-100%);
+  }
+  .thinking .flow::after { animation: flow 1.7s var(--ease) infinite; }
+  @keyframes flow { to { transform: translateX(300%); } }
+
+  .you { margin-top: 8px; font-size: 15px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+  .you.partial { color: rgba(255, 255, 255, 0.66); }
+  .you.partial::after {
+    content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 3px; vertical-align: -0.14em;
+    border-radius: 1px; background: var(--listen); animation: caret 1s steps(2, jump-none) infinite;
+  }
+  .you.earlier { font-size: 13px; font-weight: 500; color: var(--text-dim); }
+  .you.earlier::before { content: "\201c"; }
+  .you.earlier::after { content: "\201d"; }
+  .you:empty { display: none; }
+  @keyframes caret { 50% { opacity: 0; } }
+  .status { margin-top: 7px; font-size: 13px; color: var(--text-dim); }
+  .status:empty { display: none; }
+  /* A reply is never clipped: the card grows, and past the window's height the
+     card list scrolls as a whole, newest at the top. */
+  .reply {
+    margin-top: 7px; max-width: 68ch;
+    font-size: 14.5px; line-height: 1.5; color: var(--text-reply);
+    overflow-wrap: anywhere; white-space: pre-wrap;
+  }
+  .reply.filler { color: var(--text-dim); }
+  .reply:empty { display: none; }
+  .note { margin-top: 7px; font-size: 12.5px; line-height: 1.45; color: var(--text-dim); }
+  .note:empty { display: none; }
+  .actions { margin-top: 10px; display: flex; gap: 8px; }
+  .actions:empty { display: none; }
+
+  /* The queue: other work still in progress, below the cards. */
+  .queue { position: relative; padding: 9px 16px 6px; }
+  .queue:empty, .queue.none, .cards:empty + .queue::before { display: none; }
+  .row {
+    display: flex; align-items: center; gap: 9px; height: 22px;
+    font-size: 12.5px; transition: opacity 0.3s ease;
+  }
+  .row[hidden] { display: none; }
+  .row .orb { width: 7px; height: 7px; --orb: var(--think); animation: breathe 1.4s ease-in-out infinite; }
+  .row .orb::before, .row .orb::after { display: none; }
+  .row .what { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-reply); }
+  .row .state { flex: none; font-size: 11px; font-weight: 600; color: var(--text-dim); }
+
+  .bar {
+    display: flex; align-items: center; gap: 8px; padding: 0 12px 8px 16px; height: 30px;
+  }
+  .bar .title { flex: 1; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--text-dim); }
+  .bar .title.warn { color: var(--think); }
+  .mode {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-dim);
+    background: rgba(255, 255, 255, 0.08); border: 1px solid var(--edge); border-radius: 7px;
+    padding: 2px 9px; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .mode.on { color: var(--alert); border-color: rgba(255, 138, 128, 0.5); }
+  .mode:hover { color: var(--text); background: rgba(255, 255, 255, 0.14); }
+  .mode:disabled { opacity: 0.45; pointer-events: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb, .orb::before, .orb::after, .bars i, .flow::after, .you.partial::after, .row .orb { animation: none !important; }
+  }
+
+  /* A height picked by hand is a ceiling: the panel still fits its content, and the cards scroll past it. */
+  body.sized .panel { max-height: 100vh; }
+
+  /* Resize handles, invisible, along every edge and corner of the window. */
+  .grip { position: fixed; z-index: 1; }
+  .grip.n, .grip.s { left: 14px; right: 14px; height: 6px; cursor: ns-resize; }
+  .grip.e, .grip.w { top: 14px; bottom: 14px; width: 6px; cursor: ew-resize; }
+  .grip.n { top: 0; } .grip.s { bottom: 0; } .grip.e { right: 0; } .grip.w { left: 0; }
+  .grip.nw, .grip.ne, .grip.sw, .grip.se { width: 14px; height: 14px; }
+  .grip.nw { top: 0; left: 0; cursor: nwse-resize; } .grip.se { bottom: 0; right: 0; cursor: nwse-resize; }
+  .grip.ne { top: 0; right: 0; cursor: nesw-resize; } .grip.sw { bottom: 0; left: 0; cursor: nesw-resize; }
+</style>
+</head>
+<body>
+  <div class="panel" id="panel">
+    <div class="cards" id="cards"></div>
+    <div class="queue" id="queue"></div>
+    <div class="bar">
+      <div class="title" id="queueTitle"></div>
+      <button class="mode" id="muteButton" type="button">Mute</button>
+    </div>
+  </div>
+  <div class="grip n" data-edge="n"></div><div class="grip s" data-edge="s"></div>
+  <div class="grip e" data-edge="e"></div><div class="grip w" data-edge="w"></div>
+  <div class="grip nw" data-edge="nw"></div><div class="grip ne" data-edge="ne"></div>
+  <div class="grip sw" data-edge="sw"></div><div class="grip se" data-edge="se"></div>
+  <template id="cardTemplate">
+    <div class="card quiet">
+      <div class="head">
+        <div class="orb"></div>
+        <div class="label">Sunday</div>
+        <div class="chip"></div>
+        <div class="bars"><i></i><i></i><i></i><i></i></div>
+        <div class="flow"></div>
+      </div>
+      <div class="you"></div>
+      <div class="status"></div>
+      <div class="reply"></div>
+      <div class="note"></div>
+      <div class="actions"></div>
+    </div>
+  </template>
+  <template id="rowTemplate">
+    <div class="row"><div class="orb"></div><div class="what"></div><div class="state"></div></div>
+  </template>
+<script>
+  // Every query gets its own card, keyed by the id the server puts on each event
+  // about it. Newest on top. A card shows one state at a time in its label (Listening,
+  // Thinking, Answering...), his words as they were heard, one plain line of what is
+  // being done while it works, and the answer. A card in progress updates in place; a
+  // finished one stays while its reply is still playing, then for a while longer, and
+  // leaves on its own, never while the pointer is on it. Clicking a card dismisses it at
+  // once. Below the cards, the queue lists other work still in progress.
+  const panel = document.getElementById("panel");
+  const stack = document.getElementById("cards");
+  const queue = document.getElementById("queue");
+  const queueTitle = document.getElementById("queueTitle");
+  const cardTemplate = document.getElementById("cardTemplate");
+  const rowTemplate = document.getElementById("rowTemplate");
+  const isMac = !!window.sunday.isMac;
+  const HIDE_AFTER_MS = 7000;
+  const MAX_CARDS = 4;
+  const SPEECH_LIMIT_MS = 180000;   // in case the end of speech never arrives
+  const ROW_MIN_MS = 1200;          // a quick lookup still shows long enough to read
+  const STATUS_MIN_MS = 700;        // a status line stays this long before the next replaces it
+  const cards = new Map();          // id -> card
+  const tasks = new Map();          // id -> queue row
+  const dismissed = new Set();      // ids clicked away, so their later events are ignored
+  let lastId = null;                // for events from a server that sends no id
+  let last = { you: "", reply: "" };
+  let seq = 0;
+  let shown = false;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // What each state is called, one at a time, in the card's label.
+  const STATES = {
+    listening: ["Listening", "listening"],
+    thinking: ["Thinking", "thinking"],
+    speaking: ["Answering", "speaking"],
+    answered: ["Answered", "answered"],
+    announcing: ["Announcement", "speaking"],
+    announced: ["Announcement", "answered"],
+    late: ["Follow-Up", "speaking"],
+    lateDone: ["Follow-Up", "answered"],
+    idle: ["Sunday", "quiet"],
+    stopped: ["Stopped", "quiet"],
+    skipped: ["Skipped", "quiet"],
+    closed: ["Closed", "quiet"],
+    muted: ["Muted", "alert"],
+    error: ["Couldn't Answer", "alert"],
+    offline: ["Can't Reach Sunday", "alert"],
+    replay: ["Last Exchange", "answered"],
+    notice: ["Sunday", "answered"],
+  };
+
+  function pop(el) {
+    // A changed line settles in rather than snapping.
+    if (reduced.matches || !el.isConnected) return;
+    el.animate([{ opacity: 0.2, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+      { duration: 220, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+  }
+
+  // ---- pop-up visibility and pointer capture
+
+  // Muted by voice, the button, or here. While muted the pop-up stays up as a reminder.
+  let muted = false;
+  const muteButton = document.getElementById("muteButton");
+  function setMuted(on) {
+    const was = muted;
+    muted = !!on;
+    muteButton.textContent = muted ? "Unmute" : "Mute";
+    muteButton.classList.toggle("on", muted);
+    if (muted && !was) {
+      const card = makeCard("muted", "system");
+      setState(card, "muted");
+      setNote(card, "Sunday listens only for “unmute” until you turn the microphone back on.");
+      card.finished = true;
+      card.sticky = true;
+    } else if (!muted && was) {
+      const card = cards.get("muted");
+      if (card) remove(card);
+    }
+    updateVisibility();
+  }
+  muteButton.addEventListener("click", () => {
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: muted ? "unmute" : "mute" }));
+  });
+
+  // ElevenLabs mode, switched from the tray, by voice or by the endpoint.
+  let elevenlabs = false;
+  function setVoice(on) {
+    elevenlabs = !!on;
+    window.sunday.voice(elevenlabs);
+  }
+  function toggleVoice() {
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "voice", elevenlabs: !elevenlabs }));
+  }
+  window.sunday.onToggleVoice(toggleVoice);
+
+  // The devices the brain has connected, from "hello" and every "sync".
+  let devices = null;
+
+  function updateVisibility() {
+    // A card whose canvas is up is shown there, and a queue row for a question its own
+    // card already shows would say the same thing twice.
+    let rows = 0;
+    for (const row of tasks.values()) {
+      const dup = row.id.startsWith("q-") && cards.has(row.id.slice(2));
+      row.el.hidden = dup;
+      if (!dup && !row.ending) rows++;
+    }
+    queue.classList.toggle("none", ![...tasks.values()].some((r) => !r.el.hidden));
+    const visible = [...cards.values()].filter((c) => !c.el.classList.contains("on-canvas")).length;
+    const want = visible > 0 || rows > 0 || muted;
+    if (want && !shown) window.sunday.activity("show");
+    if (!want && shown) window.sunday.activity("hide");
+    shown = want;
+    let title = "", warn = false;
+    if (rows) title = `In Progress · ${rows}`;
+    else if (devices && !devices.cubes?.length) { title = "Speaker Offline"; warn = true; }
+    else if (devices?.hw_muted?.length) { title = "Speaker Microphone Off"; warn = true; }
+    queueTitle.textContent = title;
+    queueTitle.classList.toggle("warn", warn);
+  }
+
+  let gesturing = false;            // a drag or resize holds the pointer until it ends
+  function capturesMouse(el) {
+    // The window is click-through except over these.
+    el.addEventListener("mouseenter", () => window.sunday.mouse(true));
+    el.addEventListener("mouseleave", () => { if (!gesturing) window.sunday.mouse(false); });
+  }
+
+  // ---- moving and resizing
+
+  // The bar drags the window, its button aside; the grips resize it. The main
+  // process reads the cursor itself, so the page only says start, move and end.
+  function gestureFrom(el, edgeOf) {
+    capturesMouse(el);
+    el.addEventListener("pointerdown", (e) => {
+      const edge = edgeOf(e);
+      if (!edge || e.button !== 0) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      gesturing = true;
+      window.sunday.gesture("start", edge);
+      const move = () => window.sunday.gesture("move");
+      const end = () => {
+        el.removeEventListener("pointermove", move);
+        el.removeEventListener("pointerup", end);
+        el.removeEventListener("pointercancel", end);
+        gesturing = false;
+        window.sunday.gesture("end");
+        if (!el.matches(":hover")) window.sunday.mouse(false);
+      };
+      el.addEventListener("pointermove", move);
+      el.addEventListener("pointerup", end);
+      el.addEventListener("pointercancel", end);
+    });
+  }
+  gestureFrom(document.querySelector(".bar"), (e) => (e.target.closest("button") ? null : "move"));
+  for (const grip of document.querySelectorAll(".grip")) gestureFrom(grip, () => grip.dataset.edge);
+  window.sunday.onSized((sized) => document.body.classList.toggle("sized", sized));
+
+  // ---- cards
+
+  function makeCard(id, kind = "question") {
+    const el = cardTemplate.content.firstElementChild.cloneNode(true);
+    const card = {
+      id, el, kind, state: "idle", finished: false, timer: null, audible: false, endState: "idle", touched: Date.now(),
+      hovered: false, hasCanvas: false, heard: false,
+      label: el.querySelector(".label"),
+      chip: el.querySelector(".chip"),
+      you: el.querySelector(".you"),
+      status: el.querySelector(".status"),
+      reply: el.querySelector(".reply"),
+      note: el.querySelector(".note"),
+      actions: el.querySelector(".actions"),
+    };
+    cards.set(id, card);
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("button") || card.sticky) return;
+      dismissed.add(id);
+      remove(card, false);
+    });
+    el.addEventListener("mouseenter", () => { card.hovered = true; clearTimeout(card.timer); });
+    el.addEventListener("mouseleave", () => { card.hovered = false; startTimer(card); });
+    capturesMouse(el);
+    stack.prepend(el);
+    stack.scrollTop = 0;          // the newest card is always the one in view
+    if (!reduced.matches) {
+      el.animate([{ opacity: 0, transform: "translateY(-6px) scale(0.985)" }, { opacity: 1, transform: "none" }],
+        { duration: 280, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+    }
+    trim();
+    updateVisibility();
+    return card;
+  }
+
+  function cardFor(id, create, kind) {
+    const card = cards.get(id) || (create ? makeCard(id, kind) : null);
+    if (card) card.touched = Date.now();
+    return card;
+  }
+
+  function trim() {
+    // Past the cap, the oldest finished cards go first, then the oldest of any.
+    while (cards.size > MAX_CARDS) {
+      const all = [...cards.values()].filter((c) => !c.sticky);
+      if (!all.length) break;
+      remove(all.find((c) => c.finished) || all[0], true);
+    }
+  }
+
+  function remove(card, now) {
+    if (!cards.has(card.id)) return;
+    cards.delete(card.id);
+    clearTimeout(card.timer);
+    clearTimeout(card.statusTimer);
+    const gone = () => {
+      if (card.el.matches(":hover")) window.sunday.mouse(false);
+      card.el.remove();
+      updateVisibility();
+    };
+    if (now) gone();
+    else { card.el.classList.add("leaving"); setTimeout(gone, 300); }
+  }
+
+  function setState(card, state) {
+    const [label, look] = STATES[state] || STATES.idle;
+    card.state = state;
+    card.el.className = "card " + look + (card.el.classList.contains("on-canvas") ? " on-canvas" : "");
+    if (card.label.textContent !== label) {
+      card.label.textContent = label;
+      pop(card.label);
+    }
+  }
+
+  function setYou(card, text, partial, earlier) {
+    card.you.textContent = text || "";
+    card.you.classList.toggle("partial", !!partial);
+    card.you.classList.toggle("earlier", !!earlier);
+    if (!partial && text) card.heard = true;
+  }
+
+  function setStatus(card, text) {
+    // One plain line of what is being done. Each line is held long enough to read, so a
+    // quick run of lookups never flickers past.
+    card.statusWant = text || "";
+    clearTimeout(card.statusTimer);
+    const apply = () => {
+      if (card.status.textContent === card.statusWant) return;
+      card.status.textContent = card.statusWant;
+      card.statusAt = Date.now();
+      if (card.statusWant) pop(card.status);
+    };
+    const wait = (card.statusAt || 0) + STATUS_MIN_MS - Date.now();
+    if (!text || wait <= 0) apply();
+    else card.statusTimer = setTimeout(apply, wait);
+  }
+
+  function setReply(card, text, filler) {
+    const first = !card.reply.textContent;
+    card.reply.textContent = text;
+    card.reply.classList.toggle("filler", !!filler);
+    card.filler = !!filler;
+    if (first && text) pop(card.reply);
+  }
+
+  function setNote(card, text) { card.note.textContent = text || ""; }
+
+  function setChip(card, ear) {
+    // Which device is answering, when it isn't the speaker he usually talks to.
+    card.chip.textContent = ear ? (isMac ? "This Mac" : "Mac") : "";
+  }
+
+  function renderActions(card) {
+    card.actions.replaceChildren();
+    if (card.hasCanvas && canvasOpenId !== card.id) {
+      const b = document.createElement("button");
+      b.className = "mode";
+      b.type = "button";
+      b.textContent = "Show Details";
+      b.addEventListener("click", () => {
+        const r = card.el.getBoundingClientRect();
+        window.sunday.canvasReopen(card.id, { x: r.x, y: r.y, width: r.width, height: r.height });
+        send({ type: "canvas_state", id: card.id, machine, shown: true, reopened: true });
+      });
+      card.actions.append(b);
+    }
+  }
+
+  function active(card) {
+    card.finished = false;
+    clearTimeout(card.timer);
+    updateVisibility();
+  }
+
+  function finish(card, state, quick) {
+    if (!card) return;
+    if (!state) {
+      state = card.reply.textContent && !card.filler
+        ? (card.kind === "announce" ? "announced" : card.kind === "late" ? "lateDone" : "answered")
+        : "idle";
+    }
+    card.endState = state;
+    card.quick = quick || 0;
+    setStatus(card, "");
+    setState(card, card.audible ? playingState(card) : state);
+    card.finished = true;
+    startTimer(card);
+    if (card.you.textContent || card.reply.textContent) {
+      last = { you: card.you.textContent, reply: card.reply.textContent };
+    }
+  }
+
+  function playingState(card) {
+    return card.kind === "announce" ? "announcing" : card.kind === "late" ? "late" : "speaking";
+  }
+
+  // A finished card stays up while its reply is still playing on the speaker; the
+  // timer starts once the server says that query's speech has ended. Longer answers
+  // stay a little longer, and none leaves while the pointer is on it or while its
+  // detail is up on the canvas.
+  function startTimer(card) {
+    clearTimeout(card.timer);
+    if (!card.finished || card.sticky || card.hovered || card.id === canvasOpenId) return;
+    if (card.audible) {
+      card.timer = setTimeout(() => { card.audible = false; startTimer(card); }, SPEECH_LIMIT_MS);
+      return;
+    }
+    // A card with nothing on it has nothing worth reading, so it goes quickly.
+    const empty = !card.you.textContent && !card.reply.textContent;
+    const words = card.reply.textContent.split(/\s+/).length;
+    const ms = card.quick || (empty ? 1200 : HIDE_AFTER_MS + Math.min(6000, Math.max(0, words - 25) * 120));
+    card.timer = setTimeout(() => remove(card), ms);
+  }
+
+  // ---- the queue
+
+  function startTask(e) {
+    if (tasks.has(e.id)) { updateTask(e); return; }
+    const el = rowTemplate.content.firstElementChild.cloneNode(true);
+    const row = { id: e.id, el, started: Date.now(), what: el.querySelector(".what"), state: el.querySelector(".state") };
+    row.what.textContent = e.label || e.kind || "Working";
+    row.what.title = row.what.textContent;
+    row.state.textContent = e.status || "Working";
+    tasks.set(e.id, row);
+    queue.append(el);
+    updateVisibility();
+  }
+
+  function updateTask(e) {
+    const row = tasks.get(e.id);
+    if (row && e.status && row.state.textContent !== e.status) { row.state.textContent = e.status; pop(row.state); }
+  }
+
+  function endTask(id) {
+    const row = tasks.get(id);
+    if (!row || row.ending) return;
+    row.ending = true;
+    setTimeout(() => {
+      row.el.classList.add("leaving");
+      setTimeout(() => { row.el.remove(); tasks.delete(id); updateVisibility(); }, 300);
+    }, Math.max(0, ROW_MIN_MS - (Date.now() - row.started)));
+  }
+
+  // ---- reconciling with the server
+
+  // On every (re)connect and every few seconds after, the server sends what is really
+  // in progress. Anything here that it no longer lists is let go, so a "done" or an
+  // "end" lost to a restart, a dropped connection or a turn that died can't leave a
+  // card or a row stuck. Something heard from in the last moment is left alone, since
+  // its own events may still be on the way.
+  const SETTLE_MS = 3000;
+  function reconcile(e) {
+    if (e.devices) devices = e.devices;
+    if (Array.isArray(e.active)) {
+      const listed = new Set(e.active.map((t) => t.id));
+      for (const id of [...tasks.keys()]) if (!listed.has(id)) endTask(id);
+      for (const t of e.active) startTask(t);
+    }
+    if (Array.isArray(e.live)) {
+      const live = new Set(e.live), playing = new Set(e.playing || []);
+      const now = Date.now();
+      for (const card of [...cards.values()]) {
+        if (card.kind === "system" || card.kind === "notice") continue;
+        if (now - card.touched < SETTLE_MS || live.has(card.id)) continue;
+        if (!card.finished) finish(card, card.endState === "idle" ? null : card.endState);
+        if (card.audible && !playing.has(card.id)) {
+          card.audible = false;
+          setState(card, card.endState);
+          startTimer(card);
+        }
+      }
+    }
+    updateVisibility();
+  }
+
+  // With no server to ask, nothing shown can be trusted to still be going.
+  function letGoOfEverything() {
+    for (const id of [...tasks.keys()]) endTask(id);
+    for (const card of [...cards.values()]) {
+      if (card.kind === "system") continue;
+      if (!card.finished) finish(card, card.endState === "idle" ? null : card.endState);
+      if (card.audible) { card.audible = false; setState(card, card.endState); startTimer(card); }
+    }
+  }
+
+  // ---- the full-screen canvas
+
+  let canvasOpenId = null;
+  function send(msg) {
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
+  }
+  function onCanvas(e) {
+    const card = cards.get(e.id);
+    if (card) { card.hasCanvas = true; renderActions(card); }
+    let rect = null;
+    if (card && shown && !card.el.classList.contains("on-canvas")) {
+      const r = card.el.getBoundingClientRect();
+      rect = { x: r.x, y: r.y, width: r.width, height: r.height };
+    }
+    window.sunday.canvas(e, rect);
+  }
+  window.sunday.onCanvasOpen(({ id, open }) => {
+    if (open) canvasOpenId = id;
+    else if (canvasOpenId === id) canvasOpenId = null;
+    for (const c of cards.values()) {
+      c.el.classList.toggle("on-canvas", c.id === canvasOpenId);
+      renderActions(c);
+      if (!open && c.id === id) startTimer(c);
+    }
+    updateVisibility();
+  });
+  // Where the canvas landed, or why it was held back, and when he closed it here: the
+  // brain takes it down on his other screens and stops listening for "close that".
+  window.sunday.onCanvasReport((r) => send({ type: "canvas_state", id: r.id, machine, shown: r.shown, why: r.why, reopened: !!r.reopened }));
+  window.sunday.onCanvasClosedHere((r) => send({ type: "canvas_closed", id: r.id, by: r.by }));
+
+  // ---- server events
+
+  function handle(e) {
+    if (e.type === "hello") { reconcile(e); setMuted(e.muted); setVoice(e.elevenlabs); window.sunday.light(!!e.light); return; }
+    if (e.type === "sync") { reconcile(e); return; }
+    if (e.type === "light") { window.sunday.light(!!e.on); return; }
+    if (e.type === "voice") { setVoice(e.elevenlabs); return; }
+    if (e.type === "mute") { setMuted(e.muted); return; }
+    if (e.type === "overlay") { window.sunday.overlay(!!e.on, e.by || "voice"); return; }
+    if (e.type === "canvas_close") { window.sunday.canvasClose(e.id, e.by); return; }
+    if (e.type === "task") {
+      if (e.state === "start") startTask(e);
+      else if (e.state === "update") updateTask(e);
+      else if (e.state === "end") endTask(e.id);
+      return;
+    }
+    if (e.type === "canvas") { onCanvas(e); return; }
+    const id = e.id ?? (e.type === "listening" || e.type === "announce" ? "local-" + ++seq : lastId);
+    if (id != null) lastId = id;
+    if (dismissed.has(id)) return;
+    let card;
+    switch (e.type) {
+      case "listening":
+        card = cardFor(id, true);
+        setChip(card, e.ear);
+        setState(card, "listening");
+        active(card);
+        break;
+      case "partial":
+        card = cardFor(id, true);
+        if (!card.heard) setYou(card, e.text, true);
+        break;
+      case "heard":
+        card = cardFor(id, true);
+        setYou(card, e.text, false);
+        break;
+      case "status":
+        card = cardFor(id, true);
+        if (e.kind === "filler") {
+          // A line said while the answer is worked out: shown as said, until the answer replaces it.
+          if (!card.reply.textContent || card.filler) setReply(card, e.text, true);
+        } else {
+          if (card.state !== "speaking") setState(card, "thinking");
+          setStatus(card, e.kind === "thinking" || e.text === "Thinking" ? "" : e.text);
+        }
+        active(card);
+        break;
+      case "reply":
+        card = cardFor(id, true);
+        setStatus(card, "");
+        setReply(card, (card.filler ? "" : card.reply.textContent) + (card.filler ? e.text.trimStart() : e.text), false);
+        break;
+      case "speaking":
+        card = cardFor(id, true);
+        if (e.ear != null) setChip(card, e.ear);
+        card.audible = true;
+        setStatus(card, "");
+        setState(card, playingState(card));
+        active(card);
+        window.sunday.canvasSpeaking({ id, speaking: true });
+        break;
+      case "spoken":
+        card = cardFor(id, false);
+        window.sunday.canvasSpeaking({ id, speaking: false });
+        if (card) {
+          card.audible = false;
+          if (card.finished) setState(card, card.endState);
+          startTimer(card);
+        }
+        break;
+      case "announce":
+        card = cardFor(id, true, e.source === "late" ? "late" : "announce");
+        card.kind = e.source === "late" ? "late" : "announce";
+        setYou(card, e.source === "late" ? e.about || "" : "", false, e.source === "late");
+        setReply(card, e.text);
+        card.audible = true;
+        setState(card, playingState(card));
+        active(card);
+        break;
+      case "done":
+        card = cardFor(id, false);
+        window.sunday.canvasSpeaking({ id, speaking: false });
+        if (!card) break;
+        if (e.command === "close") finish(card, "closed", 1800);
+        else if (e.command === "stop") finish(card, "stopped", 2500);
+        else if (e.command === "mute") finish(card, "stopped", 1500);
+        else if (e.interrupted) {
+          if (e.cause === "superseded" || e.cause === "redirect") finish(card, "skipped", 900);
+          else if (e.cause === "mute") finish(card, "stopped", 1500);
+          else finish(card, "stopped", 2500);
+        } else if (e.error) {
+          finish(card, "error");
+          setNote(card, "Sunday ran into a problem with that one. Ask again.");
+        } else finish(card);
+        break;
+      case "idle":
+        if (e.id != null) finish(cardFor(e.id, false));
+        // An idle with no id means nothing is in progress anywhere.
+        else for (const c of cards.values()) if (!c.finished && c.kind !== "system") finish(c);
+        break;
+    }
+  }
+
+  window.sunday.onReplay(() => {
+    if ([...cards.values()].some((c) => !c.sticky)) return;
+    const card = makeCard("replay-" + ++seq);
+    setYou(card, last.you, false);
+    setReply(card, last.reply);
+    finish(card, "replay");
+  });
+
+  // The height the panel wants with nothing scrolled away, so the window can grow
+  // back to it as well as shrink, up to the ceiling a hand-picked height sets.
+  const reportHeight = () => window.sunday.height(panel.offsetHeight - stack.clientHeight + stack.scrollHeight);
+  new ResizeObserver(reportHeight).observe(panel);
+  new MutationObserver(reportHeight).observe(stack, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class"] });
+
+  // Whether this computer is playing sound, passed on to the server so it can tell
+  // the computer's audio apart from his voice.
+  let audioPlaying = false, socket = null, machine = "computer";
+  function reportAudio() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "audio", machine, playing: audioPlaying }));
+    }
+  }
+  window.sunday.onComputerAudio((playing) => { audioPlaying = playing; reportAudio(); });
+
+  // The overlay switch on Windows: whether the app is drawing anything and for which
+  // game it is holding back, passed on so the brain can answer "overlay on" truthfully.
+  let overlay = null;
+  function reportOverlay() {
+    if (overlay && socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "overlay", machine, ...overlay }));
+    }
+  }
+  window.sunday.onOverlayState((state) => { overlay = state; reportOverlay(); });
+  // A word that the overlay came on from the hotkey or the tray, gone in two seconds.
+  window.sunday.onNotice((text) => {
+    const card = makeCard("notice-" + ++seq, "notice");
+    setState(card, "notice");
+    setReply(card, text);
+    card.finished = true;
+    card.timer = setTimeout(() => remove(card), 2000);
+  });
+
+  // The brain out of reach: said once, plainly, while it keeps trying, and gone again
+  // the moment it is back. The tray's ring shows the same thing for as long as it lasts.
+  const UNREACHABLE_AFTER_MS = 4000;
+  const UNREACHABLE_SHOW_MS = 12000;
+  let unreachableTimer = null, unreachableSaid = false, everConnected = false;
+  function unreachable() {
+    if (unreachableSaid) return;
+    unreachableSaid = true;
+    const card = makeCard("offline", "system");
+    setState(card, "offline");
+    setStatus(card, "Reconnecting");
+    card.finished = true;
+    card.quick = UNREACHABLE_SHOW_MS;
+    startTimer(card);
+  }
+  function reachable() {
+    clearTimeout(unreachableTimer);
+    unreachableTimer = null;
+    unreachableSaid = false;
+    const card = cards.get("offline");
+    if (card) remove(card);
+  }
+
+  async function connect() {
+    const servers = await window.sunday.servers();
+    machine = await window.sunday.machine();
+    let i = 0, delay = 1000, heardAt = Date.now(), lostTimer = null;
+    const attempt = () => {
+      const ws = new WebSocket(servers[i % servers.length]);
+      let opened = false;
+      ws.onopen = () => {
+        opened = true; delay = 1000; socket = ws; heardAt = Date.now();
+        clearTimeout(lostTimer); lostTimer = null;
+        reachable();
+        everConnected = true;
+        muteButton.disabled = false;
+        window.sunday.connection(true); reportAudio(); reportOverlay();
+      };
+      ws.onmessage = (m) => { heardAt = Date.now(); try { handle(JSON.parse(m.data)); } catch (_) {} };
+      ws.onclose = () => {
+        if (socket === ws) socket = null;
+        muteButton.disabled = true;
+        window.sunday.connection(false);
+        if (!lostTimer) lostTimer = setTimeout(letGoOfEverything, LOST_AFTER_MS);
+        // At start the tunnel takes a few seconds to come up, which is not worth a word.
+        if (!unreachableTimer && !unreachableSaid) {
+          unreachableTimer = setTimeout(unreachable, everConnected ? UNREACHABLE_AFTER_MS : 20000);
+        }
+        if (!opened) i++;
+        setTimeout(attempt, delay);
+        delay = Math.min(delay * 2, 15000);
+      };
+    };
+    attempt();
+    // The server sends its list every ten seconds; a connection that has gone quiet
+    // for much longer is dead even if it hasn't closed, so start it over.
+    setInterval(() => {
+      if (socket && socket.readyState === WebSocket.OPEN && Date.now() - heardAt > SILENT_AFTER_MS) socket.close();
+    }, 5000);
+  }
+  const LOST_AFTER_MS = 20000;
+  const SILENT_AFTER_MS = 35000;
+  updateVisibility();
+  connect();
+</script>
+</body>
+</html>

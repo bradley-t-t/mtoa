@@ -1,0 +1,24 @@
+{
+  "group": "Slides",
+  "prefix": "SLD",
+  "description": "HTML presentation rules from references/slides-*.md. Web-UI, pointer, and polish gates apply to a deck too - these are the ones specific to slides.",
+  "defaults": {
+    "kinds": ["slides"],
+    "severity": "required",
+    "source": "references/slides-create.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {"id": "SLD-01", "title": "One Idea Per Slide", "rule": "Each slide carries a single point. A slide with three arguments is three slides.", "when": "always", "severity": "blocker"},
+    {"id": "SLD-02", "title": "Headline States The Takeaway", "rule": "The headline says the conclusion, not the topic. 'Revenue doubled in Q3', not 'Q3 Revenue'.", "when": "copy", "severity": "blocker"},
+    {"id": "SLD-03", "title": "Layout Comes From The Pattern Library", "rule": "The slide uses a layout from references/slides-layout-patterns.md, chosen for its content shape rather than defaulting to title-and-bullets throughout.", "when": "always"},
+    {"id": "SLD-04", "title": "Deck Rhythm Varies", "rule": "Consecutive slides do not share a layout. A deck of identical slides reads as a template.", "when": "always"},
+    {"id": "SLD-05", "title": "Chart Type Matches The Claim", "rule": "The chart supports the headline's claim, and its type matches the data shape. Chart.js defaults are overridden to the deck's tokens.", "when": "chart", "severity": "blocker"},
+    {"id": "SLD-06", "title": "Every Figure Is Real", "rule": "No number on a slide the user did not supply. A placeholder is marked as one.", "when": "copy", "severity": "blocker", "check": {"type": "invented_metric"}},
+    {"id": "SLD-07", "title": "Readable At Presentation Size", "rule": "Body type reads from the back of a room - nothing under 18px at 1920x1080, and no text sitting outside the safe margin.", "when": "always", "severity": "blocker"},
+    {"id": "SLD-08", "title": "Deck Uses Design Tokens", "rule": "Colour, type, and spacing come from the deck's token block, so every slide agrees. The validator runs clean: python3 scripts/system/slide-token-validator.py.", "when": "css", "severity": "blocker"},
+    {"id": "SLD-09", "title": "Copy Follows The Formulas", "rule": "Headlines, transitions, and closers are built with the formulas in references/slides-copywriting-formulas.md, then held to avoid-ai-writing.", "when": "copy", "severity": "blocker"},
+    {"id": "SLD-10", "title": "Speaker Notes Carry What The Slide Does Not", "rule": "The detail that would clutter the slide lives in the notes, and the notes go through the copy pass too.", "when": "copy"},
+    {"id": "SLD-11", "title": "Deck Renders At 16:9 And Prints", "rule": "Checked at presentation size and in print or PDF export, since a deck usually travels as both.", "when": "always", "severity": "blocker"}
+  ]
+}

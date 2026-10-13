@@ -1,0 +1,42 @@
+{
+  "group": "Live Page",
+  "prefix": "LIV",
+  "description": "What the deployed page actually does when it loads. Source cannot answer any of it: these fail on a build that compiled, a deploy that succeeded and a page that looks right.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "deployed",
+    "severity": "blocker",
+    "source": "references/live-page.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "LIV-01",
+      "title": "The Deployed Page Answers",
+      "rule": "The production URL returns the site over HTTPS, and the non-canonical host redirects to the canonical one rather than serving a second copy.",
+      "check": {"type": "probe", "probe": "live.reachable"},
+      "fix": "Fix the deployment or the DNS, and set the redirect so one host is canonical."
+    },
+    {
+      "id": "LIV-02",
+      "title": "The Console Is Clean",
+      "rule": "Loading the page produces no console errors. An error on load is a code path that already failed, and the visitor sees whatever the page was going to render after it.",
+      "check": {"type": "probe", "probe": "live.console"},
+      "fix": "Fix each one. An error from a third party is still an error the visitor's browser reports."
+    },
+    {
+      "id": "LIV-03",
+      "title": "Nothing The Page Asks For Is Missing",
+      "rule": "No request the page makes returns 404. A missing font, image or chunk is invisible in a build log and obvious on the page.",
+      "check": {"type": "probe", "probe": "live.assets"},
+      "fix": "Correct the paths, or ship the files the build left out."
+    },
+    {
+      "id": "LIV-04",
+      "title": "Every Third Party It Loads Answers",
+      "rule": "Each external script or stylesheet the page pulls returns 200. A third party that stopped serving takes a piece of the page with it, and does it long after anybody was looking.",
+      "check": {"type": "probe", "probe": "live.thirdparty"},
+      "fix": "Remove what is gone, or self-host it. Anything about how much it weighs goes to /perf-checklist."
+    }
+  ]
+}

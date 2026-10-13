@@ -1,0 +1,49 @@
+{
+  "group": "Who Can Reach What",
+  "prefix": "SEC",
+  "description": "Every table in the public schema is served over HTTP the moment it exists. Row-level security is not a feature to switch on later; without it, the table is published. These gates read the catalogue rather than the intent, because a policy that was written and a policy that is enforced look identical in a migration.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "probe",
+    "severity": "blocker",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "SEC-01",
+      "title": "Row-Level Security Is On For Every Table",
+      "rule": "Every table in the public schema has RLS enabled. The API serves the schema as it finds it, so a table without RLS is readable by anyone holding the publishable key, which ships in the page.",
+      "check": {"type": "rls_enabled"},
+      "fix": "alter table public.<name> enable row level security, in a migration, plus the policies that restore the access the app needs."
+    },
+    {
+      "id": "SEC-02",
+      "title": "Every Protected Table Has A Policy",
+      "rule": "A table with RLS on and no policy denies everyone, which usually means a feature is silently broken rather than secure. Each table has at least one policy, or is recorded as deliberately closed.",
+      "check": {"type": "policies_present"},
+      "fix": "Write the policy, or table-clear the table naming why it is closed to everyone."
+    },
+    {
+      "id": "SEC-03",
+      "title": "No Blanket Policy Stands In For A Real One",
+      "rule": "No policy uses a bare true for all roles on a table holding real data. A policy of true is RLS switched on in name only, and it reads as protection in every audit that counts policies rather than reading them.",
+      "severity": "required",
+      "check": {"type": "manual"},
+      "fix": "Replace the blanket policy with one that names the role and the condition."
+    },
+    {
+      "id": "SEC-04",
+      "title": "The Anonymous Role Reaches Only What It Should",
+      "rule": "Tables granted to anon are the ones a signed-out visitor is meant to read. Anything else is reachable with the key in the page, whatever the application does with it.",
+      "check": {"type": "anon_grants"},
+      "fix": "revoke all on public.<name> from anon, in a migration."
+    },
+    {
+      "id": "SEC-05",
+      "title": "The Service Key Is Not In Anything The Browser Loads",
+      "rule": "No service-role key appears in source, in a build output, or in a variable with a client-side prefix. It bypasses every policy above, so one occurrence undoes the whole group.",
+      "check": {"type": "service_key_client_side"},
+      "fix": "Move the key to a server-side variable and rotate it, since a key that reached a bundle is public from then on."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Read certificate and registration expiry once a day
+
+[Timer]
+OnCalendar=*-*-* 09:00:00 UTC
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

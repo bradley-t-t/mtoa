@@ -1,0 +1,5 @@
+sherpa-onnx>=1.12
+numpy
+websockets>=14
+soundfile
+soxr

@@ -1,0 +1,5 @@
+{
+  "github_token": "REPLACE-ME",
+  "errors_repo": "your-name/your-setup",
+  "stall_hours": 3
+}

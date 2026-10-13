@@ -1,0 +1,111 @@
+{
+  "group": "Drawn Plates",
+  "prefix": "PLT",
+  "description": "Art a project drew for its own subject, as opposed to the photography and library glyphs every site has. A plate is the one visual thing on a page that could not have come from anywhere else, it weighs a kilobyte, and it scales to any width. These rules hold what separates a plate from a sticker: what it draws, how much of the subject it has to carry and how much it must not, where its ground lives, how big it is allowed to be, and what it must never be used as.",
+  "defaults": {
+    "kinds": [
+      "web-ui"
+    ],
+    "when": "image",
+    "severity": "required",
+    "source": "references/icon-design.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "PLT-01",
+      "title": "The Page Draws Something Of Its Own",
+      "rule": "A surface with a subject draws it. A library glyph shows a generic shape that could belong to anyone; flat vector plates in the project's own palette show what this business actually moves, builds, sells, or repairs, they weigh a kilobyte, and they scale to any width. Keep them as files under public/art and reference them, so one plate can serve a menu panel and a section without being drawn twice. A subject that cannot be drawn right at this weight is a subject for a photograph, and PLT-07 is where that line sits.",
+      "source": "references/icon-design.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "marketing",
+      "severity": "required",
+      "check": {
+        "type": "drawn_plates"
+      },
+      "fix": "Draw three to six plates of the subject on one viewBox and one palette taken from the token block, save them under public/art, and render them through a single component. Where the subject needs more than PLT-07 allows, photograph it instead."
+    },
+    {
+      "id": "PLT-02",
+      "title": "A Plate Is Imagery For A Block, Not A Mark Per Row",
+      "rule": "One plate belongs to a panel, a section, or a card; it does not belong to each link inside one. A mark against every menu option stops reading as a drawing and starts reading as a bullet, and every row's mark then has to be invented to fill the slot rather than because there was something to draw. In a mega-menu the plate sits in the promoted half beside a heading and a sentence, with the destinations listed plainly beside it.",
+      "source": "references/hallmark/references/components/mm2-two-column-split.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "image",
+      "severity": "required",
+      "check": {
+        "type": "plate_per_row"
+      },
+      "fix": "Move the plate out of the row loop and into the block that owns it: one per panel or section, keyed on the block rather than on a destination."
+    },
+    {
+      "id": "PLT-03",
+      "title": "The Plates Are One Set",
+      "rule": "Every plate in a project shares one viewBox and one handful of inks taken from the token block. Two grids and two palettes read as clip art collected rather than art commissioned, and the difference is visible the moment two of them sit on the same page. The ground is not on that list and never was a property of the file: PLT-05 puts it on whatever renders the plate, so the set shares a surface by sharing a placement rather than by each file painting the same rectangle.",
+      "source": "references/icon-design.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "image",
+      "severity": "required",
+      "check": {
+        "type": "plate_cohesion"
+      },
+      "fix": "Redraw the outliers on the shared viewBox and restrict every plate to the same four to six inks."
+    },
+    {
+      "id": "PLT-04",
+      "title": "A Plate Is Drawn, Not Silhouetted",
+      "rule": "The difference between a drawing and a sticker is countable. A silhouette is one outline in one fill: the subject's edge and nothing inside it. A drawing has the parts the subject actually has - the wheelhouse, the stacks, the coaming, the rake of the bow - and it carries a second tone wherever a face turns away from the light. Twelve shapes and five inks is not a standard of taste; it is the floor a first pass falls through. It is a floor and not a direction: PLT-07 is the ceiling above it, and a plate that answers this one by adding rectangles until it clears has answered the wrong question.",
+      "severity": "required",
+      "check": {
+        "type": "plate_depth",
+        "min_shapes": 12,
+        "min_inks": 5
+      },
+      "fix": "Draw the subject's own parts rather than its outline, and give every material a lit face and a turned one from the same token ramp."
+    },
+    {
+      "id": "PLT-05",
+      "title": "The Ground Belongs To Whatever Renders The Plate",
+      "rule": "A plate carries its drawing and nothing behind it. A file that paints its own backdrop reads correctly on the one surface it was drawn against and wrong on every other - a white card on a dark band, a navy slab where the page ends, a rectangle the section divider cuts through - and whoever drew it never sees the fault, because they were looking at the surface that happened to match. The ground is a class on the element that renders the plate, which costs nothing and lets the same drawing sit on a dark band, a light card, and a page that changes theme under it. The old reading of this gate treated the placement as a real decision either way round; it is not, and a plate drawing its own ground is now a fault wherever it appears.",
+      "severity": "blocker",
+      "check": {
+        "type": "plate_ground"
+      },
+      "fix": "Run ~/.claude/tools/svg-guard.py fix on the art directory, then put the ground on the element that renders the plate - a token-backed class on the image, not a fill in the file."
+    },
+    {
+      "id": "PLT-06",
+      "title": "A Page Plate Is Sized Off Its Column",
+      "rule": "A drawing pinned to the height of a heading reads as a mark above it, and the eye skips it on the way to the words. Imagery for a block is as wide as the block will let it be: a width off the column with a max-width, not a fixed height. Chrome is the exception and always was, because a panel has the room it has.",
+      "severity": "required",
+      "source": "references/hallmark/references/components/mm2-two-column-split.md",
+      "check": {
+        "type": "plate_scale"
+      },
+      "fix": "Replace the fixed height with w-full and a max-width, and let the column decide how big the plate is."
+    },
+    {
+      "id": "PLT-07",
+      "title": "A Drawing Simple Enough To Come Out Right",
+      "rule": "Past a certain size a flat vector stops being a mark and becomes a scene, and a scene assembled out of axis-aligned rectangles and straight segments does not end up looking like the thing it depicts however long it is adjusted. The signature is countable and it is the opposite of exported artwork, which is curves: forty or more drawn elements, most of them boxes and lines. A dock wall, three barges, mooring wires and a hundred water dashes is the shape this refuses. Reach for a photograph, a real exported asset, or a mark simple enough to be right - a silhouette, a wordmark, a single shape.",
+      "source": "references/icon-design.md",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "image",
+      "severity": "blocker",
+      "check": {
+        "type": "plate_scene"
+      },
+      "fix": "Replace the scene with a photograph of the real thing, an exported asset, or a mark that carries the subject in a handful of shapes. Do not try to fix a scene by redrawing it at the same size."
+    }
+  ]
+}

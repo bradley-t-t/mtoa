@@ -1,0 +1,159 @@
+    <script>
+      (function () {
+        var endpoint = "https://voice-host.example.ts.net/report";
+        var site = "__SITE__";
+        var sent = 0;
+        // Nothing the page can intercept reaches the visitor's console. Each
+        // error is reported first and swallowed second, so the report is made
+        // whether or not the suppression holds. What survives is written by the
+        // browser's own network layer, which no page script can reach.
+        var loud = false;
+        var held = [];
+        try {
+          if (location.search.indexOf("console=on") > -1) localStorage.setItem("reporter-console", "1");
+          if (location.search.indexOf("console=off") > -1) localStorage.removeItem("reporter-console");
+          loud = localStorage.getItem("reporter-console") === "1";
+        } catch (ignored) {}
+        // An extension injects its scripts into the page, so a rejection thrown
+        // inside one arrives at this handler with nothing of the site in its
+        // stack. A stack naming only extension scripts describes the visitor's
+        // browser; one carrying a single site frame is the site's.
+        function extensionOnly(stack) {
+          var schemes = String(stack || "").match(/[a-z][a-z0-9+.-]*:\/\//gi);
+          if (!schemes) return false;
+          for (var i = 0; i < schemes.length; i += 1) {
+            var scheme = schemes[i].slice(0, -3).toLowerCase();
+            if (scheme.slice(-9) !== "extension") return false;
+          }
+          return true;
+        }
+        // A request the page makes writes its own failure to the console when it
+        // fails, and a collector that cannot be reached would then be the loudest
+        // thing on the page. The same request issued inside a worker writes
+        // nothing, so reports travel that way while the page is alive.
+        var unloading = false;
+        var worker = null;
+        var workerFailed = false;
+        function transport() {
+          if (worker || workerFailed) return worker;
+          try {
+            var source = "self.onmessage=function(e){fetch(e.data.endpoint,{method:'POST',body:e.data.body}).then(function(){},function(){})}";
+            worker = new Worker(URL.createObjectURL(new Blob([source], { type: "text/javascript" })));
+          } catch (ignored) {
+            workerFailed = true;
+          }
+          return worker;
+        }
+        function send(body) {
+          // On the way out the worker dies with the page, and the console goes
+          // with it, so the beacon's survival is worth more than its silence.
+          if (!unloading) {
+            var channel = transport();
+            if (channel) {
+              channel.postMessage({ endpoint: endpoint, body: body });
+              return;
+            }
+          }
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(endpoint, body);
+          } else {
+            fetch(endpoint, { method: "POST", body: body, keepalive: true }).catch(function () {});
+          }
+        }
+        addEventListener("pagehide", function () { unloading = true; });
+        // Everything swallowed stays readable on the page itself, so a live
+        // console with the flag off still answers what happened.
+        function hold(kind, message, stack) {
+          if (held.length < 50) held.push({ kind: kind, message: String(message), stack: String(stack || "") });
+        }
+        window.__reporter = { held: held, replay: function () { return held.slice(); } };
+        function report(kind, message, stack) {
+          hold(kind, message, stack);
+          if (sent >= 10) return; // a page stuck in an error loop stops at ten
+          if (extensionOnly(stack)) return;
+          sent += 1;
+          try {
+            send(JSON.stringify({
+              site: site,
+              kind: kind,
+              message: String(message || "Unknown error").slice(0, 1500),
+              stack: String(stack || "").slice(0, 4000),
+              url: location.href,
+              userAgent: navigator.userAgent
+            }));
+          } catch (ignored) {}
+        }
+        function flatten(args, from) {
+          var parts = [];
+          for (var i = from; i < args.length; i += 1) {
+            var piece = args[i];
+            if (piece && piece.stack) {
+              parts.push(piece.stack);
+            } else if (typeof piece === "object") {
+              try { parts.push(JSON.stringify(piece)); } catch (ignored) { parts.push(String(piece)); }
+            } else {
+              parts.push(String(piece));
+            }
+          }
+          return parts.join(" ");
+        }
+        // A media element that is torn down mid-load, or hands its <source>
+        // over to a codec the browser will not decode, fires this same error
+        // with nothing an operator can act on. A missing file still surfaces
+        // as an http 404 through the fetch wrapper below, so nothing that
+        // matters is lost by skipping these tags.
+        var MEDIA_LIFECYCLE_TAGS = { SOURCE: 1, VIDEO: 1, AUDIO: 1, TRACK: 1, PICTURE: 1 };
+        // Capture phase, because element load failures fire error events that do not bubble.
+        window.addEventListener("error", function (event) {
+          try {
+            if (event.target && event.target !== window && event.target.tagName) {
+              if (MEDIA_LIFECYCLE_TAGS[event.target.tagName]) return;
+              report("resource", "Failed to load " + event.target.tagName.toLowerCase() + ": " + (event.target.src || event.target.href || ""));
+            } else {
+              report("uncaught", event.message, event.error && event.error.stack);
+            }
+          } finally {
+            if (!loud) event.preventDefault();
+          }
+        }, true);
+        window.addEventListener("unhandledrejection", function (event) {
+          try {
+            var reason = event.reason;
+            report("rejection", reason && reason.message ? reason.message : reason, reason && reason.stack);
+          } finally {
+            if (!loud) event.preventDefault();
+          }
+        });
+        // A library writing to these is addressing whoever maintains the site
+        // rather than whoever is reading the page, so the message travels to the
+        // Pi instead of to the visitor's console.
+        ["error", "warn", "trace"].forEach(function (level) {
+          var original = console[level];
+          console[level] = function () {
+            report("console", flatten(arguments, 0));
+            if (loud) original.apply(console, arguments);
+          };
+        });
+        var originalAssert = console.assert;
+        console.assert = function (condition) {
+          if (condition) return;
+          report("console", "Assertion failed: " + flatten(arguments, 1));
+          if (loud) originalAssert.apply(console, arguments);
+        };
+        if (window.fetch) {
+          var originalFetch = window.fetch;
+          window.fetch = function (input) {
+            var target = typeof input === "string" ? input : (input && input.url) || "";
+            // Reports about the reporter's own request would loop, so the endpoint passes through unwrapped.
+            if (target.indexOf(endpoint) === 0) return originalFetch.apply(window, arguments);
+            return originalFetch.apply(window, arguments).then(function (response) {
+              if (response.status >= 500) report("http", "HTTP " + response.status + " from " + target.split("?")[0]);
+              return response;
+            }, function (error) {
+              report("network", (error && error.message ? error.message : String(error)) + " fetching " + target.split("?")[0]);
+              throw error;
+            });
+          };
+        }
+      })();
+    </script>

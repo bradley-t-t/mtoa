@@ -1,0 +1,88 @@
+{
+  "group": "Trust And Safety",
+  "prefix": "TRS",
+  "description": "Whether Google considers the property safe to send people to. These are the failures that remove a site from results wholesale rather than costing it positions: a Safe Browsing flag, a manual action, a broken certificate, a page served differently to a crawler than to a visitor. Nothing in the repository proves any of them, because every one is a judgement Google makes about the live host and the company it keeps.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "blocker",
+    "source": "references/trust.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "TRS-01",
+      "title": "Safe Browsing Reports The Site Clean",
+      "rule": "The Safe Browsing service returns no threat match for the domain or any subdomain. A match puts a full-page interstitial in front of every visitor arriving from search or Chrome, and traffic goes to zero the same day.",
+      "check": {"type": "probe", "probe": "trs.safe_browsing"},
+      "fix": "Query the Safe Browsing Lookup API for the host and its subdomains. If a threat is listed, find and remove the flagged resource, then request a review in the Search Console security issues report."
+    },
+    {
+      "id": "TRS-02",
+      "title": "Every URL Serves Over HTTPS With A Valid Chain",
+      "rule": "The canonical host serves HTTPS with a certificate that matches the name, is inside its validity window, and presents its full intermediate chain. A chain that validates in a browser holding a cached intermediate still fails for a crawler that holds none.",
+      "check": {"type": "probe", "probe": "trs.tls_chain"},
+      "fix": "Serve the intermediates alongside the leaf, correct the name on the certificate where it excludes the apex or the www host, and reissue before expiry."
+    },
+    {
+      "id": "TRS-03",
+      "title": "The Certificate Renews Ahead Of Expiry",
+      "rule": "The certificate has more than 30 days of validity left and renews without a hand on it. An expired certificate is an unclickable browser warning, and it lands on a weekend as often as not.",
+      "severity": "required",
+      "check": {"type": "probe", "probe": "trs.cert_expiry"},
+      "fix": "Confirm automatic renewal is running at the host or CDN, and read the current expiry rather than trusting that renewal is configured."
+    },
+    {
+      "id": "TRS-04",
+      "title": "No Page Loads A Resource Over Plain HTTP",
+      "rule": "No document loads a script, stylesheet, image, font or frame over HTTP. Mixed content is blocked or downgraded by the browser, so the page a visitor sees is not the page that was tested.",
+      "severity": "required",
+      "check": {"type": "probe", "probe": "trs.mixed_content"},
+      "fix": "Fetch each template and list the HTTP subresources, then correct the URLs in the repository through seo-checklist or the owning project."
+    },
+    {
+      "id": "TRS-05",
+      "title": "No Manual Action Stands Against The Property",
+      "rule": "The manual actions report is empty. A manual action is a human decision at Google to demote or remove the site, and it persists until a reconsideration request is filed and accepted, however clean the site becomes.",
+      "check": {"type": "probe", "probe": "trs.manual_actions"},
+      "fix": "Read the manual actions report through the Search Console API, remove what the action names, then file a reconsideration request describing what was removed and how it happened."
+    },
+    {
+      "id": "TRS-06",
+      "title": "No Security Issue Is Open In Search Console",
+      "rule": "The security issues report shows no hacked content, malware, social engineering or unwanted software finding. These are reported separately from manual actions and carry their own review cycle.",
+      "check": {"type": "probe", "probe": "trs.security_issues"},
+      "fix": "Read the security issues report, clean the URLs it names, close the entry point that allowed the injection, then request a review."
+    },
+    {
+      "id": "TRS-07",
+      "title": "No Hacked Or Injected Content Is Served",
+      "rule": "No page serves spam text, hidden links, injected redirects or content in a language the site does not publish in. Injected content is served selectively, so a page that looks clean to the owner can be spam to a crawler or to a visitor arriving from search.",
+      "check": {"type": "probe", "probe": "trs.injected_content"},
+      "fix": "Fetch the site with a search crawler user agent and with a search referrer, compare against a plain fetch, and remove what only appears in one of them."
+    },
+    {
+      "id": "TRS-08",
+      "title": "Googlebot Receives The Page A Visitor Receives",
+      "rule": "The response to a crawler and the response to a browser carry the same content. Serving a different page by user agent is cloaking whether it was meant as one or fell out of a caching layer, and it is enforced as a policy breach either way.",
+      "check": {"type": "probe", "probe": "trs.cloaking"},
+      "fix": "Fetch each template as Googlebot and as a normal browser and compare the rendered text. Where a CDN or bot-protection rule causes the difference, allow the verified crawler through it."
+    },
+    {
+      "id": "TRS-09",
+      "title": "The Inbound Link Profile Is One Nobody Paid For",
+      "rule": "The links report holds no pattern of paid, exchanged or automated inbound links. Link schemes are the most common cause of a manual action, and a site inherits the ones a previous owner or a previous agency bought.",
+      "severity": "required",
+      "check": {"type": "probe", "probe": "trs.link_profile"},
+      "fix": "Export the top linking sites from the Search Console links report and read the pattern. Where paid links cannot be removed at the source, file a disavow for those domains."
+    },
+    {
+      "id": "TRS-10",
+      "title": "Every Third-Party Script Is One That Will Not Flag The Domain",
+      "rule": "Each third-party script embedded on the site is served from a host the owner recognises and would defend. A widget, a chat box or an ad tag pulling further scripts at runtime puts the domain's reputation in someone else's release process.",
+      "severity": "required",
+      "check": {"type": "probe", "probe": "trs.third_party_scripts"},
+      "fix": "List the third-party origins each page loads, remove what nobody can name an owner for, and pin the rest to a versioned URL with subresource integrity where the vendor supports it."
+    }
+  ]
+}

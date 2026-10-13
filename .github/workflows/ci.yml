@@ -1,0 +1,89 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  leaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: gitleaks
+        run: |
+          curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" dir . --redact --no-banner
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: tool cases
+        run: |
+          fail=0
+          for t in claude/tools/tests/*-cases.py; do
+            name=$(basename "$t" -cases.py)
+            home=$(mktemp -d)
+            printf '[user]\n\tname = CI\n\temail = ci@example.com\n' > "$home/.gitconfig"
+            HOME="$home" INTELLIGENCE_TEST_TARGET="$PWD/claude/tools/$name.py" python3 "$t" \
+              || { echo "::error::$name cases failed"; fail=1; }
+          done
+          exit $fail
+      - name: guards
+        run: |
+          HOME=$(mktemp -d) python3 claude/ratchet/ratchet.py selftest
+          HOME=$(mktemp -d) python3 claude/tools/peer-reply-guard.py selftest
+      - name: host
+        run: |
+          for t in host/services/error-reporter/selftest_*.py host/services/lib/selftest_slack.py; do
+            (cd "$(dirname "$t")" && python3 "$(basename "$t")")
+          done
+      - name: voice
+        working-directory: voice/server
+        run: |
+          python3 -m pip install --quiet numpy
+          python3 pronounce.py check
+          python3 repeat_guard.py selftest
+          python3 nonspeech.py selftest
+          python3 canvas.py selftest
+          python3 selftest_audit.py
+
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install into an empty home and ask the doctor
+        run: |
+          export HOME=$(mktemp -d)
+          MTOA_REPO="$GITHUB_WORKSPACE" bash install.sh
+          python3 "$HOME/.mtoa/bin/mtoa" doctor
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build the host image and answer a health check
+        run: |
+          docker build -f host/docker/Dockerfile -t mtoa-host .
+          mkdir -p mtoa-home/error-reporter
+          python3 - <<'PY'
+          import json
+          config = json.load(open("host/services/error-reporter/config.example.json"))
+          config["listen_host"] = "0.0.0.0"
+          json.dump(config, open("mtoa-home/error-reporter/config.json", "w"))
+          PY
+          sudo chown -R 1000:1000 mtoa-home
+          docker run -d --name mtoa-host -p 8791:8791 -v "$PWD/mtoa-home:/home/mtoa" mtoa-host
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8791/healthz && exit 0
+            sleep 2
+          done
+          docker logs mtoa-host
+          exit 1

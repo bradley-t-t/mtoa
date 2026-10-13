@@ -1,0 +1,150 @@
+{
+  "group": "Code And Prompt Surfaces",
+  "prefix": "COD",
+  "description": "Anything a reader is meant to run, paste, or hand to an agent: shell blocks, config files, and the prompts a page ships. A bordered box of grey monospace is the browser's default, not a design.",
+  "gates": [
+    {
+      "id": "COD-01",
+      "title": "A Code Surface Is Drawn, Not Defaulted",
+      "rule": "A block of code, commands or config is a designed surface: a titled bar naming what it is, a drawn mark or frame, and its own ground. A pre with a border and a mono font is what the browser does on its own.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "blocker",
+      "check": {
+        "type": "code_surface_drawn"
+      },
+      "fix": "Give the block a header bar carrying its name and a drawn mark, and set it on its own field rather than the page ground."
+    },
+    {
+      "id": "COD-02",
+      "title": "A Runnable Block Is Copyable",
+      "rule": "Any block holding a command a reader is meant to run carries a copy control. Selecting monospace text across a wrapped line is not the affordance.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "blocker",
+      "check": {
+        "type": "code_copyable"
+      },
+      "fix": "Put a copy button in the block's header, writing the raw text rather than the rendered nodes."
+    },
+    {
+      "id": "COD-03",
+      "title": "Code Is Told Apart By Role",
+      "rule": "Within a code block the prompt sigil, the command, its flags and its addresses carry different tones, drawn from the palette already in use. One flat colour hides which word is the verb.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "major",
+      "check": {
+        "type": "code_tonal"
+      },
+      "fix": "Tokenise the line and set each role from an existing ink or accent token. No new hues."
+    },
+    {
+      "id": "COD-04",
+      "title": "A Long Prompt Is Not Dumped",
+      "rule": "A prompt or instruction block over a dozen lines is presented as what it does, with the text behind a copy control and a disclosure. Set out in full it is a wall the reader scrolls past.",
+      "kinds": [
+        "web-ui",
+        "page"
+      ],
+      "when": "code",
+      "severity": "blocker",
+      "check": {
+        "type": "prompt_not_dumped"
+      },
+      "fix": "Summarise the prompt in a sentence, put the text on a copy button, and hold the full text behind a disclosure for whoever wants to read it first."
+    },
+    {
+      "id": "COD-05",
+      "title": "A Command Never Truncates",
+      "rule": "At every width the block is read, a command either wraps or scrolls inside its own container. A URL cut mid-path with no way to reach the rest is a command that cannot be run.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "blocker",
+      "check": {
+        "type": "code_no_truncate"
+      },
+      "fix": "Wrap the block with whitespace-pre-wrap and break-words, or give it an overflow-x-auto container of its own."
+    },
+    {
+      "id": "COD-06",
+      "title": "The Block Says What It Is",
+      "rule": "Each block names itself: the shell, the path of the file, or the destination the text is going to. A reader should never have to guess where a block goes.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "major",
+      "check": {
+        "type": "code_labelled"
+      },
+      "fix": "Label the block with the file path or the surface it belongs to."
+    },
+    {
+      "id": "COD-07",
+      "title": "Drawn Code Keeps Its Text",
+      "rule": "Code rendered as a graphic still hands over its text: a copy control carrying the source, and a name for a screen reader. A picture of a command is not a command.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "blocker",
+      "check": {
+        "type": "code_graphic_keeps_text"
+      },
+      "fix": "Keep the text as text and draw only the frame, or pair the graphic with a copy control and an accessible name."
+    },
+    {
+      "id": "COD-08",
+      "title": "The Monospace Face Is Chosen",
+      "rule": "The monospace stack names a face. A bare monospace renders as whatever the reader's machine happens to ship, which is the one typeface on the page nobody picked.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "major",
+      "check": {
+        "type": "mono_face_named"
+      },
+      "fix": "Name the face in the theme's mono stack and give it a real fallback."
+    },
+    {
+      "id": "COD-09",
+      "title": "The Block Is Read At The Width It Ships",
+      "rule": "The code surface is looked at on a phone as well as a desktop: the label, the copy control and the first line of every command are all legible without a sideways scroll of the page.",
+      "kinds": [
+        "web-ui",
+        "component",
+        "page"
+      ],
+      "when": "code",
+      "severity": "major",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Open the page at 375px, read every block, and fix whatever is cut, cramped, or under the tap target."
+    }
+  ]
+}

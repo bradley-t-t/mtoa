@@ -1,0 +1,85 @@
+{
+  "name": "sunday-popup",
+  "productName": "Sunday",
+  "version": "1.0.0",
+  "description": "Live view of what the Sunday speaker hears and says",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "npm run vendor && npm run host && npm run build:native && electron-builder --mac zip --arm64",
+    "dist:win": "npm run vendor && npm run host && electron-builder --win zip --x64",
+    "build:native": "swiftc -O -target arm64-apple-macos14.2 -o native/audio-playing native/audio-playing.swift && swiftc -O -target arm64-apple-macos14.2 -o native/ear-audio native/ear-audio.swift",
+    "vendor": "node vendor.js",
+    "host": "node host.js"
+  },
+  "build": {
+    "appId": "com.acme.sunday-popup",
+    "productName": "Sunday",
+    "files": [
+      "main.js",
+      "host.json",
+      "preload.js",
+      "index.html",
+      "canvas.html",
+      "canvas.css",
+      "canvas.js",
+      "canvas-preload.js",
+      "vendor/**"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSAudioCaptureUsageDescription": "Sunday listens to what this Mac is playing so the speaker can tell it apart from your voice.",
+        "NSMicrophoneUsageDescription": "Sunday listens for its name on this Mac when the speaker cube can't hear you."
+      },
+      "extraResources": [
+        {
+          "from": "native/audio-playing",
+          "to": "audio-playing"
+        },
+        {
+          "from": "native/ear-audio",
+          "to": "ear-audio"
+        },
+        {
+          "from": "ear",
+          "to": "ear",
+          "filter": [
+            "mac_ear.py",
+            "wake/**"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "signAndEditExecutable": false,
+      "extraResources": [
+        {
+          "from": "native/audio-playing.ps1",
+          "to": "audio-playing.ps1"
+        },
+        {
+          "from": "native/game-watch.ps1",
+          "to": "game-watch.ps1"
+        }
+      ]
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "@fontsource-variable/orbitron": "5.3.0",
+    "@fontsource/rajdhani": "5.3.0",
+    "@highlightjs/cdn-assets": "11.12.0",
+    "chart.js": "4.5.1",
+    "dompurify": "3.4.16",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "markdown-it": "15.0.2"
+  }
+}

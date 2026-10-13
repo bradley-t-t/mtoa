@@ -1,0 +1,75 @@
+{
+  "group": "Repository Compliance",
+  "prefix": "REP",
+  "description": "The working agreement every owned repository is supposed to follow, checked rather than remembered. All of it is written down already; none of it was ever verified by anything, which is how a repository ends up half set up and looking finished.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "owned_repo",
+    "severity": "required",
+    "source": "references/repository.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "REP-01",
+      "title": "develop Exists",
+      "rule": "The repository has a develop branch. Without it every branch is cut from main, and a branch cut from main is missing whatever develop already holds.",
+      "check": {"type": "probe", "probe": "repo.develop"},
+      "fix": "Create it from the tip of the default branch."
+    },
+    {
+      "id": "REP-02",
+      "title": "Both Branches Are Protected And Gate On check",
+      "rule": "main and develop both require the check status, refuse force pushes and deletions, and require conversations resolved. develop is strict so a branch is tested against what it will land on; main is not, because a merge-commit promotion leaves develop behind by a commit carrying no code.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "repo.protection"},
+      "fix": "Apply the standard protection rule to both branches."
+    },
+    {
+      "id": "REP-03",
+      "title": "Auto-Merge And Branch Deletion Are On",
+      "rule": "allow_auto_merge and delete_branch_on_merge are both enabled. Without the first nothing lands on its own when CI goes green; without the second every merged branch stays behind forever.",
+      "check": {"type": "probe", "probe": "repo.settings"},
+      "fix": "gh api -X PATCH repos/{owner}/{repo} -f allow_auto_merge=true -f delete_branch_on_merge=true"
+    },
+    {
+      "id": "REP-04",
+      "title": "The Standard Workflow Is On Both Branches",
+      "rule": "ci.yml matches the standard byte for byte on main and on develop. A workflow that drifted on one branch gates nothing on that branch, and the branch it gates is not the one anybody looks at.",
+      "check": {"type": "probe", "probe": "repo.workflow"},
+      "fix": "Write the standard workflow to both branches through the contents API."
+    },
+    {
+      "id": "REP-05",
+      "title": "One README, At The Root",
+      "rule": "Exactly one README.md exists and it is at the project root. A README in a subdirectory is a second source of truth that goes stale without anybody noticing it exists.",
+      "when": "always",
+      "check": {"type": "single_readme"},
+      "fix": "Fold the subdirectory READMEs into the root one and delete them."
+    },
+    {
+      "id": "REP-06",
+      "title": "This Repository Is Held Once On This Machine",
+      "rule": "No second checkout of the same repository exists. Two checkouts is how a build from the stale twin overwrote a night of work, and the twin looks exactly like the real one until it does.",
+      "when": "always",
+      "severity": "blocker",
+      "check": {"type": "single_checkout"},
+      "fix": "The gate names them. Keep one, and cut worktrees from it."
+    },
+    {
+      "id": "REP-07",
+      "title": "The Work Is In A Worktree",
+      "rule": "The changes are in a worktree cut from develop, not in the primary checkout. Two agents in one checkout share a HEAD and an index, and the second to switch branches carries the first one's uncommitted work away.",
+      "check": {"type": "in_worktree"},
+      "fix": "git worktree add <path> -b <slug> origin/develop, and move the work there."
+    },
+    {
+      "id": "REP-08",
+      "title": "The Branch Is Based On develop",
+      "rule": "The working branch has origin/develop as an ancestor. A branch cut from main looks fine until its pull request reintroduces already-merged commits or conflicts on files develop has since changed.",
+      "when": "branch_work",
+      "check": {"type": "based_on_develop"},
+      "fix": "Rebase onto origin/develop, or reset onto it and reapply the working changes."
+    }
+  ]
+}

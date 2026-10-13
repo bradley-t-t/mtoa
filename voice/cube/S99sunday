@@ -1,0 +1,93 @@
+#!/bin/sh
+# Sunday: the only application on this cube. Brings up the speaker amp, the mic
+# line and the LED ring driver, then runs the agent under a respawn loop.
+
+HOME_DIR=/data/sunday
+PIDFILE=/var/run/sunday.pid
+LOG=/tmp/sunday.log
+
+hw_up() {
+    for g in 414 438; do
+        [ -d /sys/class/gpio/gpio$g ] || echo $g > /sys/class/gpio/export
+        echo out > /sys/class/gpio/gpio$g/direction
+    done
+    echo 1 > /sys/class/gpio/gpio414/value   # speaker amp on
+    echo 1 > /sys/class/gpio/gpio438/value   # mics on
+    amixer -q cset name='PDM Gain' 20
+    amixer -q cset name='Loopback datain source' PDMIN
+    amixer -q cset name='Loopback tdmin lb source' TDMOUT_C
+    pidof tr_ledring >/dev/null || /usr/share/thirdreality/bin/tr_ledring &
+    hostname sunday-cube
+    # Power save holds frames for the next beacon, which is jitter on a live audio stream.
+    iw dev wlan0 set power_save off 2>/dev/null
+}
+
+run_loop() {
+    while true; do
+        python3 -u $HOME_DIR/sunday_cube.py >> $LOG 2>&1
+        echo "$(date) agent exited ($?), restarting" >> $LOG
+        [ $(wc -c < $LOG) -gt 2000000 ] && tail -c 500000 $LOG > $LOG.1 && mv $LOG.1 $LOG
+        sleep 2
+    done
+}
+
+wifi_watch() {
+    # Wi-Fi drops: the router deauths it, or the link stays associated while traffic stops
+    # (2026-10-06, 10:34 to 10:37: two minutes of nothing with the radio up). Checked every
+    # 5 s against the gateway and the brain, either answering counts. Reassociating did not
+    # bring that one back and bouncing the link did, so the bounce comes early. DHCP is
+    # renewed through the running udhcpc (SIGUSR1): starting a second udhcpc first clears the
+    # address, which is what turned that drop into a full outage. Reboot after about 2.5 min.
+    misses=0
+    brain=$(sed -n 's|.*"server": *"ws://\([0-9.]*\).*|\1|p' $HOME_DIR/config.json 2>/dev/null)
+    while true; do
+        sleep 5
+        gw=$(ip route | awk '/default/ {print $3; exit}')
+        [ -z "$gw" ] && gw=192.168.1.1
+        if ping -c1 -W2 "$gw" >/dev/null 2>&1 || { [ -n "$brain" ] && ping -c1 -W2 "$brain" >/dev/null 2>&1; }; then
+            [ $misses -ge 2 ] && echo "$(date) wifi: back after $misses missed checks" >> $LOG
+            misses=0
+            continue
+        fi
+        misses=$((misses + 1))
+        echo "$(date) wifi: gateway $gw unreachable ($misses)" >> $LOG
+        case $misses in
+            3) wpa_cli -i wlan0 reassociate >/dev/null 2>&1 || killall -HUP wpa_supplicant
+               killall -USR1 udhcpc 2>/dev/null ;;
+            5|12) ip link set wlan0 down; sleep 1; ip link set wlan0 up; iw dev wlan0 set power_save off 2>/dev/null
+               sleep 4; killall -USR1 udhcpc 2>/dev/null
+               pidof udhcpc >/dev/null || /sbin/udhcpc -i wlan0 -A 1 -T 1 -b ;;
+        esac
+        [ $misses -ge 24 ] && { snapshot; sync; reboot; }
+    done
+}
+
+snapshot() {
+    # /tmp is lost on a reboot; keep the last state on flash so a drop can be explained.
+    { date; uptime; cat /proc/net/wireless; ip addr show wlan0; dmesg | tail -n 80; tail -n 150 $LOG; } \
+        > /data/sunday/last-state.tmp 2>&1 && mv /data/sunday/last-state.tmp /data/sunday/last-state.log
+}
+
+snapshot_loop() {
+    [ -f /data/sunday/last-state.log ] && mv /data/sunday/last-state.log /data/sunday/previous-boot.log
+    while true; do sleep 60; snapshot; done
+}
+
+case "$1" in
+    start)
+        hw_up
+        run_loop &
+        echo $! > $PIDFILE
+        wifi_watch &
+        echo $! >> $PIDFILE
+        snapshot_loop &
+        echo $! >> $PIDFILE
+        ;;
+    stop)
+        [ -f $PIDFILE ] && kill $(cat $PIDFILE) 2>/dev/null
+        killall -q arecord aplay 2>/dev/null
+        for p in $(ps w | awk '/sunday_cube.py/ && !/awk/ {print $1}'); do kill $p; done
+        rm -f $PIDFILE
+        ;;
+    restart) "$0" stop; sleep 1; "$0" start ;;
+esac

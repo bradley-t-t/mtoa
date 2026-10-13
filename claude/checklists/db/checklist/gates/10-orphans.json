@@ -1,0 +1,56 @@
+{
+  "group": "What The Code No Longer Reads",
+  "prefix": "ORP",
+  "description": "A feature is removed from an application in an afternoon and its schema stays for a year. Nothing breaks, so nothing reports it: the tables keep their rows, the functions keep answering, the jobs keep firing, and the only sign is a bill and a load nobody can account for. These gates are the pairing that makes that visible.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "probe",
+    "severity": "blocker",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "ORP-01",
+      "title": "Every Table Has A Reader In The Code",
+      "rule": "Each table in the public schema is named somewhere in the application or its functions, outside its own migration and outside a test. A table named only by the migration that created it has no reader, whatever its row count says, and a row count is what makes it look alive.",
+      "check": {"type": "tables_referenced"},
+      "fix": "Drop the table in a migration, or name what reads it with db-pass.py table-clear <name> --note \"<the reader>\"."
+    },
+    {
+      "id": "ORP-02",
+      "title": "Every Deployed Function Has Source Here",
+      "rule": "Each function deployed to the project has a directory in supabase/functions/. One that does not is running code nobody can read, review, or change, and it will keep running long after the feature is gone.",
+      "check": {"type": "functions_have_source"},
+      "fix": "Restore the source from the deployment, or delete the function once nothing calls it."
+    },
+    {
+      "id": "ORP-03",
+      "title": "Every Deployed Function Has A Caller",
+      "rule": "Each deployed function is named by the application, by another function, or by a scheduled job. One with no caller is an open route into the database that nothing is watching.",
+      "check": {"type": "functions_referenced"},
+      "fix": "Delete the function, or record the caller when it is invoked from outside this repository - a webhook, a userscript, another service."
+    },
+    {
+      "id": "ORP-04",
+      "title": "Every Scheduled Job Still Has Somewhere To Go",
+      "rule": "Each cron job names a table and a function that still exist. A job whose target is gone either fails on every tick or, worse, still succeeds against a table nothing reads - which is how a five-minute import outlives the feature it fed.",
+      "check": {"type": "cron_targets_exist"},
+      "fix": "Unschedule the job in a migration, or repoint it."
+    },
+    {
+      "id": "ORP-05",
+      "title": "Every Database Function Has A Caller",
+      "rule": "Each function in the public schema is called by the application, by a trigger, or by a job. The ones left behind are usually the reporting helpers of a removed feature, and they hold references that keep its tables from being dropped cleanly.",
+      "severity": "required",
+      "check": {"type": "db_functions_referenced"},
+      "fix": "Drop the function in a migration, or name its caller."
+    },
+    {
+      "id": "ORP-06",
+      "title": "Nothing In The Repository Points At What Is Gone",
+      "rule": "The code names no table, function, or job that the database does not have. This is the same drift read from the other side, and it fails at runtime rather than sitting quietly - a service still calling a table dropped in a previous cleanup answers every request with an error.",
+      "check": {"type": "code_targets_exist"},
+      "fix": "Remove the dead call, or restore what it needs."
+    }
+  ]
+}

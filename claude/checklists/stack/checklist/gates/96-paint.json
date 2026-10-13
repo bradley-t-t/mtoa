@@ -1,0 +1,21 @@
+{
+  "group": "First Paint",
+  "prefix": "PNT",
+  "description": "What a page shows in the moment before its JavaScript runs. A page rendered to HTML at build time is already on screen then, so whatever its own head leaves out is a reader watching the page get dressed. Nothing here is about weight or timing - a page that arrives fast and paints bare fails this and passes every measurement.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "prerendered",
+    "severity": "blocker",
+    "source": "references/first-paint.md",
+    "check": { "type": "manual" }
+  },
+  "gates": [
+    {
+      "id": "PNT-01",
+      "title": "Every Built Page Links The Sheets Its Own Markup Needs",
+      "rule": "Each page written to HTML at build time links every stylesheet that dresses the markup inside it. A sheet the bundler split into an async chunk is not linked by the page unless the build puts it there, so the markup paints bare until the chunk that pulls it arrives.",
+      "check": { "type": "probe", "probe": "paint.stylesheets" },
+      "fix": "Emit the missing link into that route's head at build time, resolved from the chunk graph rather than listed by hand. Moving the import into the entry sheet also closes it, at the cost of the split."
+    }
+  ]
+}

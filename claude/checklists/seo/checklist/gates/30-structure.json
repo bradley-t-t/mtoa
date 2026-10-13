@@ -1,0 +1,75 @@
+{
+  "group": "Document Structure",
+  "prefix": "STR",
+  "description": "The outline a crawler, a screen reader, and an agent all read the same way. Structure is the only part of a page that survives being stripped of its styling, which is exactly the form every machine reader sees it in.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "pages",
+    "severity": "required",
+    "source": "references/structure-and-content.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "STR-01",
+      "title": "One h1 Per Route",
+      "rule": "Exactly one h1. Several h1 elements leave nothing stating what the page is about, and the outline has no root to hang the rest of the headings from.",
+      "severity": "blocker",
+      "check": {"type": "single_h1"},
+      "fix": "Keep the one that names the page and demote the rest to h2."
+    },
+    {
+      "id": "STR-02",
+      "title": "Routes That Render Headings Open With h1",
+      "rule": "A route with headings starts at h1. Starting at h2 because it looked smaller is styling decided in the markup, and it costs the page its top-level subject.",
+      "check": {"type": "h1_present"},
+      "fix": "Promote the opening heading to h1 and set its size in the stylesheet."
+    },
+    {
+      "id": "STR-03",
+      "title": "No Heading Level Is Skipped",
+      "rule": "Levels descend one at a time. An h2 followed by an h4 tells a machine reader a section is missing, and the outline it builds is wrong in a way nothing on the rendered page reveals.",
+      "check": {"type": "heading_order"},
+      "fix": "Renumber the headings so each step down is one level."
+    },
+    {
+      "id": "STR-04",
+      "title": "The Page Has Landmarks",
+      "rule": "main, nav, header and footer exist as elements or roles. The accessibility tree is the cleanest signal an agent reads, and a page built entirely from div elements gives it nothing to orient on.",
+      "when": "always",
+      "check": {"type": "landmarks"},
+      "fix": "Replace the wrapper divs with the semantic elements they already stand in for."
+    },
+    {
+      "id": "STR-05",
+      "title": "Anchor Text Says Where It Goes",
+      "rule": "No link whose entire label is a placeholder. The anchor text is what the destination ranks for, so a site full of `read more` links passes its ranking signal to nothing.",
+      "when": "link",
+      "check": {"type": "descriptive_anchors"},
+      "fix": "Replace each placeholder with the destination's subject."
+    },
+    {
+      "id": "STR-06",
+      "title": "Every Route Links Onward",
+      "rule": "Each route carries at least one outgoing link. A route linked from nowhere and linking to nothing is reachable only through the sitemap, and passes nothing on to the rest of the site.",
+      "check": {"type": "internal_links"},
+      "fix": "Add links from each route to the related routes a reader would want next."
+    },
+    {
+      "id": "STR-07",
+      "title": "A Breadcrumb Trail Exists",
+      "rule": "The site renders a breadcrumb trail. It is the one navigation element Google shows in place of the raw URL in a result, and it tells a reader where the page sits before they open it.",
+      "when": "multipage",
+      "check": {"type": "breadcrumbs"},
+      "fix": "Render a breadcrumb nav on nested routes and mark it up as BreadcrumbList."
+    },
+    {
+      "id": "STR-08",
+      "title": "Interaction Lives On Real Controls",
+      "rule": "Clicks are bound to buttons and links, not to divs and spans. An agent reading the accessibility tree finds nothing it can act on, and a keyboard reaches none of it.",
+      "when": "always",
+      "check": {"type": "semantic_html"},
+      "fix": "Swap each clickable div for a button or an anchor and let it keep its own styling."
+    }
+  ]
+}

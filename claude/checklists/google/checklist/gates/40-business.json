@@ -1,0 +1,150 @@
+{
+  "group": "Business Profile",
+  "prefix": "GBP",
+  "description": "Google Business Profile is the surface a local business is actually found on. For a tool shop, a barber, or a company that drives to the customer, the profile decides the map pack and the knowledge panel, and it answers more commercial searches than the website behind it ever sees. A profile that is unclaimed, miscategorized, or carrying the wrong hours costs calls every day it stands, and no amount of work on the site recovers them. This group holds what is true inside the profile itself: who controls it, what it says, what it shows, and how fast the business answers the people it brings in.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "local",
+    "severity": "required",
+    "source": "references/business-profile.md",
+    "check": {"type": "probe", "probe": "gbp.profile"}
+  },
+  "gates": [
+    {
+      "id": "GBP-01",
+      "title": "The Profile Is Claimed, Verified And Unrestricted",
+      "rule": "The business has a Google Business Profile that is claimed, fully verified, and carrying no suspension or restriction, so it can appear in Maps and in the local pack.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.verified"},
+      "fix": "Claim the listing at business.google.com and finish verification by whichever method Google offers the category, usually video or postcard. A suspended profile goes through the Business Profile reinstatement form with proof of operation attached: a signage photo, a utility bill, or the business license."
+    },
+    {
+      "id": "GBP-02",
+      "title": "Ownership Outlives The Client Relationship",
+      "rule": "The primary owner is a business account held by the agency or the client company, and a second owner exists, so access survives an employee leaving or a phone being lost.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.owners"},
+      "fix": "In Business Profile Manager, open Business Profile settings, then People and access, add the operating account as an owner, and transfer primary ownership to it. Strip access from personal accounts belonging to former staff."
+    },
+    {
+      "id": "GBP-03",
+      "title": "One Listing Per Location",
+      "rule": "Exactly one profile exists for each address or service area, and every duplicate, old address, and listing left behind by a previous marketer is merged or removed.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.duplicates"},
+      "fix": "Search Maps for the business name, the phone number, and the address to surface competing listings. Report each duplicate through the Business Profile duplicate flow so Google merges it into the live profile, keeping whichever listing holds the review history."
+    },
+    {
+      "id": "GBP-04",
+      "title": "The Categories Match How Customers Search",
+      "rule": "The primary category is the single category customers use to find this kind of work, and secondary categories name the rest of the services without pulling against the primary one.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.categories"},
+      "fix": "Compare the primary category against the ones used by the three top-ranking competitors for the main money keyword, and set the category that matches the core service. Add secondary categories only for work the business performs, and drop any that drag the profile toward a different intent."
+    },
+    {
+      "id": "GBP-05",
+      "title": "The Name Is The Name On The Sign",
+      "rule": "The profile name is the business name as it reads on the signage, the letterhead, and the front door, with no city, service keyword, or tagline appended to it.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.name"},
+      "fix": "Set the name to the real-world name. Where keywords have been appended, take them out: stuffing the name is a suspension trigger, and the rankings it buys are withdrawn along with the profile."
+    },
+    {
+      "id": "GBP-06",
+      "title": "Address And Phone Agree With The Website",
+      "rule": "Street address, suite, and phone number on the profile match the website footer and contact page character for character, and no edit to them sits pending or rejected.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.nap"},
+      "fix": "Write the address the way the postal service writes it and set a local number as the primary, with any call-tracking number added as the secondary. Where a Google edit is pending or was rejected, resubmit it with evidence attached, and correct the same details in the directories that carry the old ones."
+    },
+    {
+      "id": "GBP-07",
+      "title": "Hours Are Current And Holidays Are Filled In",
+      "rule": "Regular opening hours match what the door actually does, and special hours are set for every holiday and closure falling in the next quarter.",
+      "when": "storefront",
+      "check": {"type": "probe", "probe": "gbp.hours"},
+      "fix": "Take the regular hours from the owner and enter them, then add special hours for each upcoming holiday. Without special hours the profile shows open hours on a day the business is shut, and Google flags hours it doubts as unconfirmed."
+    },
+    {
+      "id": "GBP-08",
+      "title": "The Service Area Matches Where The Business Travels",
+      "rule": "A business that drives to customers lists the towns, counties, or ZIP codes it reaches and keeps its street address hidden, and a business customers visit shows its address instead.",
+      "check": {"type": "probe", "probe": "gbp.service_area"},
+      "fix": "For a service-area business, set the service area to the places the crew reaches and clear the address so Google hides it, which is what Google requires of a business with no public location. Listing an area the business does not serve thins the profile without adding reach."
+    },
+    {
+      "id": "GBP-09",
+      "title": "Services And Products Are Listed",
+      "rule": "Every service the business sells exists as a service item with its own description, and anything sold at a price exists as a product with an image, so the profile can answer the searches it is shown for.",
+      "check": {"type": "probe", "probe": "gbp.services"},
+      "fix": "Add one service item per line of work, described in the words customers use rather than the trade's own. Add products for priced goods with an image and a link to the matching page on the site."
+    },
+    {
+      "id": "GBP-10",
+      "title": "The Description Uses The Room It Has",
+      "rule": "The description states what the business does, where it works, and how long it has done so, and fills most of the 750 characters available.",
+      "check": {"type": "probe", "probe": "gbp.description"},
+      "fix": "Write for someone deciding whether to call. Lead with the service and the area, name the licenses and the years in business, and keep keyword lists out of it: Google strips them and readers skip them."
+    },
+    {
+      "id": "GBP-11",
+      "title": "Photos Are Of This Business And Are Recent",
+      "rule": "The profile carries a logo, a cover photo, and photographs taken at this business inside the last year, with no stock imagery and no competitor's work among them.",
+      "check": {"type": "probe", "probe": "gbp.photos"},
+      "fix": "Upload a square logo and a wide cover image, then add photographs of the team, the vehicles, the equipment, and finished jobs. Replace anything older than a year, and set the cover and logo explicitly rather than letting Google pick from customer uploads."
+    },
+    {
+      "id": "GBP-12",
+      "title": "The Location Is Photographed Inside And Out",
+      "rule": "A location customers walk into carries exterior photographs showing the building from the street along with the parking, and interior photographs showing what a customer sees on entering.",
+      "when": "storefront",
+      "check": {"type": "probe", "probe": "gbp.photos.interior"},
+      "fix": "Shoot the building from the direction customers approach it, then the entrance, the parking, and the interior in daylight. Upload them under the exterior and interior categories so Google files them where customers look."
+    },
+    {
+      "id": "GBP-13",
+      "title": "Every Review Carries An Owner Reply",
+      "rule": "Every review has a reply from the business inside a week, negative reviews included, and the business has a standing way of asking satisfied customers for one.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.reviews"},
+      "fix": "Work the backlog oldest first, answering the complaint in a negative review rather than arguing with it. Put the profile's short review link into the invoice, the job-completion text message, and the email signature so new reviews keep arriving."
+    },
+    {
+      "id": "GBP-14",
+      "title": "Questions Carry An Answer From The Business",
+      "rule": "The questions section holds answers written by the business to the questions customers ask most often, and no question stands unanswered or answered only by a stranger.",
+      "check": {"type": "probe", "probe": "gbp.questions"},
+      "fix": "Post the questions the phone line hears every week and answer each from the business account. Watch the section afterwards: anyone can answer, and a wrong answer from a passer-by stands until the business posts a better one."
+    },
+    {
+      "id": "GBP-15",
+      "title": "Posts Publish Often Enough To Register",
+      "rule": "A post goes up at least twice a month carrying an offer, an event, or a job just finished, with an image and a call to action on it.",
+      "check": {"type": "probe", "probe": "gbp.posts"},
+      "fix": "Build the posts out of work the business already does: a job completed, a seasonal offer, a change in hours. A profile silent for months reads as abandoned beside one posting every week."
+    },
+    {
+      "id": "GBP-16",
+      "title": "Messaging Is Answered Or Switched Off",
+      "rule": "Profile messaging is either on with someone answering inside the response time Google measures, or off, and never on and ignored.",
+      "check": {"type": "probe", "probe": "gbp.messaging"},
+      "fix": "Where the client answers messages, turn messaging on, write the welcome message, and put notifications on a phone someone carries. Where nobody will answer, turn it off in the Messages settings instead of leaving customers waiting on a reply that never comes."
+    },
+    {
+      "id": "GBP-17",
+      "title": "The Website, Booking And Attribute Links Are Set",
+      "rule": "The website link points at the page that answers the search, any tracking parameters on it resolve to a live page rather than a redirect chain or a 404, booking and appointment links are set wherever the business takes bookings, and every attribute Google offers the category is answered.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gbp.links"},
+      "fix": "Point the website link at the location or service page rather than the home page. Open the finished URL, tracking parameters and all, and confirm it loads. Set the booking link to the live scheduler, and fill the attributes in the Business Profile editor, since payment, accessibility, and ownership attributes are filters customers search inside."
+    },
+    {
+      "id": "GBP-18",
+      "title": "Calls And Direction Requests Are Read",
+      "rule": "The profile's own performance figures are read every month, and the work is judged on calls, direction requests, website clicks, and bookings rather than on impressions.",
+      "check": {"type": "probe", "probe": "gbp.performance"},
+      "fix": "Pull the last twelve months of the performance report from the profile and record calls, direction requests, and clicks against the searches that produced them. Where calls fall while impressions hold, the profile is being shown for the wrong searches, and the categories and services are what to revisit."
+    }
+  ]
+}

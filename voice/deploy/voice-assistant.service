@@ -1,0 +1,22 @@
+[Unit]
+Description=Sunday voice assistant brain (cube speech pipeline)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@HOME@/voice-assistant
+EnvironmentFile=@HOME@/.claude/machine.env
+Environment=HOME=@HOME@
+ExecStart=@HOME@/voice-assistant/voice-start.sh
+Restart=always
+RestartSec=3
+Nice=-5
+StandardOutput=append:@HOME@/voice-assistant/voice.log
+StandardError=append:@HOME@/voice-assistant/voice.log
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

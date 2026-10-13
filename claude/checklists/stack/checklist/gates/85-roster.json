@@ -1,0 +1,35 @@
+{
+  "group": "Member Roster",
+  "prefix": "RST",
+  "description": "Whether the people a site belongs to can actually reach their own figures. A signup matched on email domain covers a company whose staff read mail at the company domain and nobody else, so every client on gmail, and every client whose mail domain is spelled differently from the site, is locked out and has to ask by hand. The roster is what closes that, and a roster nobody re-reads is a roster that describes last quarter's sites.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "member_roster",
+    "severity": "blocker",
+    "source": "references/roster.md",
+    "check": { "type": "manual" }
+  },
+  "gates": [
+    {
+      "id": "RST-01",
+      "title": "The Roster Is Current And In The Database",
+      "rule": "The roster was crawled inside its window, every address printed on a site is in it, and every address in it is in the table the signup trigger reads. Any one of the three failing means somebody who works at a client is signing up and landing on an empty console.",
+      "check": { "type": "member_roster" },
+      "fix": "site-roster.py crawl, then site-roster.py sync. An address the crawl finds that should not grant access is retired with site-roster.py forget."
+    },
+    {
+      "id": "RST-02",
+      "title": "Signup Reads The Roster As Well As The Domain",
+      "rule": "The trigger that runs on a new account resolves sites through both routes, and grants viewer for either. A trigger that reads only the domain leaves the roster as a list nothing consults.",
+      "check": { "type": "roster_wired" },
+      "fix": "Point handle_new_user at sites_for_email rather than sites_for_email_domain."
+    },
+    {
+      "id": "RST-03",
+      "title": "The Roster Is Not Readable From A Browser",
+      "rule": "The address table carries row-level security, no policies, and no grant to anon or authenticated. It is a list of real people's email addresses, and the trigger reads it as the definer rather than as the caller.",
+      "check": { "type": "roster_sealed" },
+      "fix": "Enable RLS, revoke from public, anon and authenticated, and leave the table without policies."
+    }
+  ]
+}

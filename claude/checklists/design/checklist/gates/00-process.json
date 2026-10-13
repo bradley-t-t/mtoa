@@ -1,0 +1,112 @@
+{
+  "group": "Process",
+  "prefix": "PRC",
+  "description": "The run itself. These gates hold whether the deliverable is a page, a logo, or a deck.",
+  "gates": [
+    {
+      "id": "PRC-01",
+      "title": "Run Opened Before Any Work",
+      "rule": "A design run exists and names its kind and targets before the first file is written. Opening it after the fact means the checklist was read against finished work rather than driving it.",
+      "source": "checklist/README.md",
+      "kinds": [
+        "*"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "run_opened"
+      },
+      "fix": "design-pass.py start --kind <kind> --target <path>"
+    },
+    {
+      "id": "PRC-08",
+      "title": "Scope Is The Deliverable, Not The Request",
+      "rule": "The run covers everything the reader will see, not only the files the prompt named. A request to change one button still answers for the page that button sits on. Narrowing the targets to the wording of the ask is how a full checklist turns into a short one without anyone deciding to skip anything.",
+      "source": "checklist/README.md",
+      "kinds": [
+        "*"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "scope_coverage"
+      },
+      "fix": "Widen the run: design-pass.py scan --target <the whole deliverable>. If a file genuinely belongs to something else, say which."
+    },
+    {
+      "id": "PRC-02",
+      "title": "Existing Project Read First",
+      "rule": "Before designing anything, read what is already there: token file, theme definitions, brand assets, and at least two sibling components or pages. Name what you found and what you inherited from it. A deliverable that ignores the surrounding system is a generic template.",
+      "source": "SKILL.md#five-principles (1)",
+      "kinds": [
+        "*"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Read the project's tokens/theme/siblings, then resolve with the file paths as evidence."
+    },
+    {
+      "id": "PRC-03",
+      "title": "Copy Held To avoid-ai-writing",
+      "rule": "Every word a person reads in this deliverable \u2014 headline, label, caption, empty state, tooltip, error, alt text, speaker note \u2014 goes through the avoid-ai-writing skill, invoked via the Skill tool, applied from the loaded skill rather than from memory.",
+      "source": "SKILL.md#five-principles (4)",
+      "kinds": [
+        "*"
+      ],
+      "when": "copy",
+      "severity": "blocker",
+      "check": {
+        "type": "writing_pass"
+      },
+      "fix": "Invoke avoid-ai-writing, apply it, then run ~/.claude/tools/writing-pass.py check on the files carrying copy."
+    },
+    {
+      "id": "PRC-04",
+      "title": "No Context-Derived Copy",
+      "rule": "No user-facing string exists because of the conversation that produced it. The test: would this sentence be here if the product had always been this way? Copy that answers a question, justifies a scoping decision, apologises for what a page is not, or narrates what changed fails.",
+      "source": "INTELLIGENCE.md#operating-principles",
+      "kinds": [
+        "*"
+      ],
+      "when": "copy",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Rewrite the string to state what the thing is, with no memory of being built."
+    },
+    {
+      "id": "PRC-05",
+      "title": "Rendered Output Verified",
+      "rule": "Anything that renders is opened and looked at before it is called done \u2014 page in the browser pane, image at full size, deck at presentation size. Console and network are read for errors. Reading the source is not verification.",
+      "source": "SKILL.md#delivery",
+      "kinds": [
+        "*"
+      ],
+      "when": "renderable",
+      "severity": "blocker",
+      "check": {
+        "type": "manual"
+      },
+      "fix": "Open the deliverable, screenshot it, read the console, then resolve with what you saw."
+    },
+    {
+      "id": "PRC-06",
+      "title": "Every Applicable Gate Resolved",
+      "rule": "Each gate in the run is pass, fixed, or n/a with a stated reason. No gate is left silent. N/A carries the condition that made it inapplicable.",
+      "source": "checklist/README.md",
+      "kinds": [
+        "*"
+      ],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "all_resolved"
+      },
+      "fix": "design-pass.py status, then resolve what is left."
+    }
+  ]
+}

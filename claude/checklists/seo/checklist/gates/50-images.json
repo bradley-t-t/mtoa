@@ -1,0 +1,60 @@
+{
+  "group": "Images",
+  "prefix": "IMG",
+  "description": "The heaviest thing on most pages and the least described. Every gate here is both an accessibility fix and a ranking fix, because the text that describes an image and the bytes it costs are the two things a machine reader has to go on.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "image",
+    "severity": "required",
+    "source": "references/images-and-performance.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "IMG-01",
+      "title": "Every Image Has An alt Attribute",
+      "rule": "Each image element carries alt. A decorative image takes alt=\"\", which says it is decorative; there is no third option, and a missing attribute says nothing at all.",
+      "severity": "blocker",
+      "check": {"type": "img_alt"},
+      "fix": "Describe the content-bearing images and give the decorative ones an empty alt."
+    },
+    {
+      "id": "IMG-02",
+      "title": "alt Describes The Image",
+      "rule": "alt text names what is in the picture, in 125 characters or fewer. A filename, the word `image`, or a run of keywords all pass a presence check and describe nothing.",
+      "check": {"type": "img_alt_quality"},
+      "fix": "Rewrite each one as the sentence you would say to somebody who cannot see it."
+    },
+    {
+      "id": "IMG-03",
+      "title": "Every Image Reserves Its Space",
+      "rule": "Each image sets width and height, or an aspect ratio. An image without dimensions is the single most common cause of layout shift, and layout shift is a ranking input.",
+      "severity": "blocker",
+      "check": {"type": "img_dimensions"},
+      "fix": "Set the intrinsic width and height on each image and let CSS scale it."
+    },
+    {
+      "id": "IMG-04",
+      "title": "Raster Images Are Not Oversized",
+      "rule": "No raster image over 200KB. WebP or AVIF at the same visual quality is typically a third the bytes, and the largest image on a page is usually the largest paint on it too.",
+      "when": "raster",
+      "check": {"type": "img_modern_format"},
+      "fix": "Convert the heavy files to WebP or AVIF, or serve them through the framework's image pipeline."
+    },
+    {
+      "id": "IMG-05",
+      "title": "Below-The-Fold Images Are Deferred",
+      "rule": "Images past the first screen carry loading=\"lazy\". Every one of them competes with the hero for the same connection while the reader is looking at the top of the page.",
+      "check": {"type": "img_lazy"},
+      "fix": "Add loading=\"lazy\" to everything below the fold, and leave the hero eager."
+    },
+    {
+      "id": "IMG-06",
+      "title": "The Hero Image Is Not Deferred",
+      "rule": "The first image in the document is not lazy. Deferring the largest paint delays the metric it is measured by, which is the opposite of what lazy loading is for.",
+      "severity": "blocker",
+      "check": {"type": "lcp_image_eager"},
+      "fix": "Remove loading=\"lazy\" from the hero and give it fetchpriority=\"high\" or the framework's priority flag."
+    }
+  ]
+}

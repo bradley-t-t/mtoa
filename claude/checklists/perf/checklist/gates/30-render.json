@@ -1,0 +1,76 @@
+{
+  "group": "The Critical Path",
+  "prefix": "RND",
+  "description": "First paint happens when the browser has everything it needs to draw and nothing left blocking it. These gates are about what stands between the document arriving and the first pixel, which on a client-rendered site is usually the entire application.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/critical-path.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "RND-01",
+      "title": "The Document Contains The First Screen",
+      "rule": "The HTML that arrives already describes what the reader will see. An empty root element means first paint cannot happen until the bundle has downloaded, parsed, executed and rendered, and every one of those steps is on the critical path for a metric that is measured in seconds.",
+      "when": "spa",
+      "check": {"type": "empty_shell"},
+      "fix": "Prerender the routes at build time, or server-render them. The output is the same markup the client would have produced, so the reader sees no difference except that it arrives sooner."
+    },
+    {
+      "id": "RND-02",
+      "title": "Stylesheets Are Not One Blocking Monolith",
+      "rule": "The render-blocking CSS stays small enough to arrive in the first round trips. Every byte of it is downloaded and parsed before anything paints, including the rules for routes the visitor is not on.",
+      "when": "css",
+      "check": {"type": "css_weight", "max": 60},
+      "fix": "Inline what the first screen needs and load the rest without blocking, or split the stylesheet along the same lines as the routes."
+    },
+    {
+      "id": "RND-03",
+      "title": "No Stylesheet Imports Another",
+      "rule": "No CSS file pulls in another with @import. The browser cannot discover the second file until it has parsed the first, which turns one round trip into two before anything paints.",
+      "when": "css",
+      "check": {"type": "css_import"},
+      "fix": "Replace the @import with a link in the document, or let the bundler inline it at build time."
+    },
+    {
+      "id": "RND-04",
+      "title": "Fonts Declare A Display Strategy",
+      "rule": "Every face sets font-display. Without it text is invisible until the font arrives, so the paint that gets measured is the one that waited for a download the reader would rather not have waited for.",
+      "when": "font",
+      "check": {"type": "font_display"},
+      "fix": "Set font-display: swap on each @font-face, or the display option on the framework's font loader."
+    },
+    {
+      "id": "RND-05",
+      "title": "Fonts Are Self-Hosted, Preloaded And Subset",
+      "rule": "Faces used on the first screen are served from the site's own origin, preloaded, and cut down to the characters the site actually sets. A third-party font host adds a cold origin to the critical path for a file that could have arrived with the page.",
+      "when": "font",
+      "check": {"type": "font_delivery"},
+      "fix": "Self-host the woff2, subset it to the ranges in use, and preload only the faces the first screen sets."
+    },
+    {
+      "id": "RND-06",
+      "title": "A Fallback Face Is Metric-Matched",
+      "rule": "The fallback declared beside each web font is sized to occupy the same space. Swapping from an unmatched fallback reflows every line of text it was standing in for, which is layout shift caused by a loading strategy.",
+      "when": "font",
+      "check": {"type": "font_fallback"},
+      "fix": "Declare a local fallback with size-adjust and the ascent and descent overrides that match the web font."
+    },
+    {
+      "id": "RND-07",
+      "title": "The Largest Element Is Discoverable In The HTML",
+      "rule": "Whatever the browser will measure as the largest paint is referenced by the document itself, preloaded and marked high priority. An image the bundle discovers after it mounts cannot begin downloading until the bundle has run.",
+      "check": {"type": "lcp_discoverable"},
+      "fix": "Reference the hero in the document, preload it with fetchpriority high, and keep it out of any component that mounts late."
+    },
+    {
+      "id": "RND-08",
+      "title": "Nothing Reserves The Reader's Attention For Itself",
+      "rule": "No splash screen, entrance overlay, cookie wall or intro animation stands between the document and the content. Each one is a deliberate delay in front of the exact moment the metrics measure.",
+      "check": {"type": "entrance_gate"},
+      "fix": "Where the gate is a design decision it stays and is answered n/a with that reason. Where it exists because the content was not ready, fix the content path instead."
+    }
+  ]
+}

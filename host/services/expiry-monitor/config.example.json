@@ -1,0 +1,13 @@
+{
+  "timeout_seconds": 20,
+  "sites": [
+    {
+      "name": "Example",
+      "url": "https://www.example.com/"
+    },
+    {
+      "name": "Example Shop",
+      "url": "https://shop.example.org/"
+    }
+  ]
+}

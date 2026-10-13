@@ -1,0 +1,119 @@
+{
+  "group": "Analytics",
+  "prefix": "GA4",
+  "description": "Whether the site is measured, once, by a property that will still hold its history in three years. The SEO checklist can confirm a tag snippet is in the document shell; only the live page and the GA4 APIs can say whether the tag fires, whether a second copy is counting every visit twice, and whether the property throws its data away after two months. A number nobody can trust is worse than no number, because decisions get made on it.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/analytics.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "GA4-01",
+      "title": "A GA4 Property Serves The Site",
+      "rule": "The site is measured by a GA4 property that exists in the account and names this host in its data stream. A site with no property collects nothing, and the gap is only noticed the first time somebody asks what the traffic was.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "ga4.property_exists"},
+      "fix": "GA4 Admin > Create property, add a Web data stream for the canonical host, and install the measurement ID it issues."
+    },
+    {
+      "id": "GA4-02",
+      "title": "No Universal Analytics Remains On The Page",
+      "rule": "The live page carries no UA property ID and no analytics.js. Universal Analytics stopped processing data, so a page still loading it pays for a request that collects nothing and hides that the real tag was never added.",
+      "check": {"type": "probe", "probe": "ga4.no_universal_analytics"},
+      "fix": "Remove the UA snippet and any GTM tag referencing a UA- ID from the document shell, then redeploy and refetch the page."
+    },
+    {
+      "id": "GA4-03",
+      "title": "One Measurement Tag Per Page, Carrying This Site's ID",
+      "rule": "Each page loads exactly one GA4 measurement tag and the ID on it belongs to this site's property. Two tags double every count, and a measurement ID copied from a sibling site sends this site's traffic into another site's reports, where it looks like growth.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "ga4.tag_singleton"},
+      "fix": "Fetch each route and remove the duplicate. The usual cause is a tag installed both in the document shell and through Tag Manager; keep one path and delete the other."
+    },
+    {
+      "id": "GA4-04",
+      "title": "A Pageview Is Counted Once",
+      "rule": "One visit to one page produces one page_view event. A client-side router that fires a manual page_view while enhanced measurement also fires one on history change doubles every session's depth, and every rate derived from it is then wrong by half.",
+      "check": {"type": "probe", "probe": "ga4.pageview_double_count"},
+      "fix": "Either turn off page changes based on browser history events in the data stream's enhanced measurement settings, or drop the manual page_view call. Verify with a single navigation in DebugView."
+    },
+    {
+      "id": "GA4-05",
+      "title": "The Tag Fires And Events Have Arrived",
+      "rule": "The property has received events within the last 48 hours. An installed tag that is blocked by a consent wall, a content security policy, or a build that dropped the script produces an account that looks configured and a report that stays empty.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "ga4.recent_events"},
+      "fix": "Load the site and watch GA4 Admin > DebugView. Where nothing arrives, check the browser console for a blocked request and the page's content security policy for the Google endpoints."
+    },
+    {
+      "id": "GA4-06",
+      "title": "Key Events Are Defined For What The Business Counts",
+      "rule": "The property marks at least one key event, and it corresponds to the action the site exists to produce. A property collecting only pageviews reports attention rather than outcome, and cannot say which pages earn anything.",
+      "check": {"type": "probe", "probe": "ga4.key_events"},
+      "fix": "GA4 Admin > Events, mark the relevant event as a key event, or create one from an existing event where the action fires no event of its own."
+    },
+    {
+      "id": "GA4-07",
+      "title": "Form Submissions Are Counted",
+      "rule": "A site with a contact or lead form sends an event on successful submission and that event is marked as a key event. A form whose success state is a client-side message and no event leaves the site unable to tell a lead from a bounce.",
+      "when": "forms",
+      "check": {"type": "probe", "probe": "ga4.form_key_event"},
+      "fix": "Fire a named event from the form's success handler, confirm it in DebugView, then mark it as a key event in GA4 Admin > Events."
+    },
+    {
+      "id": "GA4-08",
+      "title": "Call Clicks And Direction Requests Are Counted",
+      "rule": "A business with a phone number or an address counts taps on the tel link and clicks through to directions as key events. Those two actions are what a local visitor does instead of converting on the page, and neither leaves any trace in a pageview report.",
+      "when": "local",
+      "check": {"type": "probe", "probe": "ga4.local_key_events"},
+      "fix": "Add click handlers on the tel and maps links that send named events, verify them in DebugView, and mark both as key events."
+    },
+    {
+      "id": "GA4-09",
+      "title": "Purchases Arrive With Items And Value",
+      "rule": "A store sends the purchase event carrying currency, value and the items array. A purchase event without those parameters counts orders and reports no revenue, so every channel in the report shows the same return.",
+      "when": "ecommerce",
+      "check": {"type": "probe", "probe": "ga4.purchase_event_shape"},
+      "fix": "Populate the ecommerce parameters at the point the order confirms, and compare a day of GA4 revenue against the store's own figure before trusting it."
+    },
+    {
+      "id": "GA4-10",
+      "title": "The Property Is Linked To Search Console And To Ads",
+      "rule": "The GA4 property carries a Search Console link, and an Ads link wherever an Ads account spends against the site. Without the first, no report joins a query to what the visitor did next; without the second, campaign cost sits in one account and conversions in another.",
+      "check": {"type": "probe", "probe": "ga4.product_links"},
+      "fix": "GA4 Admin > Product links > Search Console links, then Google Ads links. Both need admin rights on each side of the link."
+    },
+    {
+      "id": "GA4-11",
+      "title": "Data Retention Is Set To The Longest The Tier Allows",
+      "rule": "Event data retention is 14 months rather than the two-month default. The default silently discards last year's data, so a year-over-year comparison becomes impossible at the moment somebody first asks for one, and the setting cannot be applied backwards.",
+      "check": {"type": "probe", "probe": "ga4.data_retention"},
+      "fix": "GA4 Admin > Data settings > Data retention, set event data retention to 14 months and turn on resetting user data on new activity."
+    },
+    {
+      "id": "GA4-12",
+      "title": "Internal Traffic Is Filtered Out",
+      "rule": "The property defines an internal traffic filter and it is active rather than in testing mode. On a site with a few hundred sessions a month, the people building it are a visible share of the traffic and every engagement figure is measuring them.",
+      "check": {"type": "probe", "probe": "ga4.internal_traffic_filter"},
+      "fix": "GA4 Admin > Data streams > Configure tag settings > Define internal traffic, add the office and home IP ranges, then set the internal traffic filter to Active under Data settings > Data filters."
+    },
+    {
+      "id": "GA4-13",
+      "title": "Consent Is Declared Before The Tag Loads",
+      "rule": "A site reaching an audience under consent law sets the consent defaults ahead of the measurement tag and updates them from the banner's answer. A banner that only hides the tag loses the modelled data as well as the measured data, and a tag that fires ahead of the answer collects data the site had no right to.",
+      "check": {"type": "probe", "probe": "ga4.consent_mode"},
+      "fix": "Emit the consent default call in the document head above the gtag snippet, wire the banner to the consent update call, and confirm the state in DebugView. Where no such audience exists, answer n/a naming the regions the site serves."
+    },
+    {
+      "id": "GA4-14",
+      "title": "One Tag Deployment Shape Across The Portfolio",
+      "rule": "Every site installs its tag the same way, so a change to how measurement works is one change rather than sixteen. A portfolio where some sites hardcode gtag, some run Tag Manager and some use a framework plugin has three ways for the tag to break and no single place to fix any of them.",
+      "when": "multisite",
+      "check": {"type": "probe", "probe": "ga4.deployment_uniform"},
+      "fix": "Pick the one installation path the portfolio uses, migrate the sites that differ onto it, and record the measurement ID per site in one place."
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "env": {
+    "CLAUDE_CODE_SILENT_TURN_REMINDER": "0"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "NotebookEdit",
+      "Read",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch",
+      "Task",
+      "Agent",
+      "TodoWrite",
+      "BashOutput",
+      "KillShell",
+      "Skill",
+      "SlashCommand",
+      "mcp__github",
+      "mcp__cryptofort",
+      "mcp__supabase",
+      "mcp__vercel",
+      "mcp__Claude_Browser",
+      "mcp__ccd_session"
+    ],
+    "deny": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|NotebookEdit|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/checklists/hook.py\" ] || exit 0; exec \"$HOME/.claude/checklists/hook.py\" pre"
+          }
+        ]
+      },
+      {
+        "matcher": "SendMessage|send_message|mcp__ccd_session_mgmt__send_message",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/tools/peer-reply-guard.py\" ] || exit 0; exec \"$HOME/.claude/tools/peer-reply-guard.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" say"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Read|NotebookRead|Write|Edit|MultiEdit|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/checklists/hook.py\" ] || exit 0; exec \"$HOME/.claude/checklists/hook.py\" post"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/checklists/hook.py\" ] || exit 0; exec \"$HOME/.claude/checklists/hook.py\" stop"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" stop"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" subagent"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" prompt"
+          }
+        ]
+      }
+    ],
+    "MessageDisplay": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" display",
+            "timeout": 150
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "commit-commands@claude-plugins-official": false,
+    "github@claude-plugins-official": true,
+    "supabase@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true
+  },
+  "autoCompactWindow": 500000,
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipWorkflowUsageWarning": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "voiceEnabled": true,
+  "switchModelsOnFlag": false
+}

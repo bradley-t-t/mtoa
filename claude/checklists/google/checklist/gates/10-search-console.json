@@ -1,0 +1,104 @@
+{
+  "group": "Search Console",
+  "prefix": "GSC",
+  "description": "What Google holds about the site in its own console: whether a property exists at all, who owns it, whether the sitemap was received and read, and whether a penalty or a hacked-content flag stands against the host. The SEO checklist owns the files a crawler fetches; none of those files can say whether Google ever accepted them. A repository with a perfect sitemap.xml and no property to submit it to is a site nobody is watching.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/search-console.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "GSC-01",
+      "title": "A Domain Property Covers Every Variant",
+      "rule": "The site is registered as a domain property, so apex, www, http and https all report into one place. A URL-prefix property covers one spelling of the host and silently reports nothing about the other three, which is how a site reads as having no traffic while it ranks.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gsc.domain_property"},
+      "fix": "Add the site in Search Console as a Domain property and complete the DNS TXT verification at the registrar. Keep any existing URL-prefix property only where a tool depends on it."
+    },
+    {
+      "id": "GSC-02",
+      "title": "Ownership Verification Still Holds",
+      "rule": "The verification the property rests on is still in place: the DNS TXT record still resolves, or the HTML file or meta tag is still served. A verification token dropped during a redesign or a DNS migration expires the property, and Google stops reporting on it without announcing that it did.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gsc.verification_live"},
+      "fix": "Re-add the TXT record at the DNS provider, or restore the verification file to the site root, then re-verify in Search Console under Settings > Ownership verification."
+    },
+    {
+      "id": "GSC-03",
+      "title": "The Sitemap Is Submitted",
+      "rule": "The property lists the site's sitemap under Sitemaps. A sitemap that exists at a URL and was never submitted is found only when a crawler happens to read robots.txt, and nothing reports on what Google did with it.",
+      "check": {"type": "probe", "probe": "gsc.sitemap_submitted"},
+      "fix": "Search Console > Sitemaps, enter the sitemap path and submit it. Where the site has no sitemap to submit, hand that to seo-checklist."
+    },
+    {
+      "id": "GSC-04",
+      "title": "The Last Sitemap Read Succeeded With Zero Errors",
+      "rule": "Google's last fetch of the sitemap returned success, is recent, and lists no errors and no warnings. A submitted sitemap that fails on every fetch is worth less than none, because the console shows it as present.",
+      "check": {"type": "probe", "probe": "gsc.sitemap_read"},
+      "fix": "Read the error rows in Search Console > Sitemaps. Malformed XML, unreachable URLs and cross-host entries belong to the generator, so hand the file itself to seo-checklist and resubmit once it is fixed."
+    },
+    {
+      "id": "GSC-05",
+      "title": "The Sitemap Google Holds Is The One robots.txt Names",
+      "rule": "The sitemap URL submitted to the property matches the Sitemap line the live robots.txt serves. Two different sitemaps means one of them is stale, and the stale one keeps naming pages that no longer exist.",
+      "check": {"type": "probe", "probe": "gsc.sitemap_matches_robots"},
+      "fix": "Resubmit the correct sitemap in Search Console and remove the outdated entry. Where robots.txt names the wrong path, hand that line to seo-checklist."
+    },
+    {
+      "id": "GSC-06",
+      "title": "Coverage Carries No Server Error Or Redirect Error",
+      "rule": "The Page Indexing report lists no pages under Server error (5xx) and none under Redirect error. Both are failures of the host rather than the markup, and both remove pages from the index while every file in the repository still looks correct.",
+      "check": {"type": "attest"},
+      "fix": "Open Search Console > Indexing > Pages and read the Server error and Redirect error rows. Fix the host or the redirect rule behind them, then use Validate Fix on the report."
+    },
+    {
+      "id": "GSC-07",
+      "title": "No Manual Action Stands Against The Site",
+      "rule": "The Manual Actions report is empty. A manual action suppresses the whole site or a section of it by human decision at Google, and no amount of on-page work moves a site that is under one.",
+      "severity": "blocker",
+      "check": {"type": "attest"},
+      "fix": "Open Search Console > Security & Manual Actions > Manual actions. Where an action is listed, fix what it names and submit a reconsideration request from that page."
+    },
+    {
+      "id": "GSC-08",
+      "title": "No Security Issue Is Open",
+      "rule": "The Security Issues report is empty. Hacked content and malware warnings put an interstitial in front of every visitor Google sends, so the site keeps its rankings and loses the traffic anyway.",
+      "severity": "blocker",
+      "check": {"type": "attest"},
+      "fix": "Open Search Console > Security & Manual Actions > Security issues, clean the flagged content at the host, then request a review from that page."
+    },
+    {
+      "id": "GSC-09",
+      "title": "One Host Answers, The Rest Redirect",
+      "rule": "Exactly one host serves a 200 and every other spelling of it redirects there in one hop. When both www and the apex answer, Google chooses between two copies of every page and splits the signals that would have ranked one of them.",
+      "severity": "blocker",
+      "check": {"type": "probe", "probe": "gsc.canonical_host"},
+      "fix": "Set the redirect at the host: a Vercel domain redirect, or a redirect rule at the DNS or CDN layer, pointing every variant at the canonical host."
+    },
+    {
+      "id": "GSC-10",
+      "title": "The Property Reports Search Traffic",
+      "rule": "The performance report returns rows for the last 28 days. A verified property with no impressions is either serving a host nobody reaches or verified against a spelling of the domain the site does not use, and both look identical to a property that is simply new.",
+      "check": {"type": "probe", "probe": "gsc.performance_rows"},
+      "fix": "Compare the property's host against the host that answers 200. Where they differ, verify the host that serves the site. Where the site is under a month old, record the date and the impression count as the reading."
+    },
+    {
+      "id": "GSC-11",
+      "title": "International Targeting Matches The Audience",
+      "rule": "A site serving more than one language or region declares that relationship, and Search Console reports no hreflang errors against it. Unpaired hreflang annotations are ignored outright, so a half-declared set gives the same result as none.",
+      "when": "multisite",
+      "check": {"type": "probe", "probe": "gsc.hreflang_errors"},
+      "fix": "Read the reported pairs and fix the return links. The annotations themselves live in the markup, so hand them to seo-checklist and re-check the report after the next crawl."
+    },
+    {
+      "id": "GSC-12",
+      "title": "Ownership Survives The Client Relationship Ending",
+      "rule": "The property lists an owner account that belongs to the agency as well as any account belonging to the client. A property owned only through a client's email is lost the day that mailbox is closed, along with every year of performance history in it.",
+      "check": {"type": "attest"},
+      "fix": "Search Console > Settings > Users and permissions, add the retained account as an Owner. Where the client account holds the only verification, add a second independent verification method under Settings > Ownership verification."
+    }
+  ]
+}

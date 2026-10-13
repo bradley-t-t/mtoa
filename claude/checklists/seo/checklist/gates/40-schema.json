@@ -1,0 +1,89 @@
+{
+  "group": "Structured Data",
+  "prefix": "SCH",
+  "description": "How a page states what it is rather than leaving it to be inferred. Structured data is consumed away from the page by machines that never see it rendered, which is why the failures here are ones a browser cannot show.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/structured-data.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "SCH-01",
+      "title": "The Project Emits JSON-LD",
+      "rule": "Structured data exists, as JSON-LD. It is Google's stated preference and the only format that does not entangle the markup with the meaning.",
+      "severity": "blocker",
+      "check": {"type": "jsonld_present"},
+      "fix": "Add a JSON-LD island to the document shell describing the site, and per-route islands for what each route is."
+    },
+    {
+      "id": "SCH-02",
+      "title": "Every Island Parses",
+      "rule": "Each literal JSON-LD block is valid JSON carrying @context and @type. A block with a trailing comma is not partially read - it is discarded whole, silently.",
+      "when": "jsonld",
+      "severity": "blocker",
+      "check": {"type": "jsonld_parses"},
+      "fix": "Fix the syntax and make sure every node declares both @context and @type."
+    },
+    {
+      "id": "SCH-03",
+      "title": "URLs Inside The Markup Are Absolute",
+      "rule": "url, logo, image, sameAs and @id hold absolute URLs. Structured data is read away from the page it came from, so a relative path resolves against nothing.",
+      "when": "jsonld",
+      "severity": "blocker",
+      "check": {"type": "jsonld_absolute_urls"},
+      "fix": "Build each URL from the site origin constant rather than writing a path."
+    },
+    {
+      "id": "SCH-04",
+      "title": "No Placeholder Values Survive",
+      "rule": "No template text left in the markup. Structured data that contradicts the page is a manual-action risk, and a bracketed placeholder contradicts everything.",
+      "when": "jsonld",
+      "severity": "blocker",
+      "check": {"type": "jsonld_no_placeholder"},
+      "fix": "Fill each value from the real data, or drop the property."
+    },
+    {
+      "id": "SCH-05",
+      "title": "No Retired Type Is In Use",
+      "rule": "No HowTo, SpecialAnnouncement, CourseInfo, EstimatedSalary, LearningVideo, ClaimReview or VehicleListing. Each produces no rich result and has not since Google removed it, so the markup is weight with no return.",
+      "when": "jsonld",
+      "check": {"type": "jsonld_no_deprecated"},
+      "fix": "Remove the retired type, or replace it with the live type that covers the same content."
+    },
+    {
+      "id": "SCH-06",
+      "title": "The Site Declares Who Publishes It",
+      "rule": "An Organization, LocalBusiness, Person or WebSite node exists. It is what every other entity claim hangs off, and without it the brand is a string rather than a thing.",
+      "severity": "blocker",
+      "check": {"type": "identity_schema"},
+      "fix": "Add an Organization or Person node in the shell with name, url, logo and sameAs."
+    },
+    {
+      "id": "SCH-07",
+      "title": "Breadcrumbs Are Marked Up",
+      "rule": "BreadcrumbList markup accompanies the rendered trail. It is what turns the URL line of a result into a readable path.",
+      "when": "multipage",
+      "check": {"type": "breadcrumb_schema"},
+      "fix": "Emit BreadcrumbList alongside the breadcrumb nav, with position and item on each entry."
+    },
+    {
+      "id": "SCH-08",
+      "title": "Articles Are Marked Up As Articles",
+      "rule": "Editorial routes carry Article, BlogPosting or NewsArticle with headline, author, datePublished and image. Without it a post is an untyped page competing with typed ones.",
+      "when": "article",
+      "check": {"type": "article_schema"},
+      "fix": "Add BlogPosting to each post template, built from the post's own front matter."
+    },
+    {
+      "id": "SCH-09",
+      "title": "Products Are Marked Up As Products",
+      "rule": "Product routes carry Product markup with offers, price and availability. It is what puts a price in the result, and its absence is the difference between a listing and a link.",
+      "when": "product",
+      "check": {"type": "product_schema"},
+      "fix": "Add Product with an Offer node to the product template, rendered server-side rather than injected."
+    }
+  ]
+}

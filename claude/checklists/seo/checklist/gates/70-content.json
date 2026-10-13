@@ -1,0 +1,60 @@
+{
+  "group": "Content & Credibility",
+  "prefix": "CNT",
+  "description": "What is actually on the page, and what says it can be trusted. Every technical gate above only decides whether this gets read.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "pages",
+    "severity": "required",
+    "source": "references/structure-and-content.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "CNT-01",
+      "title": "No Route Is Thin",
+      "rule": "Each route carries enough of its own copy to answer the query it targets. A service page runs 800 words, a post 1,500, a category 400 - a route far under its type's floor competes with pages that are not.",
+      "check": {"type": "thin_content", "min_words": 300},
+      "fix": "Write the missing content, merge the route into a fuller one, or answer n/a naming the route as a shell that renders its copy from data."
+    },
+    {
+      "id": "CNT-02",
+      "title": "No Filler Copy Ships",
+      "rule": "No lorem ipsum and no placeholder prose anywhere in the markup. Filler indexes exactly as well as real copy does, and it is what the page then ranks for.",
+      "when": "always",
+      "severity": "blocker",
+      "check": {"type": "no_lorem"},
+      "fix": "Replace each block with the real copy, or remove the section."
+    },
+    {
+      "id": "CNT-03",
+      "title": "The Answer Comes First",
+      "rule": "A long route states its answer in the opening lines rather than building to it. Roughly half of AI citations are taken from the first third of a page, and a buried conclusion is not quoted.",
+      "check": {"type": "answer_front_loaded"},
+      "fix": "Move the direct statement to the top of each section and let the detail follow it."
+    },
+    {
+      "id": "CNT-04",
+      "title": "Content Is Attributed",
+      "rule": "An author is named. Experience and authorship are what the quality guidelines are written around, and anonymous content has neither to show.",
+      "when": "always",
+      "check": {"type": "author_signals"},
+      "fix": "Add a byline with a real person and link it to a page that says who they are."
+    },
+    {
+      "id": "CNT-05",
+      "title": "Dates Are Visible",
+      "rule": "Editorial content renders when it was published and when it was last changed. A reader deciding whether a page is current has nothing else to go on, and neither does anything reading it.",
+      "when": "article",
+      "check": {"type": "dates_visible"},
+      "fix": "Render the dates on the page and mirror them into datePublished and dateModified."
+    },
+    {
+      "id": "CNT-06",
+      "title": "Headings Match The Question",
+      "rule": "At least some headings are phrased the way a query is. A heading that matches the question is the string a generative answer quotes, and a site of noun-phrase headings matches none of them.",
+      "check": {"type": "question_headings"},
+      "fix": "Rewrite the section headings people actually search as the question they would type."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "_": "First-stage scan only. must_flag: closing text that must trip the denial phrase scan so the judge gets a look. must_not: closing text with no denial phrasing, which must never reach the judge. The judge's own calls (checked dead end vs unchecked give-up, approval refusals) are non-deterministic and documented under judge_cases, not asserted here. Edit either list and run: unchecked.py selftest",
+  "must_flag": [
+    "I can't reach your Windows machine or the running game from this session.",
+    "I'm on your Mac, and the box is unreachable from here.",
+    "I have no route to that machine, so I can't fix it.",
+    "I don't have access to your game files.",
+    "There's no way for me to see the game.",
+    "I'm unable to edit the craft file from the Mac.",
+    "I can't do that from here.",
+    "That's not something I can do from this session.",
+    "There is no route to the Pi from where I'm running, so I can't.",
+    "I can't access the KSP save, so you'll have to do it yourself.",
+    "No route to it from this session.",
+    "I can't pilot it from here."
+  ],
+  "must_not": [
+    "I've landed the branch on develop and opened the pull request.",
+    "Ecko's second stage now carries the delta-v to circularize and rendezvous.",
+    "Done. Added a docking port, RCS, and reaction wheels to the second stage.",
+    "I need your go-ahead before I send this email.",
+    "Running SQL now and I'll tell you what it took with it.",
+    "Which save is Ecko in, and what exactly is the second stage doing wrong?",
+    "Pushing the fix to the craft file on alexs-desktop over ssh.",
+    "I checked the tailnet and ssh config and found the box; editing it now.",
+    "That needs your approval to send; say the word and it goes."
+  ],
+  "judge_cases": [
+    {"text": "I checked ssh, the tailnet, and ListAgents - the box is offline and nothing else reaches it, so I can't touch Ecko until it's back on.", "expect": "ok", "why": "a dead end the turn actually checked"},
+    {"text": "I can't send that email without your approval.", "expect": "ok", "why": "the user's own yes, not a missing route"},
+    {"text": "I can't reach your Windows machine from this session.", "expect": "unchecked", "why": "no probe for a route this turn"}
+  ]
+}

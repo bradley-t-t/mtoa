@@ -1,0 +1,72 @@
+{
+  "group": "Delivery - What The Server Sends",
+  "prefix": "DEL",
+  "description": "The cheapest time a page can save is time it spends before any of its own code runs. Redirects, uncompressed text, cold origins and re-fetched static assets are all paid before the first byte of content arrives, and none of them are visible in the source of the page they slow down.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/critical-path.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "DEL-01",
+      "title": "The Canonical Host Answers Directly",
+      "rule": "The host people actually reach - with and without www - serves the document itself rather than redirecting to the other one. A redirect is a whole round trip on a cold mobile connection before the browser has learned there is a page.",
+      "check": {"type": "redirect_chain"},
+      "fix": "Serve both hosts from the same deployment, or make the redirect one hop to the canonical host and point every link, sitemap entry and canonical tag at that host."
+    },
+    {
+      "id": "DEL-02",
+      "title": "Text Assets Are Compressed",
+      "rule": "HTML, CSS, JavaScript, JSON and SVG arrive brotli or gzip encoded. Uncompressed JavaScript is roughly four times the bytes for the same behaviour, and the difference is paid on every cold visit.",
+      "check": {"type": "compression"},
+      "fix": "Enable brotli at the edge. On a platform that does it by default, confirm it rather than assuming it."
+    },
+    {
+      "id": "DEL-03",
+      "title": "Hashed Assets Are Cached Forever",
+      "rule": "Every asset whose filename carries a content hash is served immutable with a year-long max-age. A hashed file cannot go stale by definition, so revalidating it spends a request to be told nothing changed.",
+      "check": {"type": "static_cache"},
+      "fix": "Set Cache-Control: public, max-age=31536000, immutable on the hashed asset directory."
+    },
+    {
+      "id": "DEL-04",
+      "title": "The Document Declares Its Own Freshness",
+      "rule": "The HTML carries an explicit cache policy. Left unset, a CDN invents one, and the two failure modes are a document cached past a deploy and a document never cached at all.",
+      "check": {"type": "html_cache"},
+      "fix": "Set an explicit Cache-Control on the document, with stale-while-revalidate where the platform honours it."
+    },
+    {
+      "id": "DEL-05",
+      "title": "Origins On The Critical Path Are Preconnected",
+      "rule": "Every origin the first screen depends on is preconnected. A cold origin costs DNS, TCP and TLS before the first byte of whatever it was fetching, and the browser cannot start any of that until it finds the reference.",
+      "when": "thirdparty",
+      "check": {"type": "preconnect"},
+      "fix": "Add rel=preconnect for the origins the first screen needs and rel=dns-prefetch for the rest. Preconnect costs a connection, so it is for the few that matter."
+    },
+    {
+      "id": "DEL-06",
+      "title": "No Third-Party Script Blocks The Document",
+      "rule": "Analytics, tag managers, chat widgets and pixels carry defer or async, or are loaded after paint. A third party in the critical path hands a stranger control of when the page appears.",
+      "when": "script",
+      "check": {"type": "thirdparty_defer"},
+      "fix": "Add defer or async. Load anything that is not needed for the first screen after the load event."
+    },
+    {
+      "id": "DEL-07",
+      "title": "The Document Arrives Quickly",
+      "rule": "Time to first byte stays under 800ms at the 75th percentile. Everything else in this checklist starts counting from the moment the document lands, so a slow origin moves every metric at once.",
+      "check": {"type": "ttfb_budget", "max": 800},
+      "fix": "Serve the document from the edge, cache it, and take the database out of the request path that renders it."
+    },
+    {
+      "id": "DEL-08",
+      "title": "Nothing Is Fetched That Is Never Used",
+      "rule": "The first screen requests no asset it does not render - no preload for a font weight nothing sets, no image for a carousel slide two, no stylesheet for a route nobody is on. A preload for an unused asset is strictly worse than no preload, because it competes with the ones that matter.",
+      "check": {"type": "unused_preload"},
+      "fix": "Remove the preload, or use the asset it names on the first screen."
+    }
+  ]
+}

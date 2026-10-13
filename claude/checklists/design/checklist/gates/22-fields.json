@@ -1,0 +1,232 @@
+{
+  "group": "Fields & Dropdowns",
+  "prefix": "FLD",
+  "description": "The two controls a generated interface most reliably leaves half-done. A field inherits enough browser chrome to pass a glance, and a dropdown is invisible until someone opens it, so nobody opens it. Written against references/code/fields-and-dropdowns.md.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "when": "form",
+    "severity": "required",
+    "source": "references/code/fields-and-dropdowns.md",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "FLD-01",
+      "title": "Fields Sit On Their Own Surface",
+      "rule": "The field background is a token distinct from the page ground behind it, in all three themes. A field the same colour as the page is a label with a border, and readers stop seeing it as somewhere to type.",
+      "severity": "blocker",
+      "check": {
+        "type": "field_surface"
+      },
+      "fix": "Define a field surface token per theme and apply it to input, textarea, and select."
+    },
+    {
+      "id": "FLD-02",
+      "title": "Field Borders Clear 3:1",
+      "rule": "The border is a UI boundary, so it needs 3:1 against the surface behind it in every theme. A hairline that only just shows in light mode is gone in gray.",
+      "severity": "blocker",
+      "fix": "Raise the border token's contrast, or carry the boundary with a surface shift instead."
+    },
+    {
+      "id": "FLD-03",
+      "title": "Placeholder Is Not The Label",
+      "rule": "A placeholder disappears the moment there is content, taking the field's meaning with it. Every field keeps a visible label, and the placeholder clears 4.5:1 rather than sitting at the pale grey that comes for free.",
+      "severity": "blocker",
+      "check": {
+        "type": "placeholder_only_label"
+      },
+      "fix": "Add the visible label, and lift the placeholder colour onto a token that clears 4.5:1."
+    },
+    {
+      "id": "FLD-04",
+      "title": "One Control Height, Shared",
+      "rule": "Input, select, and button take the same height token, with a 44px floor on touch. A 38px input beside a 44px button is the most common tuning miss in a generated form.",
+      "severity": "blocker",
+      "check": {
+        "type": "control_height_token"
+      },
+      "fix": "Define a control height token and reference it from every control rule."
+    },
+    {
+      "id": "FLD-05",
+      "title": "Field Text Is At Least 16px",
+      "rule": "Below 16px, iOS zooms the whole page when the field takes focus and leaves the reader zoomed in. This holds even where the surrounding type is smaller.",
+      "severity": "blocker",
+      "check": {
+        "type": "field_font_size"
+      },
+      "fix": "Set font-size: max(16px, <your token>) on the field."
+    },
+    {
+      "id": "FLD-06",
+      "title": "Invalid Is Not Colour Alone",
+      "rule": "An invalid field carries aria-invalid, a message, and an icon or marker. A red border says nothing to a screen reader and little to a colourblind reader.",
+      "severity": "blocker",
+      "check": {
+        "type": "aria_invalid"
+      },
+      "fix": "Set aria-invalid on the field and pair the colour with a message and a marker."
+    },
+    {
+      "id": "FLD-07",
+      "title": "Native Select Chrome Is Replaced Or Kept On Purpose",
+      "rule": "A bare select renders OS chrome that ignores every token. Either style the native control with appearance: none and your own chevron, keeping the platform's option list and its accessibility, or build a real listbox. State which route was taken.",
+      "severity": "blocker",
+      "check": {
+        "type": "select_appearance"
+      },
+      "fix": "Set appearance: none on the select and supply the chevron, padding for it, and the field surface."
+    },
+    {
+      "id": "FLD-08",
+      "title": "A Custom Listbox Owes The Whole Contract",
+      "rule": "Replacing the native select means rebuilding all of it: arrow keys cycling and wrapping, Home and End, Enter or Space to select, Escape to close without selecting, typeahead, aria-expanded mirroring visibility, role listbox or menu, aria-selected on options, focus returning to the trigger on close, and outside-click dismissal. A div with a click handler is not a select.",
+      "severity": "blocker",
+      "when": "menu",
+      "check": {
+        "type": "menu_keyboard"
+      },
+      "fix": "Use the platform Popover API or a headless primitive rather than hand-rolling the contract."
+    },
+    {
+      "id": "FLD-09",
+      "title": "Menu Is Not Clipped By An Ancestor",
+      "rule": "A menu inside an overflow-hidden or overflow-auto ancestor is cut off at the container edge, and it looks like a rendering bug rather than a layout one. Portal it to the body or use the Popover API, which handles stacking and light-dismiss on its own.",
+      "severity": "blocker",
+      "when": "menu",
+      "check": {
+        "type": "menu_clipping"
+      },
+      "fix": "Portal the menu, or move to the Popover API."
+    },
+    {
+      "id": "FLD-10",
+      "title": "Menu Flips At The Viewport Edge",
+      "rule": "A menu near the bottom of the viewport opens upward; near the right edge it aligns right. Without it the last option is unreachable on a laptop and the menu runs off the screen on a phone.",
+      "severity": "blocker",
+      "when": "menu",
+      "fix": "Use a positioning library or the Popover API's anchor handling rather than a fixed offset."
+    },
+    {
+      "id": "FLD-11",
+      "title": "Menu Has A Max Height And Scrolls Inside Itself",
+      "rule": "A menu is capped at something like min(320px, 60vh) with overflow-y auto and overscroll-behavior contain, so a long list never exceeds the viewport and scrolling it never scrolls the page behind.",
+      "severity": "blocker",
+      "when": "menu",
+      "check": {
+        "type": "menu_scroll"
+      },
+      "fix": "Add the max-height, overflow-y: auto, and overscroll-behavior: contain to the menu surface."
+    },
+    {
+      "id": "FLD-12",
+      "title": "Menu Surface Is Opaque And Elevated",
+      "rule": "The menu has its own raised surface token, a border or shadow separating it from what it covers, and no transparency. A translucent menu over body text is unreadable and reads as unfinished.",
+      "severity": "blocker",
+      "when": "menu",
+      "check": {
+        "type": "menu_surface"
+      },
+      "fix": "Give the menu a raised surface token, a rule, and a shadow, and drop any alpha from its background."
+    },
+    {
+      "id": "FLD-13",
+      "title": "Menu Sits On The Named Z-Layer",
+      "rule": "The menu takes its stacking from the layer scale, above the page and below modals. A z-index of 9999 is a guess that collides with the next guess.",
+      "when": "menu",
+      "check": {
+        "type": "menu_zindex"
+      },
+      "fix": "Add a dropdown step to the z-index scale and reference it."
+    },
+    {
+      "id": "FLD-14",
+      "title": "Menu Does Not Push Page Content",
+      "rule": "The menu is absolutely or fixed positioned. A menu in normal flow shoves everything below it down as it opens, which reads as the page breaking.",
+      "severity": "blocker",
+      "when": "menu",
+      "fix": "Position the menu absolutely against a positioned parent, or portal it."
+    },
+    {
+      "id": "FLD-15",
+      "title": "Menu Width Relates To Its Trigger",
+      "rule": "The menu is at least the trigger's width and does not jump between openings as its content changes. A menu narrower than the control it belongs to reads as detached from it.",
+      "when": "menu",
+      "fix": "Set min-width to the trigger's width, measured or via the anchor's size."
+    },
+    {
+      "id": "FLD-16",
+      "title": "Hover, Focused, And Selected Are Three Distinct States",
+      "rule": "Arrowing through a menu while the mouse rests on a different row must not light two rows the same way. Hover is a surface tint; focused adds a marker such as a left rule or ring; selected is the current value.",
+      "severity": "blocker",
+      "when": "menu",
+      "check": {
+        "type": "option_states"
+      },
+      "fix": "Give the focused option a marker the hover state does not have."
+    },
+    {
+      "id": "FLD-17",
+      "title": "Selected Carries A Marker In A Reserved Gutter",
+      "rule": "The current value is marked by a check or dot, not by colour alone, and the gutter holding it is reserved on every row so labels do not shift when the selection moves.",
+      "when": "menu",
+      "fix": "Reserve the marker column on all options and render the marker only on the selected one."
+    },
+    {
+      "id": "FLD-18",
+      "title": "Long Option Labels Stay Readable",
+      "rule": "A label longer than the menu truncates with the full text reachable through a title, a tooltip, or a two-line wrap. A label sliced mid-word with no way to read it is a dead end.",
+      "when": "menu",
+      "severity": "advisory",
+      "fix": "Truncate with an ellipsis and expose the full string."
+    },
+    {
+      "id": "FLD-19",
+      "title": "Menu Has Empty And Loading States",
+      "rule": "A filtered menu with no matches says so, and one that fetches its options shows placeholder rows. An empty box reads as broken.",
+      "when": "menu",
+      "fix": "Add the no-results row and, where options are fetched, placeholder rows in the option's shape."
+    },
+    {
+      "id": "FLD-20",
+      "title": "Menu Opens From Its Trigger, Fast",
+      "rule": "150 to 250ms, ease-out, scaling from the trigger's transform-origin rather than its own centre, and stopped under reduced motion.",
+      "when": "menu",
+      "fix": "Set the popover transform-origin variable and cap the duration."
+    },
+    {
+      "id": "FLD-21",
+      "title": "Date, Time, And Colour Pickers Follow The Same Rules",
+      "rule": "The trigger is a field, the panel is a menu, and the grid inside needs six states, not three: hover, focused, selected, today, out-of-range, and disabled. The native picker indicator is themed too, or it renders as the platform's icon on the wrong background.",
+      "when": "picker",
+      "check": {
+        "type": "picker_indicator"
+      },
+      "fix": "Theme the calendar picker indicator per theme and give the grid all six states."
+    },
+    {
+      "id": "FLD-22",
+      "title": "Checkbox, Radio, And Switch Are Themed",
+      "rule": "accent-color set from the accent token gets these right cheaply on modern browsers. A custom one still owes the focus ring, the 44px hit area, and the native semantics — a switch is a checkbox whatever it looks like.",
+      "check": {
+        "type": "accent_color"
+      },
+      "fix": "Set accent-color on the inputs, or give the custom control its focus ring and semantics."
+    },
+    {
+      "id": "FLD-23",
+      "title": "Autofilled Fields Keep The Design's Colours",
+      "rule": "A browser paints its own pale yellow over a field it filled and keeps it through hover and focus, and background-color does not reach it. The override covers every field on the page, not only the ones the project draws: a hosted sign-in widget renders its own inputs, and those are the fields a visitor is most likely to have saved credentials for.",
+      "severity": "blocker",
+      "check": {
+        "type": "autofill_surface"
+      },
+      "fix": "Add an unlayered :-webkit-autofill rule on input, textarea and select. Repaint the project's own fields with an inset box-shadow the height of the field, and neutralise the rest by delaying the background-color transition, which leaves each field the background it already had."
+    }
+  ]
+}

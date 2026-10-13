@@ -1,0 +1,2718 @@
+{
+ ".github/workflows/ci.yml": [
+  "intelligence",
+  "mtoa-public/.github/workflows/ci.yml"
+ ],
+ ".gitignore": [
+  "intelligence",
+  "mtoa-public/.gitignore"
+ ],
+ "CONTRIBUTING.md": [
+  "intelligence",
+  "mtoa-public/CONTRIBUTING.md"
+ ],
+ "LICENSE": [
+  "intelligence",
+  "mtoa-public/LICENSE"
+ ],
+ "README.md": [
+  "intelligence",
+  "mtoa-public/README.md"
+ ],
+ "THIRD_PARTY.md": [
+  "intelligence",
+  "mtoa-public/THIRD_PARTY.md"
+ ],
+ "bin/mtoa": [
+  "intelligence",
+  "mtoa-public/bin/mtoa"
+ ],
+ "claude/CLAUDE.md": [
+  "intelligence",
+  "CLAUDE.md"
+ ],
+ "claude/checklists/db/bin/db-pass.py": [
+  "intelligence",
+  "checklists/db/bin/db-pass.py"
+ ],
+ "claude/checklists/db/checklist/gates/00-process.json": [
+  "intelligence",
+  "checklists/db/checklist/gates/00-process.json"
+ ],
+ "claude/checklists/db/checklist/gates/10-orphans.json": [
+  "intelligence",
+  "checklists/db/checklist/gates/10-orphans.json"
+ ],
+ "claude/checklists/db/checklist/gates/20-access.json": [
+  "intelligence",
+  "checklists/db/checklist/gates/20-access.json"
+ ],
+ "claude/checklists/db/checklist/gates/30-health.json": [
+  "intelligence",
+  "checklists/db/checklist/gates/30-health.json"
+ ],
+ "claude/checklists/db/checklist/gates/40-provenance.json": [
+  "intelligence",
+  "checklists/db/checklist/gates/40-provenance.json"
+ ],
+ "claude/checklists/db/scripts/probe.py": [
+  "intelligence",
+  "checklists/db/scripts/probe.py"
+ ],
+ "claude/checklists/design/bin/design-pass.py": [
+  "intelligence",
+  "checklists/design/bin/design-pass.py"
+ ],
+ "claude/checklists/design/bin/design_fixes.py": [
+  "intelligence",
+  "checklists/design/bin/design_fixes.py"
+ ],
+ "claude/checklists/design/canvas-fonts/ArsenalSC-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/ArsenalSC-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/ArsenalSC-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/ArsenalSC-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/BigShoulders-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/BigShoulders-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/BigShoulders-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/BigShoulders-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/BigShoulders-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/BigShoulders-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Boldonse-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Boldonse-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Boldonse-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Boldonse-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/BricolageGrotesque-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/BricolageGrotesque-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/BricolageGrotesque-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/BricolageGrotesque-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/BricolageGrotesque-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/BricolageGrotesque-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/CrimsonPro-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/CrimsonPro-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/CrimsonPro-Italic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/CrimsonPro-Italic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/CrimsonPro-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/CrimsonPro-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/CrimsonPro-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/CrimsonPro-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/DMMono-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/DMMono-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/DMMono-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/DMMono-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/EricaOne-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/EricaOne-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/EricaOne-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/EricaOne-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/GeistMono-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/GeistMono-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/GeistMono-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/GeistMono-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/GeistMono-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/GeistMono-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Gloock-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Gloock-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Gloock-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Gloock-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexMono-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexMono-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexMono-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexMono-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexMono-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexMono-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexSerif-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexSerif-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexSerif-BoldItalic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexSerif-BoldItalic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexSerif-Italic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexSerif-Italic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/IBMPlexSerif-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/IBMPlexSerif-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSans-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSans-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSans-BoldItalic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSans-BoldItalic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSans-Italic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSans-Italic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSans-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSans-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSans-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSans-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSerif-Italic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSerif-Italic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/InstrumentSerif-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/InstrumentSerif-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Italiana-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Italiana-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Italiana-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Italiana-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/JetBrainsMono-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/JetBrainsMono-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/JetBrainsMono-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/JetBrainsMono-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/JetBrainsMono-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/JetBrainsMono-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Jura-Light.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Jura-Light.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Jura-Medium.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Jura-Medium.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Jura-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Jura-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/LibreBaskerville-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/LibreBaskerville-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/LibreBaskerville-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/LibreBaskerville-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Lora-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Lora-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Lora-BoldItalic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Lora-BoldItalic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Lora-Italic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Lora-Italic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Lora-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Lora-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Lora-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Lora-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/NationalPark-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/NationalPark-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/NationalPark-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/NationalPark-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/NationalPark-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/NationalPark-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/NothingYouCouldDo-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/NothingYouCouldDo-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/NothingYouCouldDo-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/NothingYouCouldDo-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Outfit-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Outfit-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Outfit-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Outfit-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Outfit-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Outfit-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/PixelifySans-Medium.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/PixelifySans-Medium.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/PixelifySans-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/PixelifySans-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/PoiretOne-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/PoiretOne-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/PoiretOne-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/PoiretOne-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/RedHatMono-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/RedHatMono-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/RedHatMono-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/RedHatMono-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/RedHatMono-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/RedHatMono-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Silkscreen-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Silkscreen-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Silkscreen-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Silkscreen-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/SmoochSans-Medium.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/SmoochSans-Medium.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/SmoochSans-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/SmoochSans-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Tektur-Medium.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Tektur-Medium.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/Tektur-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Tektur-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/Tektur-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/Tektur-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/WorkSans-Bold.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/WorkSans-Bold.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/WorkSans-BoldItalic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/WorkSans-BoldItalic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/WorkSans-Italic.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/WorkSans-Italic.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/WorkSans-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/WorkSans-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/WorkSans-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/WorkSans-Regular.ttf"
+ ],
+ "claude/checklists/design/canvas-fonts/YoungSerif-OFL.txt": [
+  "intelligence",
+  "checklists/design/canvas-fonts/YoungSerif-OFL.txt"
+ ],
+ "claude/checklists/design/canvas-fonts/YoungSerif-Regular.ttf": [
+  "intelligence",
+  "checklists/design/canvas-fonts/YoungSerif-Regular.ttf"
+ ],
+ "claude/checklists/design/checklist/PORTABLE.md": [
+  "intelligence",
+  "checklists/design/checklist/PORTABLE.md"
+ ],
+ "claude/checklists/design/checklist/README.md": [
+  "intelligence",
+  "checklists/design/checklist/README.md"
+ ],
+ "claude/checklists/design/checklist/gates/00-process.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/00-process.json"
+ ],
+ "claude/checklists/design/checklist/gates/10-universal.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/10-universal.json"
+ ],
+ "claude/checklists/design/checklist/gates/12-reference.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/12-reference.json"
+ ],
+ "claude/checklists/design/checklist/gates/13-navigation.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/13-navigation.json"
+ ],
+ "claude/checklists/design/checklist/gates/14-mobile.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/14-mobile.json"
+ ],
+ "claude/checklists/design/checklist/gates/15-production.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/15-production.json"
+ ],
+ "claude/checklists/design/checklist/gates/16-plates.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/16-plates.json"
+ ],
+ "claude/checklists/design/checklist/gates/18-email.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/18-email.json"
+ ],
+ "claude/checklists/design/checklist/gates/20-pointer.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/20-pointer.json"
+ ],
+ "claude/checklists/design/checklist/gates/22-fields.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/22-fields.json"
+ ],
+ "claude/checklists/design/checklist/gates/24-tables.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/24-tables.json"
+ ],
+ "claude/checklists/design/checklist/gates/25-code.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/25-code.json"
+ ],
+ "claude/checklists/design/checklist/gates/26-headers.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/26-headers.json"
+ ],
+ "claude/checklists/design/checklist/gates/27-spacing.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/27-spacing.json"
+ ],
+ "claude/checklists/design/checklist/gates/28-cohesion.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/28-cohesion.json"
+ ],
+ "claude/checklists/design/checklist/gates/30-polish.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/30-polish.json"
+ ],
+ "claude/checklists/design/checklist/gates/35-skeleton.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/35-skeleton.json"
+ ],
+ "claude/checklists/design/checklist/gates/40-slop.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/40-slop.json"
+ ],
+ "claude/checklists/design/checklist/gates/45-taste.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/45-taste.json"
+ ],
+ "claude/checklists/design/checklist/gates/50-ux.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/50-ux.json"
+ ],
+ "claude/checklists/design/checklist/gates/52-keyboard.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/52-keyboard.json"
+ ],
+ "claude/checklists/design/checklist/gates/53-marks.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/53-marks.json"
+ ],
+ "claude/checklists/design/checklist/gates/60-system.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/60-system.json"
+ ],
+ "claude/checklists/design/checklist/gates/70-brand.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/70-brand.json"
+ ],
+ "claude/checklists/design/checklist/gates/80-assets.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/80-assets.json"
+ ],
+ "claude/checklists/design/checklist/gates/90-slides.json": [
+  "intelligence",
+  "checklists/design/checklist/gates/90-slides.json"
+ ],
+ "claude/checklists/design/data/cip/deliverables.csv": [
+  "intelligence",
+  "checklists/design/data/cip/deliverables.csv"
+ ],
+ "claude/checklists/design/data/cip/industries.csv": [
+  "intelligence",
+  "checklists/design/data/cip/industries.csv"
+ ],
+ "claude/checklists/design/data/cip/mockup-contexts.csv": [
+  "intelligence",
+  "checklists/design/data/cip/mockup-contexts.csv"
+ ],
+ "claude/checklists/design/data/cip/styles.csv": [
+  "intelligence",
+  "checklists/design/data/cip/styles.csv"
+ ],
+ "claude/checklists/design/data/icon/styles.csv": [
+  "intelligence",
+  "checklists/design/data/icon/styles.csv"
+ ],
+ "claude/checklists/design/data/logo/colors.csv": [
+  "intelligence",
+  "checklists/design/data/logo/colors.csv"
+ ],
+ "claude/checklists/design/data/logo/industries.csv": [
+  "intelligence",
+  "checklists/design/data/logo/industries.csv"
+ ],
+ "claude/checklists/design/data/logo/styles.csv": [
+  "intelligence",
+  "checklists/design/data/logo/styles.csv"
+ ],
+ "claude/checklists/design/data/system/slide-backgrounds.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-backgrounds.csv"
+ ],
+ "claude/checklists/design/data/system/slide-charts.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-charts.csv"
+ ],
+ "claude/checklists/design/data/system/slide-color-logic.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-color-logic.csv"
+ ],
+ "claude/checklists/design/data/system/slide-copy.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-copy.csv"
+ ],
+ "claude/checklists/design/data/system/slide-layout-logic.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-layout-logic.csv"
+ ],
+ "claude/checklists/design/data/system/slide-layouts.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-layouts.csv"
+ ],
+ "claude/checklists/design/data/system/slide-strategies.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-strategies.csv"
+ ],
+ "claude/checklists/design/data/system/slide-typography.csv": [
+  "intelligence",
+  "checklists/design/data/system/slide-typography.csv"
+ ],
+ "claude/checklists/design/references/banner-sizes-and-styles.md": [
+  "intelligence",
+  "checklists/design/references/banner-sizes-and-styles.md"
+ ],
+ "claude/checklists/design/references/brand/_overview.md": [
+  "intelligence",
+  "checklists/design/references/brand/_overview.md"
+ ],
+ "claude/checklists/design/references/brand/approval-checklist.md": [
+  "intelligence",
+  "checklists/design/references/brand/approval-checklist.md"
+ ],
+ "claude/checklists/design/references/brand/asset-organization.md": [
+  "intelligence",
+  "checklists/design/references/brand/asset-organization.md"
+ ],
+ "claude/checklists/design/references/brand/brand-guideline-template.md": [
+  "intelligence",
+  "checklists/design/references/brand/brand-guideline-template.md"
+ ],
+ "claude/checklists/design/references/brand/color-palette-management.md": [
+  "intelligence",
+  "checklists/design/references/brand/color-palette-management.md"
+ ],
+ "claude/checklists/design/references/brand/consistency-checklist.md": [
+  "intelligence",
+  "checklists/design/references/brand/consistency-checklist.md"
+ ],
+ "claude/checklists/design/references/brand/logo-usage-rules.md": [
+  "intelligence",
+  "checklists/design/references/brand/logo-usage-rules.md"
+ ],
+ "claude/checklists/design/references/brand/messaging-framework.md": [
+  "intelligence",
+  "checklists/design/references/brand/messaging-framework.md"
+ ],
+ "claude/checklists/design/references/brand/typography-specifications.md": [
+  "intelligence",
+  "checklists/design/references/brand/typography-specifications.md"
+ ],
+ "claude/checklists/design/references/brand/update.md": [
+  "intelligence",
+  "checklists/design/references/brand/update.md"
+ ],
+ "claude/checklists/design/references/brand/visual-identity.md": [
+  "intelligence",
+  "checklists/design/references/brand/visual-identity.md"
+ ],
+ "claude/checklists/design/references/brand/voice-framework.md": [
+  "intelligence",
+  "checklists/design/references/brand/voice-framework.md"
+ ],
+ "claude/checklists/design/references/cip-deliverable-guide.md": [
+  "intelligence",
+  "checklists/design/references/cip-deliverable-guide.md"
+ ],
+ "claude/checklists/design/references/cip-design.md": [
+  "intelligence",
+  "checklists/design/references/cip-design.md"
+ ],
+ "claude/checklists/design/references/cip-prompt-engineering.md": [
+  "intelligence",
+  "checklists/design/references/cip-prompt-engineering.md"
+ ],
+ "claude/checklists/design/references/cip-style-guide.md": [
+  "intelligence",
+  "checklists/design/references/cip-style-guide.md"
+ ],
+ "claude/checklists/design/references/code/_overview.md": [
+  "intelligence",
+  "checklists/design/references/code/_overview.md"
+ ],
+ "claude/checklists/design/references/code/canvas-design-system.md": [
+  "intelligence",
+  "checklists/design/references/code/canvas-design-system.md"
+ ],
+ "claude/checklists/design/references/code/click-effect.md": [
+  "intelligence",
+  "checklists/design/references/code/click-effect.md"
+ ],
+ "claude/checklists/design/references/code/fields-and-dropdowns.md": [
+  "intelligence",
+  "checklists/design/references/code/fields-and-dropdowns.md"
+ ],
+ "claude/checklists/design/references/code/shadcn-accessibility.md": [
+  "intelligence",
+  "checklists/design/references/code/shadcn-accessibility.md"
+ ],
+ "claude/checklists/design/references/code/shadcn-components.md": [
+  "intelligence",
+  "checklists/design/references/code/shadcn-components.md"
+ ],
+ "claude/checklists/design/references/code/shadcn-theming.md": [
+  "intelligence",
+  "checklists/design/references/code/shadcn-theming.md"
+ ],
+ "claude/checklists/design/references/code/tables-and-headers.md": [
+  "intelligence",
+  "checklists/design/references/code/tables-and-headers.md"
+ ],
+ "claude/checklists/design/references/code/tailwind-customization.md": [
+  "intelligence",
+  "checklists/design/references/code/tailwind-customization.md"
+ ],
+ "claude/checklists/design/references/code/tailwind-responsive.md": [
+  "intelligence",
+  "checklists/design/references/code/tailwind-responsive.md"
+ ],
+ "claude/checklists/design/references/code/tailwind-utilities.md": [
+  "intelligence",
+  "checklists/design/references/code/tailwind-utilities.md"
+ ],
+ "claude/checklists/design/references/hallmark/LICENSE": [
+  "intelligence",
+  "checklists/design/references/hallmark/LICENSE"
+ ],
+ "claude/checklists/design/references/hallmark/SKILL.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/SKILL.md"
+ ],
+ "claude/checklists/design/references/hallmark/VENDOR.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/VENDOR.md"
+ ],
+ "claude/checklists/design/references/hallmark/docs/recipes.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/docs/recipes.md"
+ ],
+ "claude/checklists/design/references/hallmark/docs/study-examples.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/docs/study-examples.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/anti-patterns.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/anti-patterns.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/assets.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/assets.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/color.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/color.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/component-cookbook.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/component-cookbook.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/c1-outlined-chip.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/c1-outlined-chip.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/c2-inline-form-as-cta.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/c2-inline-form-as-cta.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/c3-typographic-link.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/c3-typographic-link.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/c4-sticky-bottom-bar.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/c4-sticky-bottom-bar.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/f1-bento-grid.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/f1-bento-grid.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/f2-sticky-scroll-stack.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/f2-sticky-scroll-stack.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/f3-tabular-spec-sheet.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/f3-tabular-spec-sheet.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/f4-step-sequence.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/f4-step-sequence.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/f5-annotated-screenshot.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/f5-annotated-screenshot.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/f6-product-card-grid.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/f6-product-card-grid.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft1-mast-headed.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft1-mast-headed.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft2-inline-rule-single-line.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft2-inline-rule-single-line.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft3-index-style-category-list.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft3-index-style-category-list.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft4-dense-typographic.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft4-dense-typographic.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft5-statement.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft5-statement.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft6-letter-close.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft6-letter-close.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft7-newsletter-first.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft7-newsletter-first.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/ft8-marquee-scroll.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/ft8-marquee-scroll.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h1-marquee.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h1-marquee.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h2-split-diptych.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h2-split-diptych.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h3-quote-led.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h3-quote-led.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h4-stat-led.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h4-stat-led.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h5-letter-hero.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h5-letter-hero.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h6-photographic-fold.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h6-photographic-fold.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h7-demo-video-clipped-by-viewport-edge.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h7-demo-video-clipped-by-viewport-edge.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h8-mockup-split-browser-framed.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h8-mockup-split-browser-framed.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/h9-custom-illustration-centerpiece.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/h9-custom-illustration-centerpiece.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/mm1-icon-row-list.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/mm1-icon-row-list.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/mm2-two-column-split.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/mm2-two-column-split.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/mm3-grouped-columns.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/mm3-grouped-columns.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/mm4-full-bleed-canvas.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/mm4-full-bleed-canvas.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/mm5-preview-on-hover.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/mm5-preview-on-hover.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/mm6-inline-expand-row.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/mm6-inline-expand-row.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n1-wordmark-2-links.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n1-wordmark-2-links.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n10-floating-on-scroll-morph.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n10-floating-on-scroll-morph.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n11-mega-menu.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n11-mega-menu.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n12-banner-retract.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n12-banner-retract.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n13-inline-cmdk-pill.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n13-inline-cmdk-pill.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n1b-saas-three-section.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n1b-saas-three-section.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n2-floating-chip.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n2-floating-chip.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n3-side-rail.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n3-side-rail.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n4-hidden-behind-k.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n4-hidden-behind-k.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n5-floating-pill.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n5-floating-pill.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n6-newspaper-masthead.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n6-newspaper-masthead.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n7-brutal-slab.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n7-brutal-slab.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n8-terminal-command.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n8-terminal-command.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/n9-edge-aligned-minimal.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/n9-edge-aligned-minimal.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/s1-left-margin-numbered.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/s1-left-margin-numbered.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/s2-hanging.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/s2-hanging.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/s3-sticky-pinned.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/s3-sticky-pinned.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/s4-inline-no-break.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/s4-inline-no-break.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/s5-bottom-anchored.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/s5-bottom-anchored.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/t1-pull-quote-with-marginalia.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/t1-pull-quote-with-marginalia.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/t2-logo-wall-hairline.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/t2-logo-wall-hairline.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/t3-single-huge-quote.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/t3-single-huge-quote.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/components/t4-numbered-stat-strip.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/components/t4-numbered-stat-strip.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/contract.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/contract.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/copy.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/copy.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/custom-craft.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/custom-craft.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/custom-theme.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/custom-theme.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/design-md.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/design-md.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/export-formats.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/export-formats.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/floating-nav.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/floating-nav.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/genres/atmospheric.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/genres/atmospheric.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/genres/editorial.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/genres/editorial.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/genres/modern-minimal.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/genres/modern-minimal.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/genres/playful.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/genres/playful.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/hero-enrichment.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/hero-enrichment.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/imagery-kit.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/imagery-kit.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/interaction-and-states.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/interaction-and-states.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/layout-and-space.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/layout-and-space.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/01-bento-grid.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/01-bento-grid.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/02-long-document.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/02-long-document.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/03-marquee-hero.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/03-marquee-hero.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/04-stat-led.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/04-stat-led.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/05-workbench.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/05-workbench.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/06-conversational-faq.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/06-conversational-faq.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/07-manifesto.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/07-manifesto.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/08-photographic.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/08-photographic.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/09-quote-led.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/09-quote-led.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/10-specimen.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/10-specimen.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/11-catalogue.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/11-catalogue.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/12-letter.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/12-letter.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/13-index-first.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/13-index-first.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/14-narrative-workflow.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/14-narrative-workflow.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/15-split-studio.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/15-split-studio.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/16-feature-stack.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/16-feature-stack.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/17-type-specimen.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/17-type-specimen.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/18-portfolio-grid.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/18-portfolio-grid.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/19-map-diagram.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/19-map-diagram.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/20-ecosystem-index.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/20-ecosystem-index.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/macrostructures/21-component-playground.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/macrostructures/21-component-playground.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/microinteractions.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/microinteractions.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/motion.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/motion.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/preview-examples.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/preview-examples.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/responsive.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/responsive.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/slop-test.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/slop-test.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/structure.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/structure.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/study.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/study.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/themes/carnival.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/themes/carnival.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/themes/cobalt.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/themes/cobalt.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/themes/grid.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/themes/grid.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/themes/hum.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/themes/hum.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/themes/lumen.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/themes/lumen.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/typography.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/typography.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/verbs/audit.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/verbs/audit.md"
+ ],
+ "claude/checklists/design/references/hallmark/references/verbs/redesign.md": [
+  "intelligence",
+  "checklists/design/references/hallmark/references/verbs/redesign.md"
+ ],
+ "claude/checklists/design/references/icon-design.md": [
+  "intelligence",
+  "checklists/design/references/icon-design.md"
+ ],
+ "claude/checklists/design/references/intelligence.md": [
+  "intelligence",
+  "checklists/design/references/intelligence.md"
+ ],
+ "claude/checklists/design/references/logo-color-psychology.md": [
+  "intelligence",
+  "checklists/design/references/logo-color-psychology.md"
+ ],
+ "claude/checklists/design/references/logo-design.md": [
+  "intelligence",
+  "checklists/design/references/logo-design.md"
+ ],
+ "claude/checklists/design/references/logo-prompt-engineering.md": [
+  "intelligence",
+  "checklists/design/references/logo-prompt-engineering.md"
+ ],
+ "claude/checklists/design/references/logo-style-guide.md": [
+  "intelligence",
+  "checklists/design/references/logo-style-guide.md"
+ ],
+ "claude/checklists/design/references/marketing-surfaces.md": [
+  "intelligence",
+  "checklists/design/references/marketing-surfaces.md"
+ ],
+ "claude/checklists/design/references/navigation-menus.md": [
+  "intelligence",
+  "checklists/design/references/navigation-menus.md"
+ ],
+ "claude/checklists/design/references/navigation-sites.md": [
+  "intelligence",
+  "checklists/design/references/navigation-sites.md"
+ ],
+ "claude/checklists/design/references/polish.md": [
+  "intelligence",
+  "checklists/design/references/polish.md"
+ ],
+ "claude/checklists/design/references/reference-sites.md": [
+  "intelligence",
+  "checklists/design/references/reference-sites.md"
+ ],
+ "claude/checklists/design/references/slides-copywriting-formulas.md": [
+  "intelligence",
+  "checklists/design/references/slides-copywriting-formulas.md"
+ ],
+ "claude/checklists/design/references/slides-create.md": [
+  "intelligence",
+  "checklists/design/references/slides-create.md"
+ ],
+ "claude/checklists/design/references/slides-html-template.md": [
+  "intelligence",
+  "checklists/design/references/slides-html-template.md"
+ ],
+ "claude/checklists/design/references/slides-layout-patterns.md": [
+  "intelligence",
+  "checklists/design/references/slides-layout-patterns.md"
+ ],
+ "claude/checklists/design/references/slides-strategies.md": [
+  "intelligence",
+  "checklists/design/references/slides-strategies.md"
+ ],
+ "claude/checklists/design/references/slides.md": [
+  "intelligence",
+  "checklists/design/references/slides.md"
+ ],
+ "claude/checklists/design/references/social-photos-design.md": [
+  "intelligence",
+  "checklists/design/references/social-photos-design.md"
+ ],
+ "claude/checklists/design/references/system/_overview.md": [
+  "intelligence",
+  "checklists/design/references/system/_overview.md"
+ ],
+ "claude/checklists/design/references/system/component-specs.md": [
+  "intelligence",
+  "checklists/design/references/system/component-specs.md"
+ ],
+ "claude/checklists/design/references/system/component-tokens.md": [
+  "intelligence",
+  "checklists/design/references/system/component-tokens.md"
+ ],
+ "claude/checklists/design/references/system/primitive-tokens.md": [
+  "intelligence",
+  "checklists/design/references/system/primitive-tokens.md"
+ ],
+ "claude/checklists/design/references/system/semantic-tokens.md": [
+  "intelligence",
+  "checklists/design/references/system/semantic-tokens.md"
+ ],
+ "claude/checklists/design/references/system/states-and-variants.md": [
+  "intelligence",
+  "checklists/design/references/system/states-and-variants.md"
+ ],
+ "claude/checklists/design/references/system/tailwind-integration.md": [
+  "intelligence",
+  "checklists/design/references/system/tailwind-integration.md"
+ ],
+ "claude/checklists/design/references/system/token-architecture.md": [
+  "intelligence",
+  "checklists/design/references/system/token-architecture.md"
+ ],
+ "claude/checklists/design/scripts/brand/extract-colors.cjs": [
+  "intelligence",
+  "checklists/design/scripts/brand/extract-colors.cjs"
+ ],
+ "claude/checklists/design/scripts/brand/inject-brand-context.cjs": [
+  "intelligence",
+  "checklists/design/scripts/brand/inject-brand-context.cjs"
+ ],
+ "claude/checklists/design/scripts/brand/sync-brand-to-tokens.cjs": [
+  "intelligence",
+  "checklists/design/scripts/brand/sync-brand-to-tokens.cjs"
+ ],
+ "claude/checklists/design/scripts/brand/validate-asset.cjs": [
+  "intelligence",
+  "checklists/design/scripts/brand/validate-asset.cjs"
+ ],
+ "claude/checklists/design/scripts/cip/core.py": [
+  "intelligence",
+  "checklists/design/scripts/cip/core.py"
+ ],
+ "claude/checklists/design/scripts/cip/generate.py": [
+  "intelligence",
+  "checklists/design/scripts/cip/generate.py"
+ ],
+ "claude/checklists/design/scripts/cip/render-html.py": [
+  "intelligence",
+  "checklists/design/scripts/cip/render-html.py"
+ ],
+ "claude/checklists/design/scripts/cip/search.py": [
+  "intelligence",
+  "checklists/design/scripts/cip/search.py"
+ ],
+ "claude/checklists/design/scripts/code/layout-probe.js": [
+  "intelligence",
+  "checklists/design/scripts/code/layout-probe.js"
+ ],
+ "claude/checklists/design/scripts/code/mobile-probe.js": [
+  "intelligence",
+  "checklists/design/scripts/code/mobile-probe.js"
+ ],
+ "claude/checklists/design/scripts/code/requirements.txt": [
+  "intelligence",
+  "checklists/design/scripts/code/requirements.txt"
+ ],
+ "claude/checklists/design/scripts/code/shadcn_add.py": [
+  "intelligence",
+  "checklists/design/scripts/code/shadcn_add.py"
+ ],
+ "claude/checklists/design/scripts/code/skeleton-probe.js": [
+  "intelligence",
+  "checklists/design/scripts/code/skeleton-probe.js"
+ ],
+ "claude/checklists/design/scripts/code/spacing-probe.js": [
+  "intelligence",
+  "checklists/design/scripts/code/spacing-probe.js"
+ ],
+ "claude/checklists/design/scripts/code/tailwind_config_gen.py": [
+  "intelligence",
+  "checklists/design/scripts/code/tailwind_config_gen.py"
+ ],
+ "claude/checklists/design/scripts/code/tests/coverage-ui.json": [
+  "intelligence",
+  "checklists/design/scripts/code/tests/coverage-ui.json"
+ ],
+ "claude/checklists/design/scripts/code/tests/requirements.txt": [
+  "intelligence",
+  "checklists/design/scripts/code/tests/requirements.txt"
+ ],
+ "claude/checklists/design/scripts/code/tests/test_shadcn_add.py": [
+  "intelligence",
+  "checklists/design/scripts/code/tests/test_shadcn_add.py"
+ ],
+ "claude/checklists/design/scripts/code/tests/test_tailwind_config_gen.py": [
+  "intelligence",
+  "checklists/design/scripts/code/tests/test_tailwind_config_gen.py"
+ ],
+ "claude/checklists/design/scripts/icon/generate.py": [
+  "intelligence",
+  "checklists/design/scripts/icon/generate.py"
+ ],
+ "claude/checklists/design/scripts/logo/core.py": [
+  "intelligence",
+  "checklists/design/scripts/logo/core.py"
+ ],
+ "claude/checklists/design/scripts/logo/generate.py": [
+  "intelligence",
+  "checklists/design/scripts/logo/generate.py"
+ ],
+ "claude/checklists/design/scripts/logo/search.py": [
+  "intelligence",
+  "checklists/design/scripts/logo/search.py"
+ ],
+ "claude/checklists/design/scripts/logo/transparent.py": [
+  "intelligence",
+  "checklists/design/scripts/logo/transparent.py"
+ ],
+ "claude/checklists/design/scripts/system/embed-tokens.cjs": [
+  "intelligence",
+  "checklists/design/scripts/system/embed-tokens.cjs"
+ ],
+ "claude/checklists/design/scripts/system/fetch-background.py": [
+  "intelligence",
+  "checklists/design/scripts/system/fetch-background.py"
+ ],
+ "claude/checklists/design/scripts/system/generate-slide.py": [
+  "intelligence",
+  "checklists/design/scripts/system/generate-slide.py"
+ ],
+ "claude/checklists/design/scripts/system/generate-tokens.cjs": [
+  "intelligence",
+  "checklists/design/scripts/system/generate-tokens.cjs"
+ ],
+ "claude/checklists/design/scripts/system/html-token-validator.py": [
+  "intelligence",
+  "checklists/design/scripts/system/html-token-validator.py"
+ ],
+ "claude/checklists/design/scripts/system/search-slides.py": [
+  "intelligence",
+  "checklists/design/scripts/system/search-slides.py"
+ ],
+ "claude/checklists/design/scripts/system/slide-token-validator.py": [
+  "intelligence",
+  "checklists/design/scripts/system/slide-token-validator.py"
+ ],
+ "claude/checklists/design/scripts/system/slide_search_core.py": [
+  "intelligence",
+  "checklists/design/scripts/system/slide_search_core.py"
+ ],
+ "claude/checklists/design/scripts/system/validate-tokens.cjs": [
+  "intelligence",
+  "checklists/design/scripts/system/validate-tokens.cjs"
+ ],
+ "claude/checklists/design/templates/brand/brand-guidelines-starter.md": [
+  "intelligence",
+  "checklists/design/templates/brand/brand-guidelines-starter.md"
+ ],
+ "claude/checklists/design/templates/system/design-tokens-starter.json": [
+  "intelligence",
+  "checklists/design/templates/system/design-tokens-starter.json"
+ ],
+ "claude/checklists/google/bin/google-pass.py": [
+  "intelligence",
+  "checklists/google/bin/google-pass.py"
+ ],
+ "claude/checklists/google/checklist/gates/00-process.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/00-process.json"
+ ],
+ "claude/checklists/google/checklist/gates/10-search-console.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/10-search-console.json"
+ ],
+ "claude/checklists/google/checklist/gates/20-indexing.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/20-indexing.json"
+ ],
+ "claude/checklists/google/checklist/gates/30-analytics.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/30-analytics.json"
+ ],
+ "claude/checklists/google/checklist/gates/40-business.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/40-business.json"
+ ],
+ "claude/checklists/google/checklist/gates/50-rich-results.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/50-rich-results.json"
+ ],
+ "claude/checklists/google/checklist/gates/60-vitals.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/60-vitals.json"
+ ],
+ "claude/checklists/google/checklist/gates/70-commerce.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/70-commerce.json"
+ ],
+ "claude/checklists/google/checklist/gates/80-trust.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/80-trust.json"
+ ],
+ "claude/checklists/google/checklist/gates/90-presence.json": [
+  "intelligence",
+  "checklists/google/checklist/gates/90-presence.json"
+ ],
+ "claude/checklists/google/checklist/sites.json": [
+  "intelligence",
+  "checklists/google/checklist/sites.json"
+ ],
+ "claude/checklists/google/references/analytics.md": [
+  "intelligence",
+  "checklists/google/references/analytics.md"
+ ],
+ "claude/checklists/google/references/business-profile.md": [
+  "intelligence",
+  "checklists/google/references/business-profile.md"
+ ],
+ "claude/checklists/google/references/commerce.md": [
+  "intelligence",
+  "checklists/google/references/commerce.md"
+ ],
+ "claude/checklists/google/references/indexing.md": [
+  "intelligence",
+  "checklists/google/references/indexing.md"
+ ],
+ "claude/checklists/google/references/presence.md": [
+  "intelligence",
+  "checklists/google/references/presence.md"
+ ],
+ "claude/checklists/google/references/process.md": [
+  "intelligence",
+  "checklists/google/references/process.md"
+ ],
+ "claude/checklists/google/references/rich-results.md": [
+  "intelligence",
+  "checklists/google/references/rich-results.md"
+ ],
+ "claude/checklists/google/references/search-console.md": [
+  "intelligence",
+  "checklists/google/references/search-console.md"
+ ],
+ "claude/checklists/google/references/trust.md": [
+  "intelligence",
+  "checklists/google/references/trust.md"
+ ],
+ "claude/checklists/google/references/vitals.md": [
+  "intelligence",
+  "checklists/google/references/vitals.md"
+ ],
+ "claude/checklists/google/scripts/probe.py": [
+  "intelligence",
+  "checklists/google/scripts/probe.py"
+ ],
+ "claude/checklists/hook.py": [
+  "intelligence",
+  "checklists/hook.py"
+ ],
+ "claude/checklists/perf/bin/perf-pass.py": [
+  "intelligence",
+  "checklists/perf/bin/perf-pass.py"
+ ],
+ "claude/checklists/perf/bin/perf_fixes.py": [
+  "intelligence",
+  "checklists/perf/bin/perf_fixes.py"
+ ],
+ "claude/checklists/perf/checklist/gates/00-process.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/00-process.json"
+ ],
+ "claude/checklists/perf/checklist/gates/10-delivery.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/10-delivery.json"
+ ],
+ "claude/checklists/perf/checklist/gates/20-javascript.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/20-javascript.json"
+ ],
+ "claude/checklists/perf/checklist/gates/30-render.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/30-render.json"
+ ],
+ "claude/checklists/perf/checklist/gates/40-media.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/40-media.json"
+ ],
+ "claude/checklists/perf/checklist/gates/50-interaction.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/50-interaction.json"
+ ],
+ "claude/checklists/perf/checklist/gates/60-measure.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/60-measure.json"
+ ],
+ "claude/checklists/perf/checklist/gates/70-parity.json": [
+  "intelligence",
+  "checklists/perf/checklist/gates/70-parity.json"
+ ],
+ "claude/checklists/perf/references/critical-path.md": [
+  "intelligence",
+  "checklists/perf/references/critical-path.md"
+ ],
+ "claude/checklists/perf/references/interaction.md": [
+  "intelligence",
+  "checklists/perf/references/interaction.md"
+ ],
+ "claude/checklists/perf/references/invariants.md": [
+  "intelligence",
+  "checklists/perf/references/invariants.md"
+ ],
+ "claude/checklists/perf/references/javascript-delivery.md": [
+  "intelligence",
+  "checklists/perf/references/javascript-delivery.md"
+ ],
+ "claude/checklists/perf/references/measuring.md": [
+  "intelligence",
+  "checklists/perf/references/measuring.md"
+ ],
+ "claude/checklists/perf/references/media.md": [
+  "intelligence",
+  "checklists/perf/references/media.md"
+ ],
+ "claude/checklists/perf/scripts/bundle-probe.py": [
+  "intelligence",
+  "checklists/perf/scripts/bundle-probe.py"
+ ],
+ "claude/checklists/perf/scripts/capture.js": [
+  "intelligence",
+  "checklists/perf/scripts/capture.js"
+ ],
+ "claude/checklists/perf/scripts/lighthouse.py": [
+  "intelligence",
+  "checklists/perf/scripts/lighthouse.py"
+ ],
+ "claude/checklists/perf/scripts/parity-probe.js": [
+  "intelligence",
+  "checklists/perf/scripts/parity-probe.js"
+ ],
+ "claude/checklists/perf/scripts/psi.py": [
+  "intelligence",
+  "checklists/perf/scripts/psi.py"
+ ],
+ "claude/checklists/seo/bin/seo-pass.py": [
+  "intelligence",
+  "checklists/seo/bin/seo-pass.py"
+ ],
+ "claude/checklists/seo/bin/seo_fixes.py": [
+  "intelligence",
+  "checklists/seo/bin/seo_fixes.py"
+ ],
+ "claude/checklists/seo/bin/seo_pass_api.py": [
+  "intelligence",
+  "checklists/seo/bin/seo_pass_api.py"
+ ],
+ "claude/checklists/seo/checklist/gates/00-process.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/00-process.json"
+ ],
+ "claude/checklists/seo/checklist/gates/10-crawl.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/10-crawl.json"
+ ],
+ "claude/checklists/seo/checklist/gates/20-head.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/20-head.json"
+ ],
+ "claude/checklists/seo/checklist/gates/25-social.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/25-social.json"
+ ],
+ "claude/checklists/seo/checklist/gates/30-structure.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/30-structure.json"
+ ],
+ "claude/checklists/seo/checklist/gates/40-schema.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/40-schema.json"
+ ],
+ "claude/checklists/seo/checklist/gates/50-images.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/50-images.json"
+ ],
+ "claude/checklists/seo/checklist/gates/60-performance.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/60-performance.json"
+ ],
+ "claude/checklists/seo/checklist/gates/70-content.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/70-content.json"
+ ],
+ "claude/checklists/seo/checklist/gates/80-geo.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/80-geo.json"
+ ],
+ "claude/checklists/seo/checklist/gates/90-locale.json": [
+  "intelligence",
+  "checklists/seo/checklist/gates/90-locale.json"
+ ],
+ "claude/checklists/seo/references/ai-readers.md": [
+  "intelligence",
+  "checklists/seo/references/ai-readers.md"
+ ],
+ "claude/checklists/seo/references/crawl-and-indexing.md": [
+  "intelligence",
+  "checklists/seo/references/crawl-and-indexing.md"
+ ],
+ "claude/checklists/seo/references/head-metadata.md": [
+  "intelligence",
+  "checklists/seo/references/head-metadata.md"
+ ],
+ "claude/checklists/seo/references/images-and-performance.md": [
+  "intelligence",
+  "checklists/seo/references/images-and-performance.md"
+ ],
+ "claude/checklists/seo/references/locale-and-place.md": [
+  "intelligence",
+  "checklists/seo/references/locale-and-place.md"
+ ],
+ "claude/checklists/seo/references/structure-and-content.md": [
+  "intelligence",
+  "checklists/seo/references/structure-and-content.md"
+ ],
+ "claude/checklists/seo/references/structured-data.md": [
+  "intelligence",
+  "checklists/seo/references/structured-data.md"
+ ],
+ "claude/checklists/seo/scripts/emit.py": [
+  "intelligence",
+  "checklists/seo/scripts/emit.py"
+ ],
+ "claude/checklists/stack/bin/stack-pass.py": [
+  "intelligence",
+  "checklists/stack/bin/stack-pass.py"
+ ],
+ "claude/checklists/stack/bin/stack_fixes.py": [
+  "intelligence",
+  "checklists/stack/bin/stack_fixes.py"
+ ],
+ "claude/checklists/stack/checklist/gates/00-process.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/00-process.json"
+ ],
+ "claude/checklists/stack/checklist/gates/10-services.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/10-services.json"
+ ],
+ "claude/checklists/stack/checklist/gates/20-env.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/20-env.json"
+ ],
+ "claude/checklists/stack/checklist/gates/30-chrome.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/30-chrome.json"
+ ],
+ "claude/checklists/stack/checklist/gates/40-tooling.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/40-tooling.json"
+ ],
+ "claude/checklists/stack/checklist/gates/50-version.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/50-version.json"
+ ],
+ "claude/checklists/stack/checklist/gates/60-repo.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/60-repo.json"
+ ],
+ "claude/checklists/stack/checklist/gates/70-deps.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/70-deps.json"
+ ],
+ "claude/checklists/stack/checklist/gates/80-auth.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/80-auth.json"
+ ],
+ "claude/checklists/stack/checklist/gates/85-roster.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/85-roster.json"
+ ],
+ "claude/checklists/stack/checklist/gates/90-observe.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/90-observe.json"
+ ],
+ "claude/checklists/stack/checklist/gates/95-live.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/95-live.json"
+ ],
+ "claude/checklists/stack/checklist/gates/96-paint.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/96-paint.json"
+ ],
+ "claude/checklists/stack/checklist/gates/98-legal.json": [
+  "intelligence",
+  "checklists/stack/checklist/gates/98-legal.json"
+ ],
+ "claude/checklists/stack/references/attribution.yml": [
+  "intelligence",
+  "checklists/stack/references/attribution.yml"
+ ],
+ "claude/checklists/stack/references/auth.md": [
+  "intelligence",
+  "checklists/stack/references/auth.md"
+ ],
+ "claude/checklists/stack/references/brand-chrome.md": [
+  "intelligence",
+  "checklists/stack/references/brand-chrome.md"
+ ],
+ "claude/checklists/stack/references/ci.yml": [
+  "intelligence",
+  "checklists/stack/references/ci.yml"
+ ],
+ "claude/checklists/stack/references/dependencies.md": [
+  "intelligence",
+  "checklists/stack/references/dependencies.md"
+ ],
+ "claude/checklists/stack/references/environment.md": [
+  "intelligence",
+  "checklists/stack/references/environment.md"
+ ],
+ "claude/checklists/stack/references/first-paint.md": [
+  "intelligence",
+  "checklists/stack/references/first-paint.md"
+ ],
+ "claude/checklists/stack/references/legal.md": [
+  "intelligence",
+  "checklists/stack/references/legal.md"
+ ],
+ "claude/checklists/stack/references/live-page.md": [
+  "intelligence",
+  "checklists/stack/references/live-page.md"
+ ],
+ "claude/checklists/stack/references/observability.md": [
+  "intelligence",
+  "checklists/stack/references/observability.md"
+ ],
+ "claude/checklists/stack/references/repository.md": [
+  "intelligence",
+  "checklists/stack/references/repository.md"
+ ],
+ "claude/checklists/stack/references/service-liveness.md": [
+  "intelligence",
+  "checklists/stack/references/service-liveness.md"
+ ],
+ "claude/checklists/stack/references/tooling.md": [
+  "intelligence",
+  "checklists/stack/references/tooling.md"
+ ],
+ "claude/checklists/stack/references/versioning.md": [
+  "intelligence",
+  "checklists/stack/references/versioning.md"
+ ],
+ "claude/checklists/stack/scripts/code/rail-probe.js": [
+  "intelligence",
+  "checklists/stack/scripts/code/rail-probe.js"
+ ],
+ "claude/checklists/stack/scripts/probe.py": [
+  "intelligence",
+  "checklists/stack/scripts/probe.py"
+ ],
+ "claude/ratchet/README.md": [
+  "intelligence",
+  "ratchet/README.md"
+ ],
+ "claude/ratchet/config.json": [
+  "intelligence",
+  "ratchet/config.json"
+ ],
+ "claude/ratchet/corpus.json": [
+  "intelligence",
+  "ratchet/corpus.json"
+ ],
+ "claude/ratchet/hook.py": [
+  "intelligence",
+  "ratchet/hook.py"
+ ],
+ "claude/ratchet/premature.py": [
+  "intelligence",
+  "ratchet/premature.py"
+ ],
+ "claude/ratchet/ratchet.py": [
+  "intelligence",
+  "ratchet/ratchet.py"
+ ],
+ "claude/ratchet/recall-corpus.json": [
+  "intelligence",
+  "ratchet/recall-corpus.json"
+ ],
+ "claude/ratchet/recall.py": [
+  "intelligence",
+  "ratchet/recall.py"
+ ],
+ "claude/ratchet/shape-corpus.json": [
+  "intelligence",
+  "ratchet/shape-corpus.json"
+ ],
+ "claude/ratchet/shape.json": [
+  "intelligence",
+  "ratchet/shape.json"
+ ],
+ "claude/ratchet/shape.py": [
+  "intelligence",
+  "ratchet/shape.py"
+ ],
+ "claude/ratchet/tells.json": [
+  "intelligence",
+  "ratchet/tells.json"
+ ],
+ "claude/ratchet/unchecked-corpus.json": [
+  "intelligence",
+  "ratchet/unchecked-corpus.json"
+ ],
+ "claude/ratchet/unchecked.py": [
+  "intelligence",
+  "ratchet/unchecked.py"
+ ],
+ "claude/settings.json": [
+  "intelligence",
+  "settings.json"
+ ],
+ "claude/skills/3d/SKILL.md": [
+  "intelligence",
+  "skills/3d/SKILL.md"
+ ],
+ "claude/skills/3d/bin/cutout.py": [
+  "intelligence",
+  "skills/3d/bin/cutout.py"
+ ],
+ "claude/skills/3d/references/deck.md": [
+  "intelligence",
+  "skills/3d/references/deck.md"
+ ],
+ "claude/skills/checklist/SKILL.md": [
+  "intelligence",
+  "skills/checklist/SKILL.md"
+ ],
+ "claude/skills/commit/SKILL.md": [
+  "intelligence",
+  "skills/commit/SKILL.md"
+ ],
+ "claude/skills/draft/SKILL.md": [
+  "intelligence",
+  "skills/draft/SKILL.md"
+ ],
+ "claude/skills/e/SKILL.md": [
+  "intelligence",
+  "skills/e/SKILL.md"
+ ],
+ "claude/skills/humanizer/LICENSE": [
+  "intelligence",
+  "skills/humanizer/LICENSE"
+ ],
+ "claude/skills/humanizer/SKILL.md": [
+  "intelligence",
+  "skills/humanizer/SKILL.md"
+ ],
+ "claude/skills/inspire/SKILL.md": [
+  "intelligence",
+  "skills/inspire/SKILL.md"
+ ],
+ "claude/skills/inspire/bin/extract.js": [
+  "intelligence",
+  "skills/inspire/bin/extract.js"
+ ],
+ "claude/skills/inspire/bin/ledger.py": [
+  "intelligence",
+  "skills/inspire/bin/ledger.py"
+ ],
+ "claude/skills/inspire/references/capture.md": [
+  "intelligence",
+  "skills/inspire/references/capture.md"
+ ],
+ "claude/skills/inspire/references/sites.md": [
+  "intelligence",
+  "skills/inspire/references/sites.md"
+ ],
+ "claude/skills/merge/SKILL.md": [
+  "intelligence",
+  "skills/merge/SKILL.md"
+ ],
+ "claude/skills/notes/SKILL.md": [
+  "intelligence",
+  "skills/notes/SKILL.md"
+ ],
+ "claude/skills/predator/SKILL.md": [
+  "intelligence",
+  "skills/predator/SKILL.md"
+ ],
+ "claude/skills/predator/bin/select.py": [
+  "intelligence",
+  "skills/predator/bin/select.py"
+ ],
+ "claude/skills/predator/references/catalog.md": [
+  "intelligence",
+  "skills/predator/references/catalog.md"
+ ],
+ "claude/skills/predator/workflow/predator.js": [
+  "intelligence",
+  "skills/predator/workflow/predator.js"
+ ],
+ "claude/skills/pretrip/SKILL.md": [
+  "intelligence",
+  "skills/pretrip/SKILL.md"
+ ],
+ "claude/skills/q/SKILL.md": [
+  "intelligence",
+  "skills/q/SKILL.md"
+ ],
+ "claude/skills/queue/SKILL.md": [
+  "intelligence",
+  "skills/queue/SKILL.md"
+ ],
+ "claude/skills/ship/SKILL.md": [
+  "intelligence",
+  "skills/ship/SKILL.md"
+ ],
+ "claude/skills/stack-checklist/SKILL.md": [
+  "intelligence",
+  "skills/stack-checklist/SKILL.md"
+ ],
+ "claude/skills/v/SKILL.md": [
+  "intelligence",
+  "skills/v/SKILL.md"
+ ],
+ "claude/skills/validate/SKILL.md": [
+  "intelligence",
+  "skills/validate/SKILL.md"
+ ],
+ "claude/standards/avoid-ai-writing/SKILL.md": [
+  "intelligence",
+  "standards/avoid-ai-writing/SKILL.md"
+ ],
+ "claude/standards/avoid-ai-writing/VENDOR.md": [
+  "intelligence",
+  "standards/avoid-ai-writing/VENDOR.md"
+ ],
+ "claude/standards/guards.md": [
+  "intelligence",
+  "standards/guards.md"
+ ],
+ "claude/standards/staying-on-topic.md": [
+  "intelligence",
+  "standards/staying-on-topic.md"
+ ],
+ "claude/tools/_lib.py": [
+  "intelligence",
+  "tools/_lib.py"
+ ],
+ "claude/tools/ai-writing/LICENSE": [
+  "intelligence",
+  "tools/ai-writing/LICENSE"
+ ],
+ "claude/tools/ai-writing/VENDOR.md": [
+  "intelligence",
+  "tools/ai-writing/VENDOR.md"
+ ],
+ "claude/tools/ai-writing/patterns.js": [
+  "intelligence",
+  "tools/ai-writing/patterns.js"
+ ],
+ "claude/tools/ai-writing/scan.js": [
+  "intelligence",
+  "tools/ai-writing/scan.js"
+ ],
+ "claude/tools/ai-writing/validate.js": [
+  "intelligence",
+  "tools/ai-writing/validate.js"
+ ],
+ "claude/tools/bump-version.py": [
+  "intelligence",
+  "tools/bump-version.py"
+ ],
+ "claude/tools/checklist-runs.py": [
+  "intelligence",
+  "tools/checklist-runs.py"
+ ],
+ "claude/tools/config-sync.py": [
+  "intelligence",
+  "tools/config-sync.py"
+ ],
+ "claude/tools/db-pass.py": [
+  "intelligence",
+  "tools/db-pass.py"
+ ],
+ "claude/tools/design-pass.py": [
+  "intelligence",
+  "tools/design-pass.py"
+ ],
+ "claude/tools/google-pass.py": [
+  "intelligence",
+  "tools/google-pass.py"
+ ],
+ "claude/tools/mtoa_config.py": [
+  "intelligence",
+  "tools/mtoa_config.py"
+ ],
+ "claude/tools/note.py": [
+  "intelligence",
+  "tools/note.py"
+ ],
+ "claude/tools/pass_cache.py": [
+  "intelligence",
+  "tools/pass_cache.py"
+ ],
+ "claude/tools/peer-reply-corpus.json": [
+  "intelligence",
+  "tools/peer-reply-corpus.json"
+ ],
+ "claude/tools/peer-reply-guard.py": [
+  "intelligence",
+  "tools/peer-reply-guard.py"
+ ],
+ "claude/tools/perf-pass.py": [
+  "intelligence",
+  "tools/perf-pass.py"
+ ],
+ "claude/tools/recent-folders-prune.py": [
+  "intelligence",
+  "tools/recent-folders-prune.py"
+ ],
+ "claude/tools/release-lag.py": [
+  "intelligence",
+  "tools/release-lag.py"
+ ],
+ "claude/tools/release-yard.py": [
+  "intelligence",
+  "tools/release-yard.py"
+ ],
+ "claude/tools/seo-pass.py": [
+  "intelligence",
+  "tools/seo-pass.py"
+ ],
+ "claude/tools/stack-pass.py": [
+  "intelligence",
+  "tools/stack-pass.py"
+ ],
+ "claude/tools/suite-sandbox.py": [
+  "intelligence",
+  "tools/suite-sandbox.py"
+ ],
+ "claude/tools/svg-guard.py": [
+  "intelligence",
+  "tools/svg-guard.py"
+ ],
+ "claude/tools/tests/_lib-cases.py": [
+  "intelligence",
+  "tools/tests/_lib-cases.py"
+ ],
+ "claude/tools/tests/bump-version-cases.py": [
+  "intelligence",
+  "tools/tests/bump-version-cases.py"
+ ],
+ "claude/tools/tests/cases.py": [
+  "intelligence",
+  "tools/tests/cases.py"
+ ],
+ "claude/tools/tests/checklist-runs-cases.py": [
+  "intelligence",
+  "tools/tests/checklist-runs-cases.py"
+ ],
+ "claude/tools/tests/config-sync-cases.py": [
+  "intelligence",
+  "tools/tests/config-sync-cases.py"
+ ],
+ "claude/tools/tests/db-pass-cases.py": [
+  "intelligence",
+  "tools/tests/db-pass-cases.py"
+ ],
+ "claude/tools/tests/design-pass-cases.py": [
+  "intelligence",
+  "tools/tests/design-pass-cases.py"
+ ],
+ "claude/tools/tests/google-pass-cases.py": [
+  "intelligence",
+  "tools/tests/google-pass-cases.py"
+ ],
+ "claude/tools/tests/mtoa_config-cases.py": [
+  "intelligence",
+  "tools/tests/mtoa_config-cases.py"
+ ],
+ "claude/tools/tests/note-cases.py": [
+  "intelligence",
+  "tools/tests/note-cases.py"
+ ],
+ "claude/tools/tests/pass_cache-cases.py": [
+  "intelligence",
+  "tools/tests/pass_cache-cases.py"
+ ],
+ "claude/tools/tests/perf-pass-cases.py": [
+  "intelligence",
+  "tools/tests/perf-pass-cases.py"
+ ],
+ "claude/tools/tests/release-lag-cases.py": [
+  "intelligence",
+  "tools/tests/release-lag-cases.py"
+ ],
+ "claude/tools/tests/release-yard-cases.py": [
+  "intelligence",
+  "tools/tests/release-yard-cases.py"
+ ],
+ "claude/tools/tests/seo-pass-cases.py": [
+  "intelligence",
+  "tools/tests/seo-pass-cases.py"
+ ],
+ "claude/tools/tests/stack-pass-cases.py": [
+  "intelligence",
+  "tools/tests/stack-pass-cases.py"
+ ],
+ "claude/tools/tests/suite-sandbox-cases.py": [
+  "intelligence",
+  "tools/tests/suite-sandbox-cases.py"
+ ],
+ "claude/tools/tests/svg-guard-cases.py": [
+  "intelligence",
+  "tools/tests/svg-guard-cases.py"
+ ],
+ "claude/tools/tests/with-credential-cases.py": [
+  "intelligence",
+  "tools/tests/with-credential-cases.py"
+ ],
+ "claude/tools/tests/writing-pass-cases.py": [
+  "intelligence",
+  "tools/tests/writing-pass-cases.py"
+ ],
+ "claude/tools/version-badge.py": [
+  "intelligence",
+  "tools/version-badge.py"
+ ],
+ "claude/tools/with-credential.py": [
+  "intelligence",
+  "tools/with-credential.py"
+ ],
+ "claude/tools/writing-pass.py": [
+  "intelligence",
+  "tools/writing-pass.py"
+ ],
+ "docs/credentials.md": [
+  "intelligence",
+  "mtoa-public/docs/credentials.md"
+ ],
+ "docs/host.md": [
+  "intelligence",
+  "mtoa-public/docs/host.md"
+ ],
+ "docs/keeping-your-own.md": [
+  "intelligence",
+  "mtoa-public/docs/keeping-your-own.md"
+ ],
+ "docs/profile.md": [
+  "intelligence",
+  "mtoa-public/docs/profile.md"
+ ],
+ "docs/voice.md": [
+  "intelligence",
+  "mtoa-public/docs/voice.md"
+ ],
+ "host/bin/claude-login.py": [
+  "intelligence",
+  "error-reporting/bin/claude-login.py"
+ ],
+ "host/bin/deploy.map": [
+  "intelligence",
+  "error-reporting/bin/deploy.map"
+ ],
+ "host/bin/deploy.sh": [
+  "intelligence",
+  "error-reporting/bin/deploy.sh"
+ ],
+ "host/bin/heartbeat.py": [
+  "intelligence",
+  "error-reporting/bin/heartbeat.py"
+ ],
+ "host/bin/routine-deliver.py": [
+  "intelligence",
+  "error-reporting/bin/routine-deliver.py"
+ ],
+ "host/bin/routine-salvage.py": [
+  "intelligence",
+  "error-reporting/bin/routine-salvage.py"
+ ],
+ "host/bin/work-sync.sh": [
+  "intelligence",
+  "error-reporting/bin/work-sync.sh"
+ ],
+ "host/docker/Dockerfile": [
+  "intelligence",
+  "mtoa-public/host/docker/Dockerfile"
+ ],
+ "host/docker/compose.yml": [
+  "intelligence",
+  "mtoa-public/host/docker/compose.yml"
+ ],
+ "host/docker/run.py": [
+  "intelligence",
+  "mtoa-public/host/docker/run.py"
+ ],
+ "host/docs/onboarding.md": [
+  "intelligence",
+  "error-reporting/docs/onboarding.md"
+ ],
+ "host/docs/slack.md": [
+  "intelligence",
+  "error-reporting/docs/slack.md"
+ ],
+ "host/services/attention-board/attention-board.service": [
+  "intelligence",
+  "error-reporting/services/attention-board/attention-board.service"
+ ],
+ "host/services/attention-board/attention-board.timer": [
+  "intelligence",
+  "error-reporting/services/attention-board/attention-board.timer"
+ ],
+ "host/services/attention-board/attention_board.py": [
+  "intelligence",
+  "error-reporting/services/attention-board/attention_board.py"
+ ],
+ "host/services/attention-board/config.example.json": [
+  "intelligence",
+  "error-reporting/services/attention-board/config.example.json"
+ ],
+ "host/services/error-monitor/error-monitor-run.sh": [
+  "intelligence",
+  "error-reporting/services/error-monitor/error-monitor-run.sh"
+ ],
+ "host/services/error-monitor/error-monitor-tick.sh": [
+  "intelligence",
+  "error-reporting/services/error-monitor/error-monitor-tick.sh"
+ ],
+ "host/services/error-monitor/error-monitor.prompt.md": [
+  "intelligence",
+  "error-reporting/services/error-monitor/error-monitor.prompt.md"
+ ],
+ "host/services/error-reporter/config.example.json": [
+  "intelligence",
+  "error-reporting/services/error-reporter/config.example.json"
+ ],
+ "host/services/error-reporter/error-reporter.service": [
+  "intelligence",
+  "error-reporting/services/error-reporter/error-reporter.service"
+ ],
+ "host/services/error-reporter/error_reporter.py": [
+  "intelligence",
+  "error-reporting/services/error-reporter/error_reporter.py"
+ ],
+ "host/services/error-reporter/selftest_fingerprint.py": [
+  "intelligence",
+  "error-reporting/services/error-reporter/selftest_fingerprint.py"
+ ],
+ "host/services/error-reporter/selftest_history.py": [
+  "intelligence",
+  "error-reporting/services/error-reporter/selftest_history.py"
+ ],
+ "host/services/error-reporter/selftest_reader.py": [
+  "intelligence",
+  "error-reporting/services/error-reporter/selftest_reader.py"
+ ],
+ "host/services/error-reporter/server_feed.py": [
+  "intelligence",
+  "error-reporting/services/error-reporter/server_feed.py"
+ ],
+ "host/services/error-reporter/status_feed.py": [
+  "intelligence",
+  "error-reporting/services/error-reporter/status_feed.py"
+ ],
+ "host/services/expiry-monitor/config.example.json": [
+  "intelligence",
+  "error-reporting/services/expiry-monitor/config.example.json"
+ ],
+ "host/services/expiry-monitor/expiry-monitor.service": [
+  "intelligence",
+  "error-reporting/services/expiry-monitor/expiry-monitor.service"
+ ],
+ "host/services/expiry-monitor/expiry-monitor.timer": [
+  "intelligence",
+  "error-reporting/services/expiry-monitor/expiry-monitor.timer"
+ ],
+ "host/services/expiry-monitor/expiry_monitor.py": [
+  "intelligence",
+  "error-reporting/services/expiry-monitor/expiry_monitor.py"
+ ],
+ "host/services/lib/mtoa_config.py": [
+  "intelligence",
+  "error-reporting/services/lib/mtoa_config.py"
+ ],
+ "host/services/lib/selftest_slack.py": [
+  "intelligence",
+  "error-reporting/services/lib/selftest_slack.py"
+ ],
+ "host/services/lib/set_slack.py": [
+  "intelligence",
+  "error-reporting/services/lib/set_slack.py"
+ ],
+ "host/services/lib/slack.example.json": [
+  "intelligence",
+  "error-reporting/services/lib/slack.example.json"
+ ],
+ "host/services/lib/slack.py": [
+  "intelligence",
+  "error-reporting/services/lib/slack.py"
+ ],
+ "host/services/queue-board/config.example.json": [
+  "intelligence",
+  "error-reporting/services/queue-board/config.example.json"
+ ],
+ "host/services/queue-board/queue-board.service": [
+  "intelligence",
+  "error-reporting/services/queue-board/queue-board.service"
+ ],
+ "host/services/queue-board/queue-board.timer": [
+  "intelligence",
+  "error-reporting/services/queue-board/queue-board.timer"
+ ],
+ "host/services/queue-board/queue_board.py": [
+  "intelligence",
+  "error-reporting/services/queue-board/queue_board.py"
+ ],
+ "host/services/routine-repair/routine-repair-sweep.sh": [
+  "intelligence",
+  "error-reporting/services/routine-repair/routine-repair-sweep.sh"
+ ],
+ "host/services/routine-repair/routine-repair.prompt.md": [
+  "intelligence",
+  "error-reporting/services/routine-repair/routine-repair.prompt.md"
+ ],
+ "host/services/routine-repair/routine-repair.sh": [
+  "intelligence",
+  "error-reporting/services/routine-repair/routine-repair.sh"
+ ],
+ "host/services/slack/manifest.yaml": [
+  "intelligence",
+  "error-reporting/services/slack/manifest.yaml"
+ ],
+ "host/services/status-board/config.example.json": [
+  "intelligence",
+  "error-reporting/services/status-board/config.example.json"
+ ],
+ "host/services/status-board/status-board.service": [
+  "intelligence",
+  "error-reporting/services/status-board/status-board.service"
+ ],
+ "host/services/status-board/status-board.timer": [
+  "intelligence",
+  "error-reporting/services/status-board/status-board.timer"
+ ],
+ "host/services/status-board/status_board.py": [
+  "intelligence",
+  "error-reporting/services/status-board/status_board.py"
+ ],
+ "host/services/uptime-monitor/config.example.json": [
+  "intelligence",
+  "error-reporting/services/uptime-monitor/config.example.json"
+ ],
+ "host/services/uptime-monitor/monitor.py": [
+  "intelligence",
+  "error-reporting/services/uptime-monitor/monitor.py"
+ ],
+ "host/services/uptime-monitor/uptime-monitor.service": [
+  "intelligence",
+  "error-reporting/services/uptime-monitor/uptime-monitor.service"
+ ],
+ "host/services/uptime-monitor/uptime-monitor.timer": [
+  "intelligence",
+  "error-reporting/services/uptime-monitor/uptime-monitor.timer"
+ ],
+ "host/snippet/reporter.html": [
+  "intelligence",
+  "error-reporting/snippet/reporter.html"
+ ],
+ "install.sh": [
+  "intelligence",
+  "mtoa-public/install.sh"
+ ],
+ "profile.example/CLAUDE.md": [
+  "intelligence",
+  "mtoa-public/profile.example/CLAUDE.md"
+ ],
+ "profile.example/mtoa.json": [
+  "intelligence",
+  "mtoa-public/profile.example/mtoa.json"
+ ],
+ "voice/README.md": [
+  "voice",
+  "README.md"
+ ],
+ "voice/clients/mic_ear.py": [
+  "voice",
+  "clients/mic_ear.py"
+ ],
+ "voice/cube/S99sunday": [
+  "voice",
+  "cube/S99sunday"
+ ],
+ "voice/cube/adckey_function.sh": [
+  "voice",
+  "cube/adckey_function.sh"
+ ],
+ "voice/cube/config.json": [
+  "voice",
+  "cube/config.json"
+ ],
+ "voice/cube/lib/libspeexdsp.so.1": [
+  "voice",
+  "cube/lib/libspeexdsp.so.1"
+ ],
+ "voice/cube/sunday_cube.py": [
+  "voice",
+  "cube/sunday_cube.py"
+ ],
+ "voice/cube/wake_replay.py": [
+  "voice",
+  "cube/wake_replay.py"
+ ],
+ "voice/deploy/deploy-cube.sh": [
+  "voice",
+  "deploy/deploy-cube.sh"
+ ],
+ "voice/deploy/deploy-server.sh": [
+  "voice",
+  "deploy/deploy-server.sh"
+ ],
+ "voice/deploy/retire-factory.sh": [
+  "voice",
+  "deploy/retire-factory.sh"
+ ],
+ "voice/deploy/speech-audit-run.sh": [
+  "voice",
+  "deploy/speech-audit-run.sh"
+ ],
+ "voice/deploy/transcripts-sync.service": [
+  "voice",
+  "deploy/transcripts-sync.service"
+ ],
+ "voice/deploy/transcripts-sync.timer": [
+  "voice",
+  "deploy/transcripts-sync.timer"
+ ],
+ "voice/deploy/voice-assistant.service": [
+  "voice",
+  "deploy/voice-assistant.service"
+ ],
+ "voice/deploy/voice-start.sh": [
+  "voice",
+  "deploy/voice-start.sh"
+ ],
+ "voice/deploy/voice.conf": [
+  "voice",
+  "deploy/voice.conf"
+ ],
+ "voice/popup/canvas-preload.js": [
+  "voice",
+  "popup/canvas-preload.js"
+ ],
+ "voice/popup/canvas.css": [
+  "voice",
+  "popup/canvas.css"
+ ],
+ "voice/popup/canvas.html": [
+  "voice",
+  "popup/canvas.html"
+ ],
+ "voice/popup/canvas.js": [
+  "voice",
+  "popup/canvas.js"
+ ],
+ "voice/popup/deck.css": [
+  "voice",
+  "popup/deck.css"
+ ],
+ "voice/popup/deck.html": [
+  "voice",
+  "popup/deck.html"
+ ],
+ "voice/popup/deck.js": [
+  "voice",
+  "popup/deck.js"
+ ],
+ "voice/popup/ear/mac_ear.py": [
+  "voice",
+  "popup/ear/mac_ear.py"
+ ],
+ "voice/popup/ear/wake/sunday.json": [
+  "voice",
+  "popup/ear/wake/sunday.json"
+ ],
+ "voice/popup/ear/wake/sunday.tflite": [
+  "voice",
+  "popup/ear/wake/sunday.tflite"
+ ],
+ "voice/popup/host.js": [
+  "voice",
+  "popup/host.js"
+ ],
+ "voice/popup/index.html": [
+  "voice",
+  "popup/index.html"
+ ],
+ "voice/popup/main.js": [
+  "voice",
+  "popup/main.js"
+ ],
+ "voice/popup/native/audio-playing": [
+  "voice",
+  "popup/native/audio-playing"
+ ],
+ "voice/popup/native/audio-playing.ps1": [
+  "voice",
+  "popup/native/audio-playing.ps1"
+ ],
+ "voice/popup/native/audio-playing.swift": [
+  "voice",
+  "popup/native/audio-playing.swift"
+ ],
+ "voice/popup/native/ear-audio": [
+  "voice",
+  "popup/native/ear-audio"
+ ],
+ "voice/popup/native/ear-audio.swift": [
+  "voice",
+  "popup/native/ear-audio.swift"
+ ],
+ "voice/popup/native/game-watch.ps1": [
+  "voice",
+  "popup/native/game-watch.ps1"
+ ],
+ "voice/popup/package-lock.json": [
+  "voice",
+  "popup/package-lock.json"
+ ],
+ "voice/popup/package.json": [
+  "voice",
+  "popup/package.json"
+ ],
+ "voice/popup/preload.js": [
+  "voice",
+  "popup/preload.js"
+ ],
+ "voice/popup/vendor.js": [
+  "voice",
+  "popup/vendor.js"
+ ],
+ "voice/popup/vendor/LICENSE._fontsource-variable_jetbrains-mono": [
+  "voice",
+  "popup/vendor/LICENSE._fontsource-variable_jetbrains-mono"
+ ],
+ "voice/popup/vendor/LICENSE._fontsource-variable_orbitron": [
+  "voice",
+  "popup/vendor/LICENSE._fontsource-variable_orbitron"
+ ],
+ "voice/popup/vendor/LICENSE._fontsource_rajdhani": [
+  "voice",
+  "popup/vendor/LICENSE._fontsource_rajdhani"
+ ],
+ "voice/popup/vendor/LICENSE._highlightjs_cdn-assets": [
+  "voice",
+  "popup/vendor/LICENSE._highlightjs_cdn-assets"
+ ],
+ "voice/popup/vendor/LICENSE.chart.js": [
+  "voice",
+  "popup/vendor/LICENSE.chart.js"
+ ],
+ "voice/popup/vendor/LICENSE.dompurify": [
+  "voice",
+  "popup/vendor/LICENSE.dompurify"
+ ],
+ "voice/popup/vendor/LICENSE.markdown-it": [
+  "voice",
+  "popup/vendor/LICENSE.markdown-it"
+ ],
+ "voice/popup/vendor/chart.umd.min.js": [
+  "voice",
+  "popup/vendor/chart.umd.min.js"
+ ],
+ "voice/popup/vendor/fonts/jetbrains-mono-latin.woff2": [
+  "voice",
+  "popup/vendor/fonts/jetbrains-mono-latin.woff2"
+ ],
+ "voice/popup/vendor/fonts/orbitron-latin.woff2": [
+  "voice",
+  "popup/vendor/fonts/orbitron-latin.woff2"
+ ],
+ "voice/popup/vendor/fonts/rajdhani-latin-500.woff2": [
+  "voice",
+  "popup/vendor/fonts/rajdhani-latin-500.woff2"
+ ],
+ "voice/popup/vendor/fonts/rajdhani-latin-600.woff2": [
+  "voice",
+  "popup/vendor/fonts/rajdhani-latin-600.woff2"
+ ],
+ "voice/popup/vendor/fonts/rajdhani-latin-700.woff2": [
+  "voice",
+  "popup/vendor/fonts/rajdhani-latin-700.woff2"
+ ],
+ "voice/popup/vendor/highlight.min.js": [
+  "voice",
+  "popup/vendor/highlight.min.js"
+ ],
+ "voice/popup/vendor/markdown-it.min.js": [
+  "voice",
+  "popup/vendor/markdown-it.min.js"
+ ],
+ "voice/popup/vendor/purify.min.js": [
+  "voice",
+  "popup/vendor/purify.min.js"
+ ],
+ "voice/server/barge.py": [
+  "voice",
+  "server/barge.py"
+ ],
+ "voice/server/canvas.py": [
+  "voice",
+  "server/canvas.py"
+ ],
+ "voice/server/mtoa_config.py": [
+  "voice",
+  "server/mtoa_config.py"
+ ],
+ "voice/server/nonspeech.py": [
+  "voice",
+  "server/nonspeech.py"
+ ],
+ "voice/server/pronounce.py": [
+  "voice",
+  "server/pronounce.py"
+ ],
+ "voice/server/relay.py": [
+  "voice",
+  "server/relay.py"
+ ],
+ "voice/server/repeat_guard.py": [
+  "voice",
+  "server/repeat_guard.py"
+ ],
+ "voice/server/requirements.txt": [
+  "voice",
+  "server/requirements.txt"
+ ],
+ "voice/server/selftest_audit.py": [
+  "voice",
+  "server/selftest_audit.py"
+ ],
+ "voice/server/selftest_gate.py": [
+  "voice",
+  "server/selftest_gate.py"
+ ],
+ "voice/server/selftest_other_mic.py": [
+  "voice",
+  "server/selftest_other_mic.py"
+ ],
+ "voice/server/speaker_id.py": [
+  "voice",
+  "server/speaker_id.py"
+ ],
+ "voice/server/speech_audit.py": [
+  "voice",
+  "server/speech_audit.py"
+ ],
+ "voice/server/speech_gate.py": [
+  "voice",
+  "server/speech_gate.py"
+ ],
+ "voice/server/system_prompt.md": [
+  "voice",
+  "server/system_prompt.md"
+ ],
+ "voice/server/transcripts.py": [
+  "voice",
+  "server/transcripts.py"
+ ],
+ "voice/server/voice_server.py": [
+  "voice",
+  "server/voice_server.py"
+ ],
+ "voice/server/wake_guard.py": [
+  "voice",
+  "server/wake_guard.py"
+ ],
+ "voice/tools/ask": [
+  "voice",
+  "tools/ask"
+ ],
+ "voice/tools/barge_test.py": [
+  "voice",
+  "tools/barge_test.py"
+ ],
+ "voice/tools/fake_cube.py": [
+  "voice",
+  "tools/fake_cube.py"
+ ]
+}

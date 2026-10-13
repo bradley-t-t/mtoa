@@ -1,0 +1,26 @@
+{
+  "_": "Cue detection on the user's latest message. must_cue: messages that say this is established, recorded work and must force a transcript read. must_not: ordinary messages that must not. The in-transcript part (did the turn actually read transcripts) is exercised by recall.should_hold, not here. Edit either list and run: recall.py selftest",
+  "must_cue": [
+    "We do this all the time, see transcripts",
+    "you're just editing kOS scripts, we do this all the time",
+    "check the transcripts, we've done this before",
+    "see transcripts",
+    "read your past transcripts for how we set this up",
+    "fix it like we did last time",
+    "do it the usual way",
+    "same as before",
+    "we always do it this way, go look",
+    "you've done this before",
+    "every time we ship this we bump the version first, check transcripts"
+  ],
+  "must_not": [
+    "fix the second stage of ecko to rendezvous with the space station",
+    "the intelligent thing would have been to check the filesystem first",
+    "write a new skill that lints craft files",
+    "land this branch onto develop",
+    "what's wrong with this kOS script",
+    "add RCS to the second stage",
+    "why isn't the rendezvous burn lining up",
+    "transcribe this audio note"
+  ]
+}

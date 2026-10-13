@@ -1,0 +1,192 @@
+{
+  "group": "EMAIL",
+  "prefix": "EML",
+  "description": "What an HTML email owes, which is almost none of what a page owes. A mail client renders static markup with inline styles: it runs no script, resolves no stylesheet, and has no pointer, focus model, viewport or scroll container. Outlook renders through the Word engine, Gmail strips a great deal on the way in, and a large share of readers see the message with images switched off before they see anything else. So the rules that govern a page are not softened here, they are replaced. Every gate below is one a regex can settle, because a gate with nothing behind it reads in a report exactly like a rule that held.",
+  "gates": [
+    {
+      "id": "EML-01",
+      "title": "Layout Is Tables",
+      "rule": "The layout is nested tables. Flexbox and grid are unreliable in Outlook, which renders through the Word engine, so a layout built on them collapses for a large share of business readers.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["<table"],
+        "message": "no table found - email layout is nested tables, not flex or grid"
+      },
+      "fix": "Move the layout onto nested tables and put every declaration inline on the cell it governs."
+    },
+    {
+      "id": "EML-02",
+      "title": "No Stylesheet, Script, Or Font Host",
+      "rule": "A style block, a link element, a script, or an import from a font host. Every one is stripped or ignored, and a message that fetches a font announces itself as a campaign before it is read.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<style[ >]|<link[ >]|<script[ >]|@import|fonts\\.googleapis|fonts\\.gstatic",
+        "message": "a mail client resolves none of these"
+      },
+      "fix": "Delete them and name a system font stack inline on each cell."
+    },
+    {
+      "id": "EML-03",
+      "title": "No SVG",
+      "rule": "Gmail strips SVG outright and Outlook will not draw it. Anything vector is either a raster served over https or is drawn with cell borders, background colours, and border-radius.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<svg|image/svg",
+        "message": "SVG does not render in Gmail or Outlook"
+      },
+      "fix": "Rasterise the mark to PNG at twice its displayed size, or draw the shape with table cells."
+    },
+    {
+      "id": "EML-04",
+      "title": "Every Image Declares Its Width",
+      "rule": "An explicit width attribute on the tag, so the layout holds while images load and when they never do. Outlook blocks images by default, and a box with no declared size collapses to nothing.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "image",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<img(?![^>]*\\bwidth=)[^>]*>",
+        "message": "an img with no width attribute collapses when images are blocked"
+      },
+      "fix": "Add width and height attributes to every img, and serve the file at twice its displayed size."
+    },
+    {
+      "id": "EML-05",
+      "title": "Every Image Carries Alt Text",
+      "rule": "Alt text saying what the image shows, because for a reader with images off it is the image. A missing alt leaves a blank where the proof was.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "image",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "<img(?![^>]*\\balt=)[^>]*>",
+        "message": "an img with no alt is a blank space for every reader with images off"
+      },
+      "fix": "Add descriptive alt text to every img, naming what it shows rather than the file."
+    },
+    {
+      "id": "EML-06",
+      "title": "No Tracking Pixel",
+      "rule": "A one-by-one image whose only job is to report an open. Filters read it as a campaign marker, the privacy proxies most readers now sit behind strip it, and what it reports is wrong often enough not to be worth the cost.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "width=[\"']?1[\"']? +height=[\"']?1[\"']?|/open\\.gif|/pixel\\.|/track(er)?\\.(gif|png)",
+        "message": "a tracking pixel is read as a campaign marker and reports badly anyway"
+      },
+      "fix": "Delete it. Measure replies and visits instead."
+    },
+    {
+      "id": "EML-07",
+      "title": "The Link Is Its Own Destination",
+      "rule": "Every href is the full URL it goes to. A shortener hides the destination from the reader and from the filter, and both treat that as what it is.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "required",
+      "check": {
+        "type": "forbid_regex",
+        "pattern": "bit\\.ly|tinyurl|t\\.co/|goo\\.gl|ow\\.ly|buff\\.ly|rebrand\\.ly|lnkd\\.in",
+        "message": "a shortened link hides its destination from the reader and the filter"
+      },
+      "fix": "Replace the shortened link with the destination it points at."
+    },
+    {
+      "id": "EML-08",
+      "title": "A One-Click Unsubscribe",
+      "rule": "The List-Unsubscribe and List-Unsubscribe-Post headers, so a mailbox provider can offer its own control beside the sender's name. Asking somebody to compose a reply is friction they will not accept, and providers now expect the headers from anything sending at volume.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["List-Unsubscribe"],
+        "mode": "all",
+        "message": "no List-Unsubscribe header is set on the send"
+      },
+      "fix": "Add the token-based endpoint, put the link in both halves, and set both headers on every send."
+    },
+    {
+      "id": "EML-09",
+      "title": "A Plain-Text Half",
+      "rule": "The message goes as multipart with a text alternative, built from the same content so the two cannot drift. A message with no text half is one a filter scores worse and some readers never see.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["\\btext\\s*[:,]", "renderText|toText|textBody|body_text"],
+        "mode": "any",
+        "message": "no plain-text alternative is built beside the HTML"
+      },
+      "fix": "Render both halves from the same paragraphs and pass both to the transport."
+    },
+    {
+      "id": "EML-10",
+      "title": "The Postal Address Is Carried",
+      "rule": "Commercial email is required to carry a physical postal address, and a footer that names only a brand is one a reader cannot answer and a regulator can act on.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "blocker",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["POSTAL_ADDRESS|postalAddress|mailing_?address|MAILING_ADDRESS"],
+        "mode": "all",
+        "message": "no postal address reaches the footer"
+      },
+      "fix": "Put the postal line in the footer of both halves, read from configuration rather than typed in."
+    },
+    {
+      "id": "EML-11",
+      "title": "The Sheet Goes Fluid",
+      "rule": "A fixed sheet width with a max-width beside it, so the message holds its column on a desktop and fills the screen on a phone. A fixed width alone is a horizontal scroll for most of the people who open it.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["max-width"],
+        "mode": "all",
+        "message": "no max-width on the sheet, so it cannot go fluid on a phone"
+      },
+      "fix": "Give the outer table a fixed width and a max-width, and let the cells inside it size to their content."
+    },
+    {
+      "id": "EML-12",
+      "title": "Grounds Are Declared, Not Inherited",
+      "rule": "Mail clients apply their own dark mode by inverting light grounds and leaving dark ones alone. A cell with no declared background is the one that comes out wrong, so bgcolor sits beside every background-color.",
+      "source": "references/intelligence.md#email",
+      "kinds": ["email"],
+      "when": "always",
+      "severity": "required",
+      "check": {
+        "type": "require_regex",
+        "patterns": ["bgcolor"],
+        "mode": "all",
+        "message": "no bgcolor attribute, so a client's dark mode decides the grounds"
+      },
+      "fix": "Set bgcolor and background-color on every band and every nested cell that sits on a ground of its own."
+    }
+  ]
+}

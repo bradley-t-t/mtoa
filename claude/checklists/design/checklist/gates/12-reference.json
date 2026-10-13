@@ -1,0 +1,208 @@
+{
+  "group": "Reference Sites",
+  "prefix": "REF",
+  "description": "What linear.app, stripe.com, and apple.com agree on, measured from their shipped CSS and held as rules.",
+  "defaults": {
+    "severity": "required"
+  },
+  "gates": [
+    {
+      "id": "REF-01",
+      "title": "Display Type Tightens As It Grows",
+      "rule": "Type at 2rem/32px and above carries negative tracking, in the -0.01em to -0.03em band. Linear runs -0.022em from 2rem up, Stripe -0.01em to -0.02em on heading tokens, Apple -0.022em to -0.01em across its headline classes. Display type left at the default tracking reads loose next to any of them.",
+      "source": "references/reference-sites.md#display-tracking",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens",
+        "slides"
+      ],
+      "when": "css",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "font-size:\\s*(3[2-9]|[4-9][0-9]|[0-9]{3})(\\.[0-9]+)?px|(font-)?size:\\s*[2-9](\\.[0-9]+)?rem",
+        "patterns": [
+          "letter-?spacing[a-zA-Z-]*['\"]?\\s*:\\s*['\"]?-",
+          "tracking-tight"
+        ],
+        "message": "Display-size type is set with no negative tracking anywhere in the deliverable."
+      },
+      "fix": "Give every display step a negative letter-spacing between -0.01em and -0.03em, tightening as the size grows."
+    },
+    {
+      "id": "REF-02",
+      "title": "Display Leading Compresses As Size Grows",
+      "rule": "Display line-height sits between 1.0 and 1.25 while body holds 1.5-1.75; the two never share a value. Linear steps from 1.4 down to 1.0 across its title ramp, Stripe's heroes sit at 1.05-1.12, Apple's headlines at 1.05-1.125. One line-height applied to every size is a defect, not a simplification.",
+      "source": "references/reference-sites.md#display-leading",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens",
+        "slides"
+      ],
+      "when": "css",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "font-size:\\s*(3[2-9]|[4-9][0-9]|[0-9]{3})(\\.[0-9]+)?px|(font-)?size:\\s*[2-9](\\.[0-9]+)?rem",
+        "patterns": [
+          "line-?height[a-zA-Z-]*['\"]?\\s*:\\s*['\"]?(0?\\.9[0-9]|1)(\\.[0-2][0-9]?)?\\s*([;,'\"}\\)]|$)",
+          "leading-(none|tight|snug)"
+        ],
+        "message": "Display-size type is set with no compressed line-height anywhere in the deliverable."
+      },
+      "fix": "Give display steps their own line-height in the 1.0-1.25 band, tightening as the size grows, and leave body at 1.5-1.75."
+    },
+    {
+      "id": "REF-03",
+      "title": "Every Type Step Declares All Four",
+      "rule": "A named type step defines size, line-height, letter-spacing, and weight together, the way Linear's --title-N-* quartet and Stripe's --hds-font-*-size/lineHeight/letterSpacing/weight do. Display weight is a per-step decision - Stripe's hero is 300, Apple's headlines 600, Linear's titles 590 - never the browser's default bold.",
+      "source": "references/reference-sites.md#type-steps",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens"
+      ],
+      "when": "tokens",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "--[a-z0-9-]*(font|text|title|display|heading)[a-zA-Z0-9-]*-?size:",
+        "patterns": [
+          "--[a-z0-9-]*(letter-?spacing|letterspacing|tracking)[a-zA-Z0-9-]*:"
+        ],
+        "message": "Type size tokens exist with no per-step tracking token beside them."
+      },
+      "fix": "Extend each type step's tokens to carry line-height, letter-spacing, and weight alongside the size."
+    },
+    {
+      "id": "REF-04",
+      "title": "Blurred Chrome Carries Its Fallbacks",
+      "rule": "A translucent blurred surface ships the -webkit-backdrop-filter prefix beside the unprefixed property, and its surface colour holds alpha .8 or higher so the bar stays legible where the blur is unsupported. Apple pairs saturate(180%) with blur(20px) so colour survives the blur; Linear's header is #0b0b0bcc behind blur(20px). All three ship the prefix.",
+      "source": "references/reference-sites.md#translucent-chrome",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "backdrop-filter:\\s*[^;}]*blur",
+        "patterns": [
+          "-webkit-backdrop-filter",
+          "@supports[^{]*backdrop-filter"
+        ],
+        "message": "backdrop-filter is used without the -webkit- prefix or an @supports fallback."
+      },
+      "fix": "Add -webkit-backdrop-filter beside every backdrop-filter, and raise the surface alpha until the bar reads without the blur."
+    },
+    {
+      "id": "REF-05",
+      "title": "Hairlines Are Ink At Low Alpha",
+      "rule": "Separators and 1px borders are the theme's ink at 5-25% alpha - Linear's #ffffff14 and #00000014, Apple's rgba(0,0,0,.08) through .16 - not a picked opaque grey. An alpha hairline composites correctly over every surface it crosses, which is what lets one token serve every card, panel, and theme.",
+      "source": "references/reference-sites.md#hairlines",
+      "kinds": [
+        "web-ui",
+        "component",
+        "tokens"
+      ],
+      "when": "css",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "border[a-z-]*:\\s*(solid\\s+)?1px|1px\\s+solid|divider|separator",
+        "patterns": [
+          "--[a-z0-9-]*(border|hairline|divider|separator|stroke|outline|line)[a-zA-Z0-9-]*:\\s*[^;}]*(rgba\\(|hsla\\(|#[0-9a-fA-F]{8}\\b|color-mix\\()",
+          "border[a-z-]*:\\s*[^;}]*(rgba|hsla)\\(",
+          "(rgb|hsl|oklch|oklab)\\([^)]*/\\s*[0-9.]+%?\\)"
+        ],
+        "message": "Hairline borders exist but none is built from ink at low alpha."
+      },
+      "fix": "Define the hairline as the theme's ink colour at 5-25% alpha in the token block and reference it from every separator."
+    },
+    {
+      "id": "REF-06",
+      "title": "Headlines Break On Purpose",
+      "rule": "Headings get text-wrap: balance and supporting prose gets text-wrap: pretty, so no headline strands one word on its own line. Stripe balances its headings and sets pretty on 23 prose rules; Linear does the same; Apple hand-places break spans per breakpoint, which is the manual form of the same decision.",
+      "source": "references/reference-sites.md#headline-breaks",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "hero",
+      "check": {
+        "type": "require_any_regex",
+        "patterns": [
+          "text-wrap:\\s*balance",
+          "text-wrap:\\s*pretty",
+          "textWrap:\\s*['\"](balance|pretty)",
+          "text-balance|text-pretty"
+        ],
+        "message": "Headings are present with no text-wrap control anywhere in the deliverable."
+      },
+      "fix": "Set text-wrap: balance on headings and text-wrap: pretty on paragraphs at the base layer."
+    },
+    {
+      "id": "REF-07",
+      "title": "Font Rendering Set At The Root",
+      "rule": "-webkit-font-smoothing: antialiased and -moz-osx-font-smoothing: grayscale are declared once at the root, as all three sites do, so weights render as drawn rather than a step heavier on macOS. The ramp's weights are chosen with that rendering in place.",
+      "source": "references/reference-sites.md#font-rendering",
+      "kinds": [
+        "web-ui",
+        "component",
+        "slides"
+      ],
+      "when": "font",
+      "check": {
+        "type": "require_regex",
+        "patterns": [
+          "font-smoothing"
+        ],
+        "message": "No font-smoothing declaration found at the root."
+      },
+      "fix": "Declare -webkit-font-smoothing: antialiased and -moz-osx-font-smoothing: grayscale on the root element."
+    },
+    {
+      "id": "REF-08",
+      "title": "The Container Width Is A Token",
+      "rule": "The content max-width is one named value referenced everywhere - Linear's --page-max-width: 1024px, Stripe's --hds-space-layout-content-maxWidth: 1264px - never a number retyped per section. UXL-06 requires one width; this requires it have one definition, so changing it is one edit.",
+      "source": "references/reference-sites.md#container-token",
+      "kinds": [
+        "web-ui",
+        "component"
+      ],
+      "when": "css",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "max-width:\\s*(9[6-9][0-9]|1[0-9]{3})px",
+        "patterns": [
+          "--[a-z0-9-]*(page|content|container|layout|site|wrapper|shell)[a-zA-Z0-9-]*:\\s*[0-9]{3,4}px",
+          "max-width:\\s*var\\(",
+          "max-w-(screen|\\[var)"
+        ],
+        "message": "Container-scale max-widths are hardcoded with no named width token."
+      },
+      "fix": "Define the container width once as a token and reference it from every section that centres content."
+    },
+    {
+      "id": "REF-09",
+      "title": "Logo Walls Are One Ink",
+      "rule": "Third-party logo strips render monochrome - a grayscale filter or single-colour SVGs - so the row reads as one quiet band of proof rather than competing brand colours. All three sites ship grayscale in their customer and partner logo sections. The strip also carries logos and nothing else: no industry or category label under each mark, which TST-47 counts.",
+      "source": "references/reference-sites.md#logo-walls",
+      "kinds": [
+        "web-ui"
+      ],
+      "when": "html",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "logo[-_]?(wall|strip|grid|row|cloud|marquee|bar|list)|customer[-_ ]?logos|trusted[-_ ]?by",
+        "patterns": [
+          "grayscale\\(",
+          "saturate\\(0",
+          "currentColor",
+          "filter:\\s*[^;}]*grayscale"
+        ],
+        "message": "A logo strip is present with no monochrome treatment on it."
+      },
+      "fix": "Apply filter: grayscale(1) to the strip, or serve the logos as single-colour SVGs inheriting currentColor, and delete any category label sitting under a mark."
+    }
+  ]
+}

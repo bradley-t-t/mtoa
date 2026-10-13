@@ -1,0 +1,86 @@
+{
+  "group": "Crawlability & Indexing",
+  "prefix": "CRW",
+  "description": "What a crawler can reach and what it is told about the site. Everything downstream of this is wasted if the crawler never arrives, or arrives and is told to leave.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/crawl-and-indexing.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "CRW-01",
+      "title": "robots.txt Exists",
+      "rule": "The site serves a robots.txt. Without one there is no sitemap pointer, no crawl policy, and no place to state a position on any crawler.",
+      "severity": "blocker",
+      "check": {"type": "robots_txt"},
+      "fix": "Add robots.txt to the directory this stack serves static files from - public/, static/, or the project root."
+    },
+    {
+      "id": "CRW-02",
+      "title": "robots.txt Points At The Sitemap",
+      "rule": "robots.txt carries a Sitemap line holding an absolute URL. It is the one discovery path that works without anybody submitting anything.",
+      "severity": "blocker",
+      "check": {"type": "robots_declares_sitemap"},
+      "fix": "Add `Sitemap: https://<host>/sitemap.xml` to robots.txt."
+    },
+    {
+      "id": "CRW-03",
+      "title": "Nothing Is Disallowed Wholesale",
+      "rule": "No `Disallow: /` under `User-agent: *`. A staging robots.txt shipped to production removes the site from search and nothing on the site says so.",
+      "severity": "blocker",
+      "check": {"type": "no_blanket_disallow"},
+      "fix": "Narrow the Disallow to the paths that should stay out, or drop it."
+    },
+    {
+      "id": "CRW-04",
+      "title": "A Sitemap Exists Or Is Generated",
+      "rule": "Either sitemap.xml is served or the build produces one. A sitemap is how routes that nothing links to are found at all.",
+      "severity": "blocker",
+      "check": {"type": "sitemap"},
+      "fix": "Add sitemap.xml, or wire the framework's sitemap generator and commit its config."
+    },
+    {
+      "id": "CRW-05",
+      "title": "No Route Carries An Unintended noindex",
+      "rule": "Every noindex in the source is deliberate and scoped to a route that should stay out of the index. This is the single defect that removes a site outright, and it reads as ordinary markup.",
+      "severity": "blocker",
+      "check": {"type": "no_accidental_noindex"},
+      "fix": "Read each occurrence. Remove the ones that are left over from staging; leave the ones that are meant."
+    },
+    {
+      "id": "CRW-06",
+      "title": "Robots Directives Are Set, Not Inherited",
+      "rule": "The project states its indexing policy rather than leaving it to whatever headers the host sends. A directive that only exists in a hosting panel is invisible to the next person and to the next deploy.",
+      "check": {"type": "meta_robots_explicit"},
+      "fix": "Set a robots meta tag or the framework's robots metadata field in the document shell."
+    },
+    {
+      "id": "CRW-07",
+      "title": "Every Route Declares Its Canonical",
+      "rule": "Each route names its own canonical URL. Without one, a query string, a trailing slash, and a www variant are three pages competing with each other for the same ranking.",
+      "when": "pages",
+      "severity": "blocker",
+      "check": {"type": "canonical"},
+      "fix": "Add rel=canonical to the head, or set the framework's alternates.canonical per route."
+    },
+    {
+      "id": "CRW-08",
+      "title": "Documents Stay Inside The Fetch Limit",
+      "rule": "Googlebot reads the first 2MB of an HTML response. Inline base64 images and bloated markup push structured data and body copy past the cap, where they are not indexed at all.",
+      "when": "html",
+      "check": {"type": "html_weight"},
+      "fix": "Move inline assets to files and trim the markup so the content and the JSON-LD sit well inside 2MB."
+    },
+    {
+      "id": "CRW-09",
+      "title": "Route Paths Are Lowercase And Hyphenated",
+      "rule": "URLs are case-sensitive and an underscore does not separate words for a crawler. A route at /Blog_Posts and one at /blog-posts are different pages, and only one of them reads as two words.",
+      "when": "pages",
+      "check": {"type": "route_shape"},
+      "fix": "Rename the route directories to lowercase hyphenated segments and redirect the old paths."
+    }
+  ]
+}

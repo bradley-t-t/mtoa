@@ -1,0 +1,23 @@
+{
+  "listen_port": 8791,
+  "per_ip_per_minute": 12,
+  "dedupe_cooldown_seconds": 600,
+  "global_per_5min": 25,
+  "allowed_origins": [
+    "https://www.example.com",
+    "https://example.com",
+    "https://shop.example.org"
+  ],
+  "github_token": "REPLACE-ME",
+  "errors_repo": "your-name/your-setup",
+  "max_open_issues": 20,
+  "repo_map": {
+    "Example": "your-name/example-com",
+    "Example Shop": "your-org/shop-example-org"
+  },
+  "board_refresh_token": "REPLACE-ME",
+  "server_feed_token": "REPLACE-ME",
+  "status_exclude": [
+    "Example Shop"
+  ]
+}

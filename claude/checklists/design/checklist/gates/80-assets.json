@@ -1,0 +1,237 @@
+{
+  "group": "Exported Assets",
+  "prefix": "AST",
+  "description": "Logos, icons, banners, social images, and CIP deliverables. These gates run against the exported files, not the source that produced them.",
+  "defaults": {
+    "severity": "required",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "AST-01",
+      "title": "Logo Ships With A Transparent Background",
+      "rule": "The delivered logo has an alpha channel and its corners are actually transparent. A mark generated on white is a mark that shows a white box on every surface that is not white. Generation on white is a prompt technique, not a deliverable - the background comes off before hand-off.",
+      "source": "references/logo-design.md; SKILL.md#logo",
+      "kinds": [
+        "logo",
+        "icon",
+        "cip"
+      ],
+      "when": "png_export",
+      "severity": "blocker",
+      "check": {
+        "type": "png_transparent"
+      },
+      "fix": "Run scripts/logo/transparent.py on the export, then re-verify. Deliver the transparent file; keep the white-background render only as a preview."
+    },
+    {
+      "id": "AST-17",
+      "title": "Every SVG Ships With A Transparent Background",
+      "rule": "AST-01 holds the raster exports; this holds the vector ones, and it holds all of them - marks, icons, favicons, plates, artwork out of a generator. A graphic carries its drawing and nothing behind it, so it reads the same on a dark band, a light card, and a page that changes theme under it. The ground, where one is wanted, is a class on whatever renders the file. The exceptions are the backings that hold something up rather than sit behind it - a QR code's quiet zone, a scrim with a spotlight masked out of it, a noise texture - and each of those is a shape the measure already passes rather than a licence to paint a canvas.",
+      "source": "references/icon-design.md",
+      "kinds": [
+        "logo",
+        "icon",
+        "cip"
+      ],
+      "when": "image",
+      "severity": "blocker",
+      "check": {
+        "type": "svg_transparent"
+      },
+      "fix": "Run ~/.claude/tools/svg-guard.py fix on the export directory, then put any ground the design wants on the element that renders the file."
+    },
+    {
+      "id": "AST-02",
+      "title": "Logo Ships In Vector Where It Can",
+      "rule": "An SVG accompanies the raster wherever the mark is vectorisable. A logo that only exists as a PNG cannot go on a vehicle or a sign.",
+      "source": "references/logo-style-guide.md",
+      "kinds": [
+        "logo",
+        "icon"
+      ],
+      "when": "asset_export",
+      "severity": "required"
+    },
+    {
+      "id": "AST-03",
+      "title": "Logo Legible At Minimum Size",
+      "rule": "Rendered at 16px, 32px, and its stated minimum, the mark still reads. Detail that disappears at favicon size is detail the mark does not need.",
+      "source": "references/logo-design.md",
+      "kinds": [
+        "logo",
+        "icon"
+      ],
+      "when": "asset_export",
+      "severity": "blocker"
+    },
+    {
+      "id": "AST-04",
+      "title": "Light And Dark Variants Delivered",
+      "rule": "A variant that reads on a light surface and one that reads on a dark surface. One file is half a delivery.",
+      "source": "references/logo-style-guide.md",
+      "kinds": [
+        "logo",
+        "icon"
+      ],
+      "when": "asset_export",
+      "severity": "required"
+    },
+    {
+      "id": "AST-05",
+      "title": "Icons Are SVG With A Consistent Grid",
+      "rule": "One viewBox, one stroke width, one visual weight across the set. Icons sit on the same optical grid so they do not jitter in a row.",
+      "source": "references/icon-design.md",
+      "kinds": [
+        "icon"
+      ],
+      "when": "asset_export",
+      "severity": "required"
+    },
+    {
+      "id": "AST-06",
+      "title": "Icons Inherit Colour",
+      "rule": "Icons use currentColor rather than a baked fill, so they follow the three themes rather than fighting them.",
+      "source": "references/icon-design.md",
+      "kinds": [
+        "icon"
+      ],
+      "when": "svg_export",
+      "severity": "blocker",
+      "check": {
+        "type": "svg_currentcolor"
+      },
+      "fix": "Replace hardcoded fill and stroke values with currentColor."
+    },
+    {
+      "id": "AST-07",
+      "title": "Exported At The Exact Platform Size",
+      "rule": "The file's pixel dimensions match the platform specification exactly - not close, exactly. A cover image one pixel off gets recompressed and softened.",
+      "source": "references/banner-sizes-and-styles.md",
+      "kinds": [
+        "banner",
+        "social"
+      ],
+      "when": "png_export",
+      "severity": "blocker",
+      "check": {
+        "type": "png_dimensions"
+      },
+      "fix": "Re-export at the specified dimensions."
+    },
+    {
+      "id": "AST-08",
+      "title": "Critical Content Inside The Safe Zone",
+      "rule": "Everything that must be read sits in the central 70-80%. Platform chrome, avatars, and crops eat the edges.",
+      "source": "references/banner-sizes-and-styles.md",
+      "kinds": [
+        "banner",
+        "social"
+      ],
+      "when": "asset_export",
+      "severity": "blocker"
+    },
+    {
+      "id": "AST-09",
+      "title": "One CTA, Placed And Sized",
+      "rule": "A single call to action, bottom-right, at least 44px tall.",
+      "source": "references/banner-sizes-and-styles.md",
+      "kinds": [
+        "banner"
+      ],
+      "when": "asset_export",
+      "severity": "required"
+    },
+    {
+      "id": "AST-10",
+      "title": "Two Fonts, Body 16px+, Headline 32px+",
+      "rule": "At most two faces on a banner; body no smaller than 16px; headline no smaller than 32px.",
+      "source": "references/banner-sizes-and-styles.md",
+      "kinds": [
+        "banner",
+        "social"
+      ],
+      "when": "asset_export",
+      "severity": "required"
+    },
+    {
+      "id": "AST-11",
+      "title": "Ad Text Under 20% Of The Image",
+      "rule": "Meta penalises reach past roughly 20% text coverage. Measured, not estimated.",
+      "source": "references/banner-sizes-and-styles.md",
+      "kinds": [
+        "banner"
+      ],
+      "when": "ad",
+      "severity": "required"
+    },
+    {
+      "id": "AST-12",
+      "title": "Print Output Is 300 DPI, CMYK, With Bleed",
+      "rule": "300 DPI, CMYK colour, 3-5mm bleed on every edge that runs off the page.",
+      "source": "references/banner-sizes-and-styles.md; references/cip-design.md",
+      "kinds": [
+        "banner",
+        "cip"
+      ],
+      "when": "print",
+      "severity": "blocker"
+    },
+    {
+      "id": "AST-13",
+      "title": "Every Requested Size Was Produced",
+      "rule": "Each platform and size the brief named exists as a file. A set delivered short is a set the user has to chase.",
+      "source": "references/social-photos-design.md",
+      "kinds": [
+        "banner",
+        "social",
+        "icon"
+      ],
+      "when": "asset_export",
+      "severity": "blocker"
+    },
+    {
+      "id": "AST-14",
+      "title": "Exports Are Named And Optimised",
+      "rule": "Consistent, sortable filenames that say platform and size; file sizes optimised for the medium; email assets under 1MB.",
+      "source": "references/brand/approval-checklist.md",
+      "kinds": [
+        "banner",
+        "social",
+        "logo",
+        "icon",
+        "cip"
+      ],
+      "when": "asset_export",
+      "severity": "required"
+    },
+    {
+      "id": "AST-15",
+      "title": "Every Export Was Looked At",
+      "rule": "Each exported file was opened at full size and inspected - not assumed correct because the HTML looked right. Text baked into an image cannot be fixed later.",
+      "source": "references/social-photos-design.md",
+      "kinds": [
+        "banner",
+        "social",
+        "logo",
+        "icon",
+        "cip"
+      ],
+      "when": "asset_export",
+      "severity": "blocker"
+    },
+    {
+      "id": "AST-16",
+      "title": "CIP Deliverables Cover The Named Set",
+      "rule": "Each deliverable the brief asked for exists, with the logo placed to its usage rules on every one.",
+      "source": "references/cip-deliverable-guide.md",
+      "kinds": [
+        "cip"
+      ],
+      "when": "asset_export",
+      "severity": "blocker"
+    }
+  ]
+}

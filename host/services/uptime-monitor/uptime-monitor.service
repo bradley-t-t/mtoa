@@ -1,0 +1,9 @@
+[Unit]
+Description=Site uptime checks with Slack alerts
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=@USER@
+ExecStart=/usr/bin/python3 @HOME@/uptime-monitor/monitor.py

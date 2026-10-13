@@ -1,0 +1,9 @@
+{
+  "server": "@VOICE_SERVER@",
+  "volume": 70,
+  "wake_word": "sunday",
+  "wake_cutoff": 0.94,
+  "speaking_wake_cutoff": 0.90,
+  "echo_tail_ms": 160,
+  "mic_gain_db": 18
+}

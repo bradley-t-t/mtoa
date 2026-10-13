@@ -1,0 +1,65 @@
+{
+  "group": "Borrowed Marks",
+  "prefix": "MRK",
+  "description": "What a surface owes a logo it did not design. A product listing other people's brands - client sites, connected accounts, integrations, referrers - puts a dozen marks in one column that were each drawn to be the loudest thing on their own page, and the result reads as a fight. The instinct is to drain the colour, and it is the wrong one: at twenty pixels colour is what identifies a brand, and a column of grey blobs is harder to tell apart than the logos were. What actually causes the fight is that one mark arrives at 16px and another at 512, one cropped to its own edges and one floating in a field, one carrying a baked white square and one carrying nothing. Fix that, at the point the mark is taken in, and the colour stops being the problem.",
+  "defaults": {
+    "kinds": [
+      "web-ui",
+      "component"
+    ],
+    "severity": "required",
+    "source": "references/intelligence.md#quick-reference",
+    "check": {
+      "type": "manual"
+    }
+  },
+  "gates": [
+    {
+      "id": "MRK-01",
+      "title": "Marks Are Normalised On The Way In, Not Filtered On The Way Out",
+      "rule": "A borrowed mark is taken once, lifted off any ground it was baked onto, trimmed to its own bounds, centred, and stored at one size with an alpha channel - so every mark in the set is the same shape of file at the same optical weight. A filter applied at render time cannot do this: it sees a finished bitmap and knows nothing about what is artwork and what is the square behind it, which is why every global treatment is wrong for some of the set.",
+      "check": {
+        "type": "forbid_regex",
+        "patterns": [
+          "(?i)mix-blend-mode:\\s*(multiply|screen|darken|lighten)",
+          "(?i)filter:[^;]*(grayscale\\(1|grayscale\\(100%|brightness\\(0\\))[^;]*;[^}]*}\\s*[^{]*(favicon|site-icon|logo|brandmark)"
+        ],
+        "message": "a blend mode or a flat silhouette is standing in for normalising the marks; both erase artwork of the colour they are hiding"
+      },
+      "fix": "Normalise the set off the render path - trim, centre, one size, alpha - and leave the colours alone."
+    },
+    {
+      "id": "MRK-02",
+      "title": "A Mark Keeps Its Colour",
+      "rule": "The mark is drawn in its own colours at rest, not only on hover. Colour is the fastest thing a reader identifies a brand by at the sizes these are shown at, and a treatment that holds it back until the pointer arrives has made the list unreadable in exchange for making it quiet. Where a set still reads as loud after normalising, the answer is smaller marks or more space around them, never less colour.",
+      "check": {
+        "type": "forbid_regex",
+        "patterns": [
+          "(?i)(favicon|site-icon|brandmark)[^}]{0,400}filter:\\s*(grayscale|brightness\\(0\\)|saturate\\(0)"
+        ],
+        "message": "borrowed marks are drained at rest, which removes the thing that identifies them"
+      },
+      "fix": "Draw them in colour. If the column reads as busy, take size or add spacing."
+    },
+    {
+      "id": "MRK-03",
+      "title": "The Ground Is Decided Per Mark",
+      "rule": "Artwork drawn in pale ink is invisible on pale paper and dark artwork disappears on a dark slab, and neither is a fault the mark can fix. So the tile's ground is chosen for each mark from its own artwork - measured, at the point it is taken in, over the pixels that are actually visible rather than over the transparent field around them - and recorded beside it. One ground applied to the whole set is the rule that loses whichever marks it does not suit.",
+      "check": {
+        "type": "require_regex_if",
+        "if_pattern": "(?i)(favicon|site-icon|brandmark)",
+        "patterns": [
+          "(?i)(object-fit:\\s*contain)"
+        ],
+        "message": "borrowed marks are drawn without object-fit: contain, so a mark that is not square is cropped"
+      },
+      "fix": "Measure each mark's luminance over its visible pixels when it is captured, store the ground it needs, and render the tile from that. Give the tile one size, one radius, a hairline and an inset so nothing touches an edge."
+    },
+    {
+      "id": "MRK-04",
+      "title": "The Treatment Is Held In One Place",
+      "rule": "Every surface showing the same mark shows it the same way, from one component, so a switcher, a table and a search result cannot drift into three treatments. The first-party mark is held to this too: a product that draws every client's logo and falls back to a letter for its own is the one oversight every reader notices.",
+      "fix": "One component, one tile, one source of grounds. Give the first-party domains their own committed mark rather than letting them fall through to the fallback."
+    }
+  ]
+}

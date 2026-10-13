@@ -1,0 +1,128 @@
+{
+  "group": "Cohesion",
+  "prefix": "COH",
+  "description": "The only gates that judge files against each other rather than on their own. Each one collects a property across every file in scope, finds what the deliverable mostly does, and names the places that do something else - the one table with square corners among nine rounded ones, the page whose shadow is deeper, the section that runs on its own spacing rhythm. Each of those passes a per-file review; together they are what makes a product feel assembled from parts.",
+  "defaults": {
+    "kinds": ["web-ui", "component", "tokens", "slides"],
+    "when": "css",
+    "severity": "required",
+    "source": "checklist/README.md#cohesion",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "COH-01",
+      "title": "One Corner Radius Language",
+      "rule": "Radius values across the deliverable form a small named set, and every element of the same kind takes the same step. One page's table with square corners beside nine rounded ones is the canonical version of this, and it survives every per-page review because each page is internally consistent.",
+      "severity": "blocker",
+      "check": {"type": "cohesion_values", "property": "border-radius"},
+      "fix": "Move the outlier onto the scale's nearest step, or add the step to the scale if it is genuinely a new one."
+    },
+    {
+      "id": "COH-02",
+      "title": "One Shadow Scale",
+      "rule": "Elevation comes from a small set of named shadows. A one-off shadow reads as a different surface at a different height, and nothing tells the reader why.",
+      "severity": "blocker",
+      "check": {"type": "cohesion_values", "property": "box-shadow"},
+      "fix": "Replace the one-off with the nearest named elevation step."
+    },
+    {
+      "id": "COH-03",
+      "title": "One Border Treatment",
+      "rule": "Border widths and colours are consistent for the same kind of boundary. A 2px border where the rest of the product uses a hairline makes one card look selected when it is not.",
+      "check": {"type": "cohesion_values", "property": "border-width"},
+      "fix": "Bring the outlier onto the shared border token."
+    },
+    {
+      "id": "COH-04",
+      "title": "One Motion Rhythm",
+      "rule": "Durations and easing curves come from the same small set everywhere. Three durations and one curve is a rhythm; nine durations and four curves is noise the reader feels without being able to name.",
+      "check": {"type": "cohesion_values", "property": "duration"},
+      "fix": "Move the outlying durations onto the motion tokens."
+    },
+    {
+      "id": "COH-05",
+      "title": "One Easing Vocabulary",
+      "rule": "Every transition and animation references the named curves. A bespoke cubic-bezier in one file is a different physics for one element.",
+      "check": {"type": "cohesion_values", "property": "easing"},
+      "fix": "Replace the inline curve with the easing token."
+    },
+    {
+      "id": "COH-06",
+      "title": "One Type Scale Across Files",
+      "rule": "Font sizes across the deliverable land on one scale. A 15px heading among 14 and 16 is the sort of thing nobody sees and everybody feels.",
+      "severity": "blocker",
+      "check": {"type": "cohesion_values", "property": "font-size"},
+      "fix": "Round the outlier to the nearest step on the type scale."
+    },
+    {
+      "id": "COH-07",
+      "title": "One Spacing Rhythm",
+      "rule": "Padding and gap values across files come from the same scale. A section on its own rhythm reads as pasted in.",
+      "check": {"type": "cohesion_values", "property": "spacing"},
+      "fix": "Move the outlying values onto the spacing scale."
+    },
+    {
+      "id": "COH-08",
+      "title": "One Font Stack",
+      "rule": "The same display, body, and mono families everywhere. A second sans-serif appearing in one file is usually a paste that nobody noticed.",
+      "severity": "blocker",
+      "check": {"type": "cohesion_values", "property": "font-family"},
+      "fix": "Point the outlier at the font token."
+    },
+    {
+      "id": "COH-09",
+      "title": "The Same Component Looks The Same Everywhere",
+      "rule": "Tables, cards, buttons, inputs, and modals carry the same radius, border, padding, and surface wherever they appear. Where two files style the same kind of element differently, one of them is wrong even though both look fine alone.",
+      "severity": "blocker",
+      "check": {"type": "cohesion_component", "component": "all", "properties": ["border-radius", "border-width", "padding"]},
+      "fix": "Extract the shared primitive, or bring the outlying definition onto the same tokens."
+    },
+    {
+      "id": "COH-10",
+      "title": "One Definition Per Component",
+      "rule": "A component is defined once and imported, not re-implemented per page. Two Card components in one codebase drift the first time only one of them is touched.",
+      "check": {"type": "cohesion_duplicate_components"},
+      "fix": "Delete the duplicate and import the shared one."
+    },
+    {
+      "id": "COH-11",
+      "title": "State Colours Mean One Thing",
+      "rule": "Danger, success, warning, and info map to the same tokens and the same vocabulary in every place they appear - a table cell, a badge, a toast, a detail panel. A status that is red in a list and amber in a panel is two products.",
+      "severity": "blocker",
+      "check": {"type": "cohesion_status_tokens"},
+      "fix": "Map status to tone in one module and render every surface through it."
+    },
+    {
+      "id": "COH-12",
+      "title": "One Density",
+      "rule": "Control heights and row heights are consistent across surfaces. A 32px control on one page and 44px on the next changes how dense the product feels between clicks.",
+      "check": {"type": "cohesion_values", "property": "control-height"},
+      "fix": "Move both onto one control height token, with the touch floor applied by media query rather than per page."
+    },
+    {
+      "id": "COH-13",
+      "title": "One Icon Size And Weight",
+      "rule": "Icon sizes come from a token set and stroke weight is constant within a hierarchy level. Mixed 20 and 24px icons in the same row is the sort of thing that reads as sloppiness without being identifiable as one.",
+      "check": {"type": "cohesion_values", "property": "icon-size"},
+      "fix": "Define icon size tokens and reference them."
+    },
+    {
+      "id": "COH-14",
+      "title": "New Work Matches What Was Already There",
+      "rule": "Anything added in this run takes its radius, spacing, type, motion, and surfaces from what the project already does. Where the existing pattern is worse than the new one, the fix is to change both, not to leave two.",
+      "severity": "blocker",
+      "when": "always",
+      "fix": "Name the existing pattern you matched, or the sweep you did to move both onto the new one."
+    },
+    {
+      "id": "COH-15",
+      "title": "Every File Was Compared Against The Others",
+      "rule": "The cohesion sweep ran over every file in scope, not a sample. The mismatch this group exists to catch is invisible from inside any one file.",
+      "severity": "blocker",
+      "when": "always",
+      "check": {"type": "cohesion_ran"},
+      "fix": "design-pass.py cohesion, then resolve the outliers it names."
+    }
+  ]
+}

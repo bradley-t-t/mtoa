@@ -1,0 +1,58 @@
+{
+  "group": "Loading & Vitals",
+  "prefix": "PRF",
+  "description": "The three field metrics that feed ranking - LCP at 2.5s, INP at 200ms, CLS at 0.1 - are measured on real visitors at the 75th percentile. None of that is readable from source, but the causes are, and the causes are what gets changed.",
+  "defaults": {
+    "kinds": ["*"],
+    "when": "always",
+    "severity": "required",
+    "source": "references/images-and-performance.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {
+      "id": "PRF-01",
+      "title": "No Script Blocks The First Paint",
+      "rule": "Every external script carries defer, async, or type=module. A blocking script in the head stops parsing until it has been fetched and run, and the reader looks at nothing for the length of that round trip.",
+      "when": "script",
+      "check": {"type": "script_defer"},
+      "fix": "Add defer to anything that does not have to run before first paint; async to anything order-independent."
+    },
+    {
+      "id": "PRF-02",
+      "title": "Web Fonts Declare A Display Strategy",
+      "rule": "Every web font sets font-display. Without it text stays invisible until the font arrives, so the paint that gets measured is the one that waited for a download nobody needed to wait for.",
+      "when": "font",
+      "check": {"type": "font_display"},
+      "fix": "Set font-display: swap on each @font-face, or the display option on the framework's font loader."
+    },
+    {
+      "id": "PRF-03",
+      "title": "The Largest Paint Is Prioritised",
+      "rule": "The hero image or font is preloaded or given a fetch priority. Otherwise its request waits to be discovered by the stylesheet that references it, which is a whole round trip late.",
+      "check": {"type": "lcp_preload"},
+      "fix": "Preload the hero asset in the head, or mark it fetchpriority=\"high\"."
+    },
+    {
+      "id": "PRF-04",
+      "title": "Third-Party Origins Are Preconnected",
+      "rule": "A site pulling from three or more external origins opens those connections early. Each cold origin costs DNS, TCP and TLS before the first byte of the thing it was fetching.",
+      "check": {"type": "preconnect"},
+      "fix": "Add rel=\"preconnect\" for the origins on the critical path and rel=\"dns-prefetch\" for the rest."
+    },
+    {
+      "id": "PRF-05",
+      "title": "Nothing Injects Markup After Paint",
+      "rule": "No document.write and no innerHTML assignment building markup at runtime. Content arriving after layout moves everything below it, and that movement is the metric.",
+      "check": {"type": "no_layout_shift_sources"},
+      "fix": "Render the content server-side, or reserve its space before it arrives."
+    },
+    {
+      "id": "PRF-06",
+      "title": "The Back Button Still Works",
+      "rule": "Nothing traps the reader by rewriting history. Defeating the Back button became a named spam-policy violation in 2026 and is enforced with manual actions, not a demotion nobody can see.",
+      "check": {"type": "back_button_intact"},
+      "fix": "Remove the history handler, or confirm one press of Back leaves the site."
+    }
+  ]
+}

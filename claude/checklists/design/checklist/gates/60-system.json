@@ -1,0 +1,24 @@
+{
+  "group": "Tokens & System",
+  "prefix": "SYS",
+  "description": "Token architecture from references/system/. Applies whenever the deliverable defines or consumes a token layer.",
+  "defaults": {
+    "kinds": ["web-ui", "component", "tokens"],
+    "severity": "required",
+    "source": "references/system/token-architecture.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {"id": "SYS-01", "title": "Three Token Layers", "rule": "Primitive holds raw values, semantic aliases them by purpose, component tokens reference semantic. A component reaching straight for a primitive skips the layer that makes theming possible.", "when": "tokens", "severity": "blocker"},
+    {"id": "SYS-02", "title": "Semantic Names Describe Purpose, Not Appearance", "rule": "--color-primary, --color-danger, --color-surface. Not --color-blue-600 in a component, and not --color-light-grey for a border that turns dark in another theme.", "when": "tokens", "severity": "blocker"},
+    {"id": "SYS-03", "title": "Spacing Scale Is 4px-Based", "rule": "One scale, multiples of 4, named steps. Every padding, gap, and margin lands on it.", "when": "css", "check": {"type": "spacing_scale"}},
+    {"id": "SYS-04", "title": "Type Scale Is Defined And Used", "rule": "A named size scale with matching line-heights, referenced rather than restated per component.", "when": "css"},
+    {"id": "SYS-05", "title": "Radius, Shadow, And Border Are Tokens", "rule": "Corner radius, elevation, and border width come from named steps, so a change to the style language is one edit.", "when": "css"},
+    {"id": "SYS-06", "title": "Z-Index Layers Are Named", "rule": "base, dropdown, sticky, sticky-nav, overlay, modal, toast - each with a value, and the nav above in-page stickies.", "when": "css", "check": {"type": "zindex_scale"}},
+    {"id": "SYS-07", "title": "Motion Tokens Are Named", "rule": "Durations and easing curves are tokens, so the whole interface shares one rhythm.", "when": "motion"},
+    {"id": "SYS-08", "title": "Every Token Resolves In All Three Themes", "rule": "No token defined for light only. Dark and gray each carry the full set; a missing entry inherits a colour that does not belong there.", "when": "tokens", "severity": "blocker"},
+    {"id": "SYS-09", "title": "Component States Are Specified", "rule": "Each component names its default, hover, focus, active, disabled, loading, error, and empty states, with the token for each.", "when": "component"},
+    {"id": "SYS-10", "title": "Tokens Validate Clean", "rule": "The token validator runs over the source and reports no unreferenced literals: node scripts/system/validate-tokens.cjs --dir <src>.", "when": "tokens", "check": {"type": "manual"}},
+    {"id": "SYS-11", "title": "Tailwind Theme Mirrors The Tokens", "rule": "Where Tailwind is in play, its theme extends from the same token source rather than carrying a second, divergent palette.", "when": "tailwind"}
+  ]
+}

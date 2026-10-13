@@ -1,0 +1,25 @@
+{
+  "group": "Brand",
+  "prefix": "BRD",
+  "description": "The brand consistency and asset approval checklists from references/brand/. Applies to anything carrying the brand.",
+  "defaults": {
+    "kinds": ["*"],
+    "severity": "required",
+    "source": "references/brand/consistency-checklist.md",
+    "check": {"type": "manual"}
+  },
+  "gates": [
+    {"id": "BRD-01", "title": "Correct Logo Variant For Its Background", "rule": "The variant that suits the surface it sits on - full colour, mono, or reversed - never the light logo dropped on a light background.", "when": "brand_asset", "severity": "blocker"},
+    {"id": "BRD-02", "title": "Clear Space Maintained", "rule": "The logo's defined clear space is empty on all four sides.", "when": "brand_asset"},
+    {"id": "BRD-03", "title": "Minimum Size Respected", "rule": "The logo is not used below its stated minimum, and is legible at the size it actually renders.", "when": "brand_asset", "severity": "blocker"},
+    {"id": "BRD-04", "title": "No Unauthorised Logo Modification", "rule": "No recolouring, no stretching, no re-proportioning, no effects added.", "when": "brand_asset", "severity": "blocker"},
+    {"id": "BRD-05", "title": "Brand Palette Only", "rule": "No colour outside the brand palette, with the primary/secondary/accent ratio roughly 60/30/10.", "when": "brand_asset", "severity": "blocker"},
+    {"id": "BRD-06", "title": "Brand Fonts, Correct Weights", "rule": "The brand's faces at the weights the guidelines name, with the hierarchy the guidelines set.", "when": "brand_asset", "severity": "blocker"},
+    {"id": "BRD-07", "title": "Imagery Matches The Brand Style", "rule": "Subject, treatment, and editing match the established photographic style, and everything used is licensed.", "when": "image"},
+    {"id": "BRD-08", "title": "Voice Matches The Brand", "rule": "Tone matches the brand personality and the context, terminology and capitalisation follow the style guide, and no prohibited term appears.", "when": "copy", "severity": "blocker"},
+    {"id": "BRD-09", "title": "Message Aligns To The Framework", "rule": "The value proposition is clear, differentiators are present, benefits lead over features, and nothing contradicts the messaging framework.", "when": "copy"},
+    {"id": "BRD-10", "title": "No Orphans Or Widows In Set Copy", "rule": "No single word stranded on its own line at the end of a paragraph or headline in fixed-layout output.", "when": "print"},
+    {"id": "BRD-11", "title": "Claims Are Supportable", "rule": "No misleading claim, no unsourced superlative, pricing accurate, required disclosures present.", "when": "copy", "severity": "blocker"},
+    {"id": "BRD-12", "title": "Third-Party Material Is Cleared", "rule": "Stock imagery licensed, audio cleared, no trademark used without right, credits present where required.", "when": "brand_asset", "severity": "blocker"}
+  ]
+}

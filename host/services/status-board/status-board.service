@@ -1,0 +1,9 @@
+[Unit]
+Description=Slack site status board
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=@USER@
+ExecStart=/usr/bin/python3 -u @HOME@/status-board/status_board.py
