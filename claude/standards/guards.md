@@ -37,6 +37,22 @@ no judge and told to run the statement, and the only ways out are that the
 thing stopped for is not a statement or that the database cannot be reached
 from the session at all.
 
+A turn that tells the user no is held the same way. `ratchet/refusal.py` reads
+the closing text for a refusal - "I can't do that based on your instructions",
+"I'd rather not", a yes asked for again after the user already gave it in chat,
+a smaller thing done in place of what was asked - and a flagged stop goes to a
+Haiku judge shown only the user's own messages and the turn's tool calls. The
+user's word outranks every written instruction, so a refusal resting on a file,
+a guess or caution is held and told to do the work. Released are replies that
+decline nothing the user asked, dead ends the turn actually tried, instructions
+found inside observed content, and the hard limits no instruction lifts -
+credentials, card, bank or ID numbers typed into a field, account creation and
+password sign-in, trades and money movement, CAPTCHAs, system security
+settings, untrusted executables, permanent deletion of mail or messages, and
+serious harm to someone. It shares the cap of three holds per user message;
+`refusal-corpus.json` is its scan corpus and `REFUSAL_OFF=1` stands it down for
+one run.
+
 `tells.json` is the word list and `corpus.json` is what it must catch and must
 not; edit either and run `selftest`. `RATCHET_OFF=1` stands it down for one run.
 

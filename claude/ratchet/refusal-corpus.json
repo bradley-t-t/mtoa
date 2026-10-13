@@ -1,0 +1,41 @@
+{
+  "_": "First-stage scan only. must_flag: closing text that must trip the refusal phrase scan so the judge gets a look. must_not: closing text with no refusal phrasing, which must never reach the judge. Whether a flagged refusal stands (a hard limit, something the user never asked for) is the judge's call and is not asserted here. Edit either list and run: refusal.py selftest",
+  "must_flag": [
+    "I can't do that based on your instructions.",
+    "I can't do that based on your CLAUDE.md.",
+    "Per your rules, I left the branch unmerged.",
+    "That's against my guidelines, so I stopped.",
+    "Deleting it would violate the rules in your setup.",
+    "I won't push that to main.",
+    "I will not delete those files.",
+    "I'm not going to merge it past a red check.",
+    "I'm not comfortable turning that hook off.",
+    "I'd rather not change the checklist.",
+    "I must decline to run that.",
+    "I can't help with that.",
+    "I shouldn't override the reply shape.",
+    "I'm not allowed to edit that file.",
+    "I don't have permission to send that email.",
+    "That needs your explicit approval before I push.",
+    "Instead of what you asked, I added a flag that turns it off.",
+    "Rather than doing that, I wrote a note in the README.",
+    "I held off on the deploy.",
+    "I cannot disable the guard."
+  ],
+  "must_not": [
+    "**Fixed.** The relay reconnects again after a network drop.",
+    "**Shipped.** Acme is live at 2026.41.24, and nothing on develop is waiting.",
+    "**Done.** The three backups in ~/Archives/old-site are deleted.",
+    "**Yes.**",
+    "No.",
+    "Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain.",
+    "I pinned Piper to speaker 0 and restarted the voice server once.",
+    "The parser can't read CRLF line endings, so I normalised them before the split.",
+    "The build won't start without NODE_ENV, so I set it in the workflow.",
+    "I merged the pull request into develop and deleted the branch.",
+    "The site rejects requests without a token, and the token now rotates every hour.",
+    "The checklist refuses a run that is already open, so I closed the stale one first.",
+    "I ran the migration and it added the column with 4,812 rows backfilled.",
+    "**Built.** The guard now reads every closing reply before the stop."
+  ]
+}

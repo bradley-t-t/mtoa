@@ -146,7 +146,11 @@ credential I hold, by asking me with AskUserQuestion and then finishing.
 Rewriting the sentence is never the way past one, and deleting something true to
 get past the check makes the reply worse rather than compliant. A standing
 approval is not a blocker: a turn that stops to ask to run SQL is held on sight
-and told to run the statement.
+and told to run the statement. A refusal is held the same way: a reply that
+turns down what I asked for in chat, on the strength of a written rule, a guess
+or caution, is sent back to do the work. Only the hard limits no instruction
+lifts let a refusal stand, and the reply names that limit once and does the
+rest.
 
 **The peer reply guard** refuses a message to another session whose whole
 content is that no message was needed - an acknowledgement of a hold, its terms

@@ -765,6 +765,9 @@ def checks(verb, payload=None, reply=None):
     if not sidechain and unchecked_hold(cfg, payload, transcript, text, turn):
         return 0
 
+    if not sidechain and refusal_hold(cfg, payload, transcript, text, turn):
+        return 0
+
     found, hold, banned, standing = scan(text)
     if hold or (not found and not banned and not standing):
         return 0
@@ -1069,6 +1072,35 @@ def unchecked_hold(cfg, payload, transcript, text, turn):
     return True
 
 
+def refusal_hold(cfg, payload, transcript, text, turn):
+    """Hold a stop that turns down what the user asked for in chat, short of a hard limit."""
+    import refusal
+    if BOOL_ENV.get((os.environ.get("REFUSAL_OFF") or "0").strip().lower(), False):
+        return False
+    binary = claude_binary()
+    if not binary or not cfg["judge"] or not refusal.flags(text):
+        return False
+    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    path, count = held_count(session, (turn or "unknown") + ":refusal")
+    if count >= int(cfg["holds_per_turn"]):
+        return False
+    verdict, found = refusal.ask(text, transcript, turn, cfg, binary)
+    if verdict is None:
+        NOTES.append(("refusal: %s - letting the stop through" % found, True))
+        return False
+    if verdict != "refused":
+        return False
+    record(path, (turn or "unknown") + ":refusal", count + 1)
+    reason = refusal.reason(found)
+    if count:
+        reason += REPEAT
+    if count + 1 >= int(cfg["holds_per_turn"]):
+        reason += LAST
+    emit(decision="block", reason=reason,
+         systemMessage="ratchet: turned down what the user asked for")
+    return True
+
+
 def pre_say():
     """PreToolUse on Bash: refuse a Sunday announcement that states unfinished work as done."""
     import premature
@@ -1172,6 +1204,8 @@ def selftest():
     bad += transcript_test()
     import shape
     bad += shape.selftest()
+    import refusal
+    bad += refusal.selftest()
     print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))

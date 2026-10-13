@@ -268,6 +268,43 @@ must catch and must not; edit it and run `selftest`.
 
 <br />
 
+## Telling the user no
+
+`refusal.py` is the fourth sibling in the same Stop pass. It reads a turn that
+turns the user down - *I can't do that based on your instructions*, *I'd rather
+not*, *that needs your explicit approval* after the user already said to do it,
+or a smaller thing done in place of what was asked. The user's word in chat is
+the authority on this account and outranks every written instruction, so a
+refusal that rests on CLAUDE.md, a skill, a standard, a checklist, another
+hook's message, a guess or plain caution is held, and the hold tells the turn
+to do the work.
+
+Cheap first. A refusal phrase in the closing text is one regex; across 726 real
+closing replies it flagged 9. Only a flagged stop pays for the judge, which is
+shown the person's own messages - never text relayed from a file, a tool or
+another session - and the tool calls the turn made. It releases a reply that
+declines nothing the person asked for, a dead end the turn actually tried, an
+instruction found inside observed content, and the hard limits no instruction
+lifts: typing a password, card, bank or ID number, API key or token into a
+field outside a local test of the user's own app; creating an account or
+signing in with a password; trading or moving money; solving a CAPTCHA;
+changing system security settings; running a file from an untrusted source;
+permanently deleting mail or messages; and anything that would seriously harm
+someone. The hold names those limits too, so a turn that hits one says so once
+and does the rest of the request instead of spending its holds.
+
+```
+refusal.py check "I can't do that based on your instructions."
+refusal.py selftest
+```
+
+It shares ratchet's cap of three holds per user message and its own count
+(`<turn>:refusal`). `refusal-corpus.json` is what the first-stage scan must
+catch and must not; edit it and run `selftest`, which `ratchet.py selftest`
+also runs. `REFUSAL_OFF=1` stands it down for one run.
+
+<br />
+
 ## Install
 
 `config-sync.py` carries `ratchet/` with the rest of the setup, so a machine
