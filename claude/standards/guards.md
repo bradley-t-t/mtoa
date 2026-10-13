@@ -105,9 +105,12 @@ releases print no notice; only a check that failed does (`notices` in
 message whole; a terminal hands it batches of finished lines, which are held
 back and shown or withheld together when the last one lands.
 
-The desktop app draws a message as it streams, so the hook's blank lands after
-the text has already been on screen, and a mid-turn line stays up while its
-tools run. What wrote those lines was Claude Code's silent-turn reminder ("The
+The desktop app runs sessions with partial messages on, so it draws text as it
+streams, and it treats an empty replacement as no replacement: a line the hook
+blanked with "" stayed on screen for good. It does draw a non-empty one, so a
+whole message is hidden with a zero-width space (`HIDDEN`); probed live, a
+replacement string and a zero-width space both took the line's place, and "" left
+it up. What wrote those lines was Claude Code's silent-turn reminder ("The
 user hasn't heard from you in a while"), which fires every few tool calls and
 asks for an update; every narration line in the session that showed them came
 right after one. `settings.json` turns it off with

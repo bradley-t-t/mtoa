@@ -891,6 +891,9 @@ def would_hold(payload, text, skip_shape=False):
     return any(body.get("decision") == "block" for body in CAPTURED)
 
 
+HIDDEN = "\u200b"
+
+
 def display():
     """MessageDisplay: keep text that is out of shape off the screen.
 
@@ -905,6 +908,10 @@ def display():
     and joined, and the whole message is shown or withheld when the last one
     lands. Display only: what is stored and what the model reads are untouched.
     Any failure prints nothing, and the original text is shown.
+
+    The desktop app streams text as it is written and treats an empty
+    replacement as none, so the streamed text stays up. A whole message is
+    hidden with a zero-width space, which it does draw in place of the text.
     """
     try:
         import shape
@@ -931,19 +938,14 @@ def display():
             text = delta
         if not text.strip():
             return 0
-        if "Display probe C3" in text:
-            emit(hookSpecificOutput={"hookEventName": "MessageDisplay", "displayContent": "[probe replaced]"})
-            return 0
-        if "Display probe D4" in text:
-            emit(hookSpecificOutput={"hookEventName": "MessageDisplay", "displayContent": "\u200b"})
-            return 0
         turn = closing_message(transcript, False)[1] if transcript else None
         outcome = shape.decide(text, transcript, session, turn, config(), body)
-        shown = text if outcome[0] != "hold" else ""
+        hidden = HIDDEN if whole else ""
+        shown = text if outcome[0] != "hold" else hidden
         if outcome[0] == "plain" and not outcome[1]:
-            shown = ""
+            shown = hidden
         if outcome[0] == "show" and would_hold(payload, text):
-            shown = ""
+            shown = hidden
         if whole and shown == text:
             return 0
         emit(hookSpecificOutput={"hookEventName": "MessageDisplay", "displayContent": shown})
