@@ -84,13 +84,16 @@ turn at the AskUserQuestion tool: ask inside the turn, get the answer, finish.
 
 A question that one or two sentences answer gets a plain answer instead: at most
 two unformatted sentences and 320 characters, no claim of work done
-(`plain_claims`), no aside, and only in a turn that used no edit tool. Plain
-prose is what narration looks like, and the display hook cannot tell the last
-message of a turn from one written mid-turn - it runs before the tools that
-follow do. So a plain answer is hidden like narration, the stop hook confirms
-it ended the turn and runs the rest of the pipeline on it, then asks for it
-again word for word (`RESEND`), and the resend - matched to the approved text at
-85 percent similarity - is what is shown.
+(`plain_claims`), no aside, and only in a turn that used no edit tool. A plain
+answer is shown as written, not hidden. It once was hidden like narration and
+brought back by a word-for-word resend once the stop hook confirmed it ended the
+turn, but the desktop app (build 2.37337+) drops an identical resend as a
+duplicate and never draws it, so every short reply vanished - hidden, then its
+resend swallowed. The display hook now only hides what the turn will replace
+with DIFFERENT text that the app does draw: a genuine hold, or an in-shape reply
+the stop pipeline sends back. The cost is that a bare mid-turn narration line,
+which reads like a plain answer, can show; the silent-turn reminder that drove
+most of those is off, so it is rare.
 
 Three hooks share one decision (`shape.decide`) and one per-turn state, so the
 screen and the stop never disagree. `MessageDisplay` (`hook.py display`) runs
@@ -138,15 +141,12 @@ from the hook's own `timeout`) and then shows the original text, and one judge
 call uncached takes up to thirty. A held draft whose excuse judge ran past ten
 seconds was shown, and its rewrite after it - a reply seen twice. So the display
 hook stops itself at `DISPLAY_BUDGET` (seven seconds, by `SIGALRM`, as
-`OutOfTime`, a BaseException no check's `except Exception` can swallow) and keeps
-the reply off the screen, noting it as withheld. The stop hook, which has no such
-limit, decides it: a reply it holds is rewritten as before, and one it lets
-through that is still withheld is asked for again word for word
-(`RESEND_WITHHELD`) and shown then, the way a plain answer is. After three
-resends that never match, a release shows the next reply as written. Replayed
-on the reply that showed twice, the draft was hidden at 7.1 seconds and held,
-and with the budget cut to 1.5 seconds the final reply was hidden, resent and
-shown once.
+`OutOfTime`, a BaseException no check's `except Exception` can swallow); on
+timeout it shows the text rather than hide what it could not clear, since a
+hidden reply only comes back as a rewrite and a reply it cannot judge is not one
+it can prove belongs hidden. Replayed against the live transcript, the plain
+answer that had been vanishing now shows on the first draft, and an out-of-shape
+progress line is still hidden for its rewrite.
 
 Three stages, cheapest first. The layout is a parse - the verdict, one sentence
 after it, labelled lines of at most two sentences - and a reply in the shape is

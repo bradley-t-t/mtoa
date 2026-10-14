@@ -842,27 +842,11 @@ def shape_hold(cfg, payload, transcript, text, turn):
         if outcome[0] == "capped":
             NOTES.append(("shape: let a reply through out of shape after %d holds" % outcome[1], False))
         if outcome[0] != "hold":
-            # A reply this hook lets through may still be off the screen: the
-            # display hook keeps a plain answer off it until this hook has seen
-            # it end the turn, and keeps off any reply it could not clear inside
-            # the ten seconds the app gives it. Unseen, it is asked for again
-            # word for word and shown then. Shown already, or held by the rest of
-            # the pipeline, this check has nothing to add.
-            unseen = (outcome[0] == "plain" and not outcome[1]) or shape.withheld(session, turn, text)
-            if not unseen or shape.released(session, turn) or would_hold(payload, text, skip_shape=True):
-                return False
-            if DRY:
-                return True
-            # Approve, and release the turn in the same breath, so the display
-            # hook shows the next thing it sees no matter what: the app's resend
-            # arriving with a word changed, an approved-text match that misses, a
-            # judge that overran its budget. The reply has been confirmed as the
-            # turn's close, so the one job left is to make sure the user sees it,
-            # and a message withheld once must never stay invisible.
-            shape.approve(session, turn, text)
-            shape.release(session, turn)
-            emit(decision="block", reason=shape.RESEND if outcome[0] == "plain" else shape.RESEND_WITHHELD)
-            return True
+            # A plain answer is shown as written at display time, and anything
+            # excused or past the hold cap is let through. The display hook
+            # never withholds a reply whose only recovery is an identical
+            # resend, so there is nothing stranded off the screen to send back.
+            return False
         _, found, why = outcome
         if not DRY:
             shape.count_hold(session, turn)
@@ -967,27 +951,22 @@ def display():
         import signal
         signal.signal(signal.SIGALRM, out_of_time)
         signal.setitimer(signal.ITIMER_REAL, max(0.5, DISPLAY_BUDGET - (time.time() - START)))
-        turn = None
         try:
             turn = closing_message(transcript, False)[1] if transcript else None
-            if shape.approved(session, turn, text):
-                shown = text
-            else:
-                outcome = shape.decide(text, transcript, session, turn, config(), body)
-                shown = text if outcome[0] != "hold" else hidden
-                if outcome[0] == "plain" and not outcome[1]:
-                    shown = hidden
-                if outcome[0] == "show" and would_hold(payload, text):
-                    shown = hidden
-                if shown != text and outcome[0] != "hold" and shape.released(session, turn):
-                    shown = text
+            outcome = shape.decide(text, transcript, session, turn, config(), body)
+            # Hide only what the turn will replace with DIFFERENT text: a
+            # genuine hold, or an in-shape reply the stop pipeline will send
+            # back. The model rewrites those and the rewrite renders. A plain
+            # answer is shown as written, because its only "rewrite" is an
+            # identical word-for-word resend, and this app build drops an
+            # identical resend as a duplicate - so hiding one loses it for good.
+            shown = hidden if outcome[0] == "hold" else text
+            if outcome[0] == "show" and would_hold(payload, text):
+                shown = hidden
         except OutOfTime:
-            signal.setitimer(signal.ITIMER_REAL, 0)
-            shown = text if shape.released(session, turn) else hidden
+            shown = text
         finally:
             signal.setitimer(signal.ITIMER_REAL, 0)
-        if shown != text:
-            shape.withhold(session, turn, text)
         if whole and shown == text:
             return 0
         emit(hookSpecificOutput={"hookEventName": "MessageDisplay", "displayContent": shown})
