@@ -2043,6 +2043,10 @@
   "intelligence",
   "tools/chrome-login/extension/totp.js"
  ],
+ "claude/tools/chrome-login/host.py": [
+  "intelligence",
+  "tools/chrome-login/host.py"
+ ],
  "claude/tools/config-sync.py": [
   "intelligence",
   "tools/config-sync.py"

@@ -1,586 +1,603 @@
 #!/usr/bin/env python3
-"""Sign a session into an account in Chrome without the password reaching it.
+"""Sign in to one of the owner's accounts in Chrome without a secret reaching a session.
 
-A session driving Chrome meets a sign-in page. Typing the password would write
-it into the transcript, and the transcript outlives the sign-in. So the session
-never holds it: it presses ctrl+alt+shift+L in the page, and the CryptoFort
-Login extension (chrome-login/extension) asks this script, running as Chrome's
-native messaging host, for the login bound to that exact origin. The script
-reads it from the vault, raises the system authentication prompt naming the
-site and the account, and only once that is approved hands it to the extension,
-which fills the fields and submits. The session sees the outcome and nothing
-else.
+A session driving Chrome reaches sign-in pages it cannot pass: typing a password
+puts it in the transcript, and the transcript outlives the page. This is the way
+through. The session names the sign-in, the owner approves it with Touch ID, and
+the username, password and one-time code travel from the CryptoFort vault into
+the page inside this process and the Chrome Login extension, rendered nowhere a
+person or a log can read them.
 
-  chrome-login.py install          build the approval prompt, register the host with Chrome
-  chrome-login.py check            say whether every piece is in place
-  chrome-login.py list [host]      the logins the vault holds, metadata only
-  chrome-login.py import <csv>     load a Chrome password export into the vault
-  chrome-login.py host <origin>    the native messaging host; Chrome runs this, nothing else
+  chrome-login.py fill [LOGIN] [--tab ID | --url PREFIX] [--no-submit]
+  chrome-login.py list                 every enrolled login, without its secret
+  chrome-login.py add LOGIN            enrol or replace one, from your own terminal
+  chrome-login.py install              build the approval prompt, register the relay
+  chrome-login.py status               what is built, registered, loaded and connected
 
-A login lives in the vault's `logins` namespace, named <host>:<username>, and
-its sealed value is JSON:
+`fill` finds the tab on a host the login names (the one in front when several
+are), checks that it shows sign-in fields, and only then asks for approval. The
+prompt names the host and the account. Approved, it fills and submits each step
+the site shows in turn - username, password, then the one-time code - and stops
+when the sign-in fields are gone, or when a step is still showing fifteen
+seconds after it was submitted, which is a refusal or a challenge for the
+session to look at. A step is submitted once and never retried, so a wrong
+password cannot walk an account into a lockout.
 
-  {"origins": ["https://github.com"], "username": "...", "password": "...",
-   "totp": "<base32 seed>", "totp_digits": 6, "totp_period": 30}
+A login is one vault record in the `chrome-login` namespace. Its secret is a JSON
+object holding the hosts it may be filled on, the username, the password and an
+optional TOTP seed; its metadata carries the hosts again for finding it, and the
+username, neither of which is secret. The hosts inside the secret are the ones
+enforced, so rewriting a record's metadata cannot send its password anywhere
+new, and a page is filled only over https, or http on this machine's loopback.
 
-The TOTP fields are optional. The origins are inside the sealed value rather
-than in the tags because a tag is writable by any session holding the vault's
-write permission, and an origin that could be rewritten would let a page on
-another site ask for the password. The tags (`login`, `host:<hostname>`,
-`user:<username>`) only narrow which entries are opened, and name the account in
-a listing.
+Exit status: 0 filled, 1 refused or failed, 2 usage, 3 not approved, 4 not set up.
 """
+from __future__ import annotations
 
+import argparse
 import base64
-import binascii
-import csv
-import ctypes
+import getpass
+import hashlib
+import hmac
 import importlib.util
 import json
 import os
-import shutil
+import re
+import socket
 import struct
 import subprocess
 import sys
+import time
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlparse
 
 HERE = Path(__file__).resolve().parent
-ASSETS = HERE / "chrome-login"
-EXTENSION = ASSETS / "extension"
-HOST_NAME = "cryptofort.chrome_login"
-# Pinned by the public key in the extension's manifest, so an unpacked copy
-# loaded from any directory on any machine carries the same ID and the host
-# manifest written by `install` admits it.
-EXTENSION_ID = "nmfnlmblcidnpkbenhpcphppfidehkbg"
-CALLER = "chrome-extension://%s/" % EXTENSION_ID
-NAMESPACE = "logins"
-SUPPORT = Path.home() / "Library" / "Application Support" / "CryptoFort Login"
-APPROVER = SUPPORT / "CryptoFort"
-LAUNCHER = SUPPORT / "host"
-CHROME_HOSTS = Path.home() / "Library" / "Application Support" / "Google" / "Chrome" / "NativeMessagingHosts"
-CHROME_PROFILES = Path.home() / "Library" / "Application Support" / "Google" / "Chrome"
-# Google's Apple developer team. A process passes as Chrome only when the
-# binary it runs is signed by it, so a script named "Google Chrome" does not.
-CHROME_REQUIREMENT = 'anchor apple generic and certificate leaf[subject.OU] = "EQHXZ8M8AV"'
-APPROVAL_TIMEOUT = 90
+KIT = HERE / "chrome-login"
+NAMESPACE = "chrome-login"
+TAG = "chrome-login"
+RELAY = "com.mtoa.chrome_login"
+# Fixed by the public key in extension/manifest.json, so the relay registration
+# can name the one extension allowed to start it before it is ever loaded.
+EXTENSION_ID = "kgknokedjcdclhdhcjkmfjaajkjcblnh"
+CHROME = Path.home() / "Library" / "Application Support" / "Google" / "Chrome"
+HOSTNAME = re.compile(r"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*"
+                      r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$|^\[::1\]$")
+LOGIN_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+STEP_LIMIT = 15
+FLOW_LIMIT = 120
 
 
-# --- origins -----------------------------------------------------------------
+class Refused(Exception):
+    """A fill that stopped before or during the sign-in, with the reason."""
 
-def origin_of(url):
-    """scheme://host[:port] for an http(s) URL, lowercased, or None."""
+    def __init__(self, message, status=1):
+        super().__init__(message)
+        self.status = status
+
+
+def _load(name, filename):
+    for path in (HERE / filename, Path.home() / ".claude" / "tools" / filename):
+        if path.is_file():
+            spec = importlib.util.spec_from_file_location(name, str(path))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+    raise Refused("%s is missing beside this tool" % filename, 4)
+
+
+def state_dir():
+    return _load("_lib", "_lib.py").state_root() / "chrome-login"
+
+
+def approver_path():
+    return state_dir() / "chrome-login"
+
+
+# ---------------------------------------------------------------- one-time codes
+
+def parse_totp(text):
+    """A TOTP seed as base32 or an otpauth:// URI, checked by computing a code."""
+    text = text.strip()
+    config = {"secret": text, "digits": 6, "period": 30, "algorithm": "SHA1"}
+    if text.lower().startswith("otpauth://"):
+        url = urlparse(text)
+        if url.netloc.lower() != "totp":
+            raise ValueError("only time-based (totp) codes are supported")
+        query = {k.lower(): v[0] for k, v in parse_qs(url.query).items()}
+        config["secret"] = unquote(query.get("secret", ""))
+        config["digits"] = int(query.get("digits", 6))
+        config["period"] = int(query.get("period", 30))
+        config["algorithm"] = query.get("algorithm", "SHA1").upper()
+    config["secret"] = re.sub(r"[\s-]", "", config["secret"]).upper().rstrip("=")
+    if config["algorithm"] not in ("SHA1", "SHA256", "SHA512"):
+        raise ValueError("unsupported algorithm %s" % config["algorithm"])
+    if not 6 <= config["digits"] <= 8 or config["period"] <= 0:
+        raise ValueError("digits must be 6 to 8 and the period positive")
+    totp_code(config)
+    return config
+
+
+def totp_code(config, at=None):
+    """RFC 6238: the code for the period holding `at` (now by default)."""
+    secret = config["secret"]
     try:
-        parts = urlsplit((url or "").strip())
-        port = parts.port
-    except ValueError:
-        return None
-    if parts.scheme not in ("http", "https") or not parts.hostname:
-        return None
-    host = parts.hostname.lower()
-    if port is None or port == {"http": 80, "https": 443}[parts.scheme]:
-        return "%s://%s" % (parts.scheme, host)
-    return "%s://%s:%d" % (parts.scheme, host, port)
-
-
-def pattern_of(text):
-    """A sealed origin as written: an origin, or https://*.example.com."""
-    text = (text or "").strip().rstrip("/").lower()
-    scheme, sep, rest = text.partition("://*.")
-    if sep:
-        if scheme in ("http", "https") and rest and "/" not in rest and ":" not in rest \
-                and "." in rest:
-            return text
-        return None
-    return origin_of(text)
-
-
-def origin_matches(pattern, origin):
-    """Whether a sealed origin admits the page's origin.
-
-    Exact, or https://*.example.com, which admits any subdomain of example.com
-    over the same scheme and default port, but not example.com itself.
-    """
-    if pattern == origin:
-        return True
-    scheme, sep, suffix = pattern.partition("://*.")
-    if not sep:
-        return False
-    page_scheme, _, page_host = origin.partition("://")
-    return page_scheme == scheme and page_host.endswith("." + suffix)
-
-
-def hostname(origin):
-    return origin.partition("://")[2].split(":")[0]
-
-
-def tag_for(pattern):
-    return "host:" + hostname(pattern)
-
-
-def lookup_tags(origin):
-    """Every host tag a login admitting this origin could carry."""
-    host = hostname(origin)
-    labels = host.split(".")
-    return ["host:" + host] + ["host:*." + ".".join(labels[i:])
-                               for i in range(1, len(labels) - 1)]
-
-
-# --- records -----------------------------------------------------------------
-
-def normalize_totp(value):
-    """(seed, digits, period) from a base32 seed or an otpauth:// URI.
-
-    Raises ValueError for anything a code cannot be made from, so a bad seed is
-    refused when it is saved rather than discovered at the second factor.
-    """
-    value = (value or "").strip()
-    digits, period = 6, 30
-    if value.lower().startswith("otpauth://"):
-        query = parse_qs(urlsplit(value).query)
-        algorithm = (query.get("algorithm", ["SHA1"])[0] or "SHA1").upper()
-        if algorithm != "SHA1":
-            raise ValueError("only SHA1 one-time codes are supported, not %s" % algorithm)
-        digits = int(query.get("digits", ["6"])[0])
-        period = int(query.get("period", ["30"])[0])
-        value = unquote(query.get("secret", [""])[0])
-    seed = "".join(value.split()).replace("-", "").upper().rstrip("=")
-    if not seed:
-        raise ValueError("the one-time code seed is empty")
-    try:
-        base64.b32decode(seed + "=" * (-len(seed) % 8))
-    except (binascii.Error, ValueError):
+        key = base64.b32decode(secret + "=" * (-len(secret) % 8), casefold=True)
+    except (ValueError, TypeError):
         raise ValueError("the one-time code seed is not base32")
-    if digits not in (6, 7, 8) or not 10 <= period <= 120:
-        raise ValueError("one-time codes of %d digits every %ds are not supported"
-                         % (digits, period))
-    return seed, digits, period
+    if not key:
+        raise ValueError("the one-time code seed is empty")
+    counter = int((time.time() if at is None else at) // config["period"])
+    digest = hmac.new(key, struct.pack(">Q", counter),
+                      getattr(hashlib, config["algorithm"].lower())).digest()
+    offset = digest[-1] & 0x0F
+    value = struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF
+    return str(value % 10 ** config["digits"]).zfill(config["digits"])
 
 
-def make_record(origins, username, password, totp=None):
-    """The sealed JSON of a login, validated; raises ValueError."""
-    patterns = []
-    for text in origins:
-        pattern = pattern_of(text)
-        if not pattern:
-            raise ValueError("%r is not an http(s) origin" % text)
-        if pattern not in patterns:
-            patterns.append(pattern)
-    if not patterns:
-        raise ValueError("a login needs the origin it signs in to")
-    username = (username or "").strip()
-    if not username or not password:
-        raise ValueError("a login needs a username and a password")
-    record = {"origins": patterns, "username": username, "password": password}
-    if totp:
-        record["totp"], record["totp_digits"], record["totp_period"] = normalize_totp(totp)
-    return record
+# ---------------------------------------------------------------- logins
 
-
-def parse_record(text):
-    """A sealed login as a dict, or None where the value is not one."""
-    try:
-        record = json.loads(text)
-    except (TypeError, ValueError):
-        return None
-    if not isinstance(record, dict):
-        return None
-    origins = record.get("origins")
-    if not isinstance(origins, list) or not origins \
-            or not all(isinstance(o, str) for o in origins):
-        return None
-    if not isinstance(record.get("username"), str) or not isinstance(record.get("password"), str):
-        return None
-    return record
-
-
-def entry_name(record):
-    return "%s:%s" % (hostname(record["origins"][0]), record["username"])
-
-
-def entry_tags(record):
-    tags = ["login"]
-    for pattern in record["origins"]:
-        if tag_for(pattern) not in tags:
-            tags.append(tag_for(pattern))
-    return tags + ["user:" + record["username"]]
-
-
-def logins_from_csv(rows):
-    """(records, skipped) from the rows of a Chrome password export.
-
-    Chrome writes name,url,username,password,note. A row for an Android app,
-    or one without a username or password, has nothing to fill and is skipped.
-    Two rows for the same site and username collapse to the later one, which is
-    what the vault would keep anyway.
-    """
-    records, skipped = {}, {}
-    for row in rows:
-        origin = origin_of(row.get("url") or "")
-        if not origin:
-            skipped["not a web address"] = skipped.get("not a web address", 0) + 1
-            continue
-        try:
-            record = make_record([origin], row.get("username"), row.get("password") or "")
-        except ValueError:
-            skipped["no username or password"] = skipped.get("no username or password", 0) + 1
-            continue
-        records[entry_name(record)] = record
-    return list(records.values()), skipped
-
-
-# --- the vault ---------------------------------------------------------------
-
-def open_vault():
-    """A CryptoFort session that may read secrets, through with-credential.py."""
-    path = HERE / "with-credential.py"
-    if not path.is_file():
-        path = Path.home() / ".claude" / "tools" / "with-credential.py"
-    spec = importlib.util.spec_from_file_location("with_credential", str(path))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.Vault()
-
-
-def call(vault, tool, arguments):
-    result = vault._call("tools/call", {"name": tool, "arguments": arguments})
-    text = "".join(block.get("text", "") for block in result.get("content", [])
-                   if block.get("type") == "text")
-    if result.get("isError"):
-        raise RuntimeError(text.strip() or "the vault refused %s" % tool)
+def normalize_host(text):
+    text = text.strip().lower()
+    if "://" in text:
+        text = urlparse(text).hostname or ""
+    text = text.split("/")[0]
+    if text != "[::1]":
+        text = text.split(":")[0]
+    if not HOSTNAME.match(text):
+        raise ValueError("%r is not a host name" % text)
     return text
 
 
-def list_logins(vault):
+def host_of(url):
     try:
-        entries = json.loads(call(vault, "credential_list", {"namespace": NAMESPACE}))
+        parsed = urlparse(url)
     except ValueError:
-        raise RuntimeError("the vault answered the listing with something other than JSON")
-    return [e for e in entries if "login" in (e.get("tags") or [])]
+        return ""
+    host = (parsed.hostname or "").lower()
+    return "[%s]" % host if ":" in host else host
 
 
-def read_login(vault, name):
-    return parse_record(call(vault, "credential_get", {"name": name, "namespace": NAMESPACE}))
+def parse_payload(text):
+    """The decrypted record: hosts, username, password, and an optional TOTP seed."""
+    try:
+        data = json.loads(text)
+    except ValueError:
+        data = None
+    if not isinstance(data, dict):
+        raise Refused("the vault record is not a chrome-login record")
+    hosts = data.get("hosts")
+    if (not isinstance(hosts, list) or not hosts
+            or not all(isinstance(h, str) and HOSTNAME.match(h) for h in hosts)):
+        raise Refused("the vault record names no valid hosts")
+    if not isinstance(data.get("username"), str) or not isinstance(data.get("password"), str):
+        raise Refused("the vault record holds no username and password")
+    if data.get("totp") is not None and not isinstance(data["totp"], dict):
+        raise Refused("the vault record's one-time code seed is malformed")
+    return data
 
 
-def store_login(vault, record):
-    origins = ", ".join(record["origins"])
-    call(vault, "credential_put", {
-        "name": entry_name(record),
-        "namespace": NAMESPACE,
-        "secret": json.dumps(record),
-        "provider": hostname(record["origins"][0]),
-        "tags": entry_tags(record),
-        "description": "Sign-in for %s on %s, filled into Chrome by the CryptoFort Login "
-                       "extension after Touch ID approval.%s"
-                       % (record["username"], origins,
-                          " Carries a one-time code seed." if record.get("totp") else ""),
-    })
+def login_hosts(meta):
+    return [t[len("host:"):] for t in meta.get("tags", []) if t.startswith("host:")]
 
 
-def usernames(entry):
-    return [t[len("user:"):] for t in entry.get("tags") or [] if t.startswith("user:")]
+class Store:
+    """The CryptoFort vault, over the same private session with-credential.py opens."""
+
+    def __init__(self):
+        self.vault = _load("with_credential", "with-credential.py").Vault()
+
+    def _text(self, tool, arguments):
+        result = self.vault._call("tools/call", {"name": tool, "arguments": arguments})
+        texts = [b.get("text", "") for b in result.get("content", []) if b.get("type") == "text"]
+        if result.get("isError"):
+            raise Refused("the vault refused %s: %s" % (tool, " ".join(texts).strip()[:200]))
+        return "".join(texts)
+
+    def logins(self):
+        listed = json.loads(self._text("credential_list", {"namespace": NAMESPACE, "tags": [TAG]})
+                            or "[]")
+        return sorted(listed, key=lambda m: m.get("name", ""))
+
+    def secret(self, name):
+        text = self._text("credential_get", {"name": name, "namespace": NAMESPACE})
+        if text.startswith("not found:"):
+            raise Refused("the vault holds no login named %s" % name)
+        return parse_payload(text)
+
+    def put(self, name, payload):
+        self._text("credential_put", {
+            "name": name, "namespace": NAMESPACE, "secret": json.dumps(payload),
+            "provider": payload["hosts"][0], "description": payload["username"],
+            "tags": [TAG] + ["host:%s" % h for h in payload["hosts"]]})
+
+    def close(self):
+        self.vault.close()
 
 
-# --- approval ----------------------------------------------------------------
+# ---------------------------------------------------------------- the browser
+
+class Chrome:
+    """Every Chrome profile with the extension loaded, each through its own relay."""
+
+    def __init__(self, directory=None):
+        self.directory = Path(directory) if directory else state_dir() / "hosts"
+
+    def relays(self):
+        return sorted(self.directory.glob("*.sock")) if self.directory.is_dir() else []
+
+    def ask(self, relay, request, timeout=30):
+        conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        conn.settimeout(timeout + 5)
+        try:
+            conn.connect(str(relay))
+            conn.sendall((json.dumps(dict(request, timeout=timeout)) + "\n").encode("utf-8"))
+            data = b""
+            while not data.endswith(b"\n"):
+                chunk = conn.recv(65536)
+                if not chunk:
+                    break
+                data += chunk
+        finally:
+            conn.close()
+        answer = json.loads(data.decode("utf-8") or "{}")
+        if not answer.get("ok"):
+            raise RuntimeError(answer.get("error") or "the extension gave no answer")
+        return answer.get("result")
+
+    def tabs(self):
+        found = []
+        for relay in self.relays():
+            try:
+                rows = self.ask(relay, {"op": "tabs"}, timeout=10)
+            except (OSError, RuntimeError, ValueError):
+                continue
+            for row in rows or []:
+                found.append(dict(row, relay=str(relay)))
+        return found
+
+    def probe(self, tab, hosts):
+        return self.ask(tab["relay"], {"op": "probe", "tabId": tab["tabId"], "hosts": hosts})
+
+    def fill(self, tab, hosts, values, submit):
+        return self.ask(tab["relay"], {"op": "fill", "tabId": tab["tabId"], "hosts": hosts,
+                                       "values": values, "submit": submit})
+
+
+def fields_of(answer):
+    """Which sign-in fields any allowed frame of the tab shows."""
+    frames = answer.get("frames") or []
+    return {k: any(f.get(k) for f in frames) for k in ("username", "password", "totp")}
+
+
+def choose_tab(tabs, hosts, tab_id=None, url=None):
+    matching = [t for t in tabs if host_of(t.get("url", "")) in hosts]
+    if tab_id is not None:
+        matching = [t for t in matching if t.get("tabId") == tab_id]
+    if url:
+        matching = [t for t in matching if t.get("url", "").startswith(url)]
+    if not matching:
+        raise Refused("no open tab is on %s" % ", ".join(hosts))
+    for key in ("front", "active"):
+        picked = [t for t in matching if t.get(key)]
+        if len(picked) == 1:
+            return picked[0]
+    if len(matching) == 1:
+        return matching[0]
+    raise Refused("several tabs are on %s; name one with --tab: %s" % (
+        ", ".join(hosts), "; ".join("%s %s" % (t["tabId"], t["url"]) for t in matching)))
+
+
+def choose(logins, tabs, name=None, tab_id=None, url=None):
+    """The login and the tab a fill acts on."""
+    if name:
+        meta = next((m for m in logins if m.get("name") == name), None)
+        if meta is None:
+            raise Refused("no login named %s is enrolled; `chrome-login.py list` shows them"
+                          % name)
+        return meta, choose_tab(tabs, login_hosts(meta), tab_id, url)
+    enrolled = sorted({h for m in logins for h in login_hosts(m)})
+    if not enrolled:
+        raise Refused("no login is enrolled; one is added with `chrome-login.py add`")
+    tab = choose_tab(tabs, enrolled, tab_id, url)
+    host = host_of(tab["url"])
+    owners = [m for m in logins if host in login_hosts(m)]
+    if len(owners) > 1:
+        raise Refused("several logins sign in on %s; name one: %s"
+                      % (host, ", ".join(m["name"] for m in owners)))
+    return owners[0], tab
+
+
+# ---------------------------------------------------------------- approval
+
+def build_approver(force=False):
+    source = KIT / "approve.swift"
+    target = approver_path()
+    if not force and target.is_file() and target.stat().st_mtime >= source.stat().st_mtime:
+        return target
+    target.parent.mkdir(parents=True, exist_ok=True)
+    done = subprocess.run(["swiftc", "-swift-version", "5", "-O", "-o", str(target), str(source)],
+                          capture_output=True, text=True)
+    if done.returncode != 0:
+        raise Refused("the approval prompt did not build: %s" % done.stderr.strip()[-300:], 4)
+    return target
+
 
 def approve(reason):
-    """Whether the person at the machine approved, through the system prompt."""
-    if not os.access(str(APPROVER), os.X_OK):
-        raise RuntimeError("the approval prompt is not built; run chrome-login.py install")
+    """Touch ID, an Apple Watch or the login password, answered by the owner alone."""
     try:
-        done = subprocess.run([str(APPROVER), reason, str(APPROVAL_TIMEOUT)],
-                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL, timeout=APPROVAL_TIMEOUT + 15)
+        done = subprocess.run([str(build_approver()), reason], capture_output=True, text=True,
+                              timeout=150)
     except subprocess.TimeoutExpired:
-        return False
-    if done.returncode == 2:
-        raise RuntimeError("this Mac has no way to ask for approval")
-    return done.returncode == 0
+        return "timed out"
+    return {0: "approved", 1: "denied", 4: "timed out"}.get(done.returncode, "unavailable")
 
 
-# --- the host ----------------------------------------------------------------
+# ---------------------------------------------------------------- the fill
 
-def handle(request, vault_factory=open_vault, approver=approve):
-    """One request from the extension, answered as a dict."""
-    action = request.get("action")
-    origin = origin_of(request.get("origin") or "")
-    if action in ("fill", "list") and not origin:
-        return {"ok": False, "error": "only an http or https page has a login"}
-
-    if action == "save":
+def drive(chrome, tab, payload, submit=True, clock=time.monotonic, sleep=time.sleep, say=print):
+    """Fill each step of the sign-in as the site shows it, each field once."""
+    hosts = payload["hosts"]
+    filled = []
+    last_fill = None
+    quiet = 0
+    started = clock()
+    while clock() - started < FLOW_LIMIT:
         try:
-            record = make_record([origin or ""] + list(request.get("extraOrigins") or []),
-                                 request.get("username"), request.get("password"),
-                                 request.get("totp") or None)
-        except ValueError as problem:
-            return {"ok": False, "error": str(problem)}
-        vault = vault_factory()
+            answer = chrome.probe(tab, hosts)
+        except (OSError, RuntimeError, ValueError):
+            # Between a submit and the next page there is briefly no document to
+            # read; a tab that is gone for good runs out the clock instead.
+            sleep(1)
+            continue
+        if answer.get("refused"):
+            if "password" in filled:
+                return filled, "the tab moved on to %s" % (answer.get("host") or "another page")
+            raise Refused("the tab is no longer on %s" % ", ".join(hosts))
+        fields = fields_of(answer)
+        # Once the password is in, a username-shaped field belongs to the site
+        # rather than the sign-in: a search box, a newsletter, an invite form.
+        if "password" in filled:
+            fields["username"] = False
+        if not any(fields.values()):
+            quiet += 1
+            if quiet >= 3:
+                if not filled:
+                    raise Refused("%s shows no sign-in fields" % answer.get("host"))
+                return filled, "the sign-in fields are gone from %s" % answer.get("host")
+            sleep(1)
+            continue
+        quiet = 0
+        pending = [k for k in ("username", "password", "totp") if fields[k] and k not in filled]
+        if not pending:
+            # Every field showing was filled and submitted already. A field that
+            # comes back is the site refusing it or a challenge in front of it, and
+            # filling it again is how an account is walked into a lockout.
+            if last_fill is not None and clock() - last_fill > STEP_LIMIT:
+                raise Refused("%s still shows the %s field %ds after it was submitted; the "
+                              "page holds an error or a challenge" % (
+                                  answer.get("host"),
+                                  "/".join(k for k, v in fields.items() if v), STEP_LIMIT))
+            sleep(1)
+            continue
+        values = {}
+        if "password" in pending:
+            values["password"] = payload["password"]
+            if "username" in pending:
+                values["username"] = payload["username"]
+        elif "username" in pending:
+            values["username"] = payload["username"]
+        if "totp" in pending and ("password" in values or not values):
+            if not payload.get("totp"):
+                raise Refused("%s asks for a one-time code this login does not hold"
+                              % answer.get("host"))
+            config = payload["totp"]
+            left = config["period"] - time.time() % config["period"]
+            if left < 3:
+                sleep(left + 0.5)
+            values["totp"] = totp_code(config)
         try:
-            store_login(vault, record)
-        finally:
-            vault.close()
-        return {"ok": True, "entry": entry_name(record), "origins": record["origins"]}
+            result = chrome.fill(tab, hosts, values, submit)
+        except (OSError, RuntimeError, ValueError):
+            sleep(1)
+            continue
+        if result.get("refused"):
+            raise Refused("the tab is no longer on %s" % ", ".join(hosts))
+        kinds = [k for k in ("username", "password", "totp")
+                 if any(k in (f.get("filled") or []) for f in result.get("frames") or [])]
+        missed = [k for k in values if k not in kinds]
+        if missed:
+            raise Refused("the %s field on %s would not take a value"
+                          % ("/".join(missed), result.get("host")))
+        filled.extend(k for k in kinds if k not in filled)
+        say("filled %s on %s%s" % (", ".join(kinds), result.get("host"),
+                                    "" if submit else "; not submitted"))
+        if not submit:
+            return filled, "left unsubmitted"
+        last_fill = clock()
+        sleep(2)
+    raise Refused("the sign-in did not finish within %ds" % FLOW_LIMIT)
 
-    if action == "list":
-        wanted = set(lookup_tags(origin))
-        vault = vault_factory()
-        try:
-            entries = list_logins(vault)
-        finally:
-            vault.close()
-        return {"ok": True, "logins": [
-            {"entry": e["name"], "usernames": usernames(e)}
-            for e in entries if wanted & set(e.get("tags") or [])]}
 
-    if action != "fill":
-        return {"ok": False, "error": "unknown request %r" % action}
-
-    account = (request.get("account") or "").strip()
-    wanted = set(lookup_tags(origin))
-    matches = []
-    vault = vault_factory()
+def fill(name=None, tab_id=None, url=None, submit=True, store=None, chrome=None,
+         approver=approve, say=print, **timing):
+    chrome = chrome or Chrome()
+    if not chrome.relays():
+        raise Refused("the Chrome Login extension is not connected; "
+                      "`chrome-login.py status` says what is missing", 4)
+    own = store is None
+    store = store or Store()
     try:
-        for entry in list_logins(vault):
-            if not wanted & set(entry.get("tags") or []):
-                continue
-            if account and account not in usernames(entry):
-                continue
-            record = read_login(vault, entry["name"])
-            # The tags chose which entries to open; the sealed origins decide.
-            if record and any(origin_matches(p, origin) for p in record["origins"]):
-                matches.append((entry["name"], record))
+        logins = store.logins()
+        meta, tab = choose(logins, chrome.tabs(), name, tab_id, url)
+        host = host_of(tab["url"])
+        probe = chrome.probe(tab, login_hosts(meta))
+        if probe.get("refused") or not any(fields_of(probe).values()):
+            raise Refused("%s shows no sign-in fields" % host)
+        account = meta.get("description") or meta["name"]
+        verdict = approver("sign in to %s as %s in Chrome" % (host, account))
+        if verdict != "approved":
+            raise Refused("the sign-in to %s was %s" % (host, verdict), 3)
+        payload = store.secret(meta["name"])
     finally:
-        vault.close()
-    if not matches:
-        return {"ok": False, "error": "the vault holds no login for %s%s"
-                % (origin, " as %s" % account if account else "")}
-    if len(matches) > 1:
-        return {"ok": False, "accounts": [r["username"] for _, r in matches],
-                "error": "the vault holds several logins for %s; set data-cryptofort-account "
-                         "on <html> to the one wanted" % origin}
-    name, record = matches[0]
-    if not approver("sign in to %s as %s" % (hostname(origin), record["username"])):
-        return {"ok": False, "error": "the sign-in was not approved"}
-    reply = {"ok": True, "entry": name, "username": record["username"],
-             "password": record["password"]}
-    if record.get("totp"):
-        reply["totp"] = {"seed": record["totp"], "digits": record.get("totp_digits", 6),
-                         "period": record.get("totp_period", 30)}
-    return reply
+        if own:
+            store.close()
+    if host not in payload["hosts"]:
+        raise Refused("login %s is not for %s" % (meta["name"], host))
+    filled, outcome = drive(chrome, tab, payload, submit, say=say, **timing)
+    say("done: %s as %s; %s" % (meta["name"], account, outcome))
+    return filled
 
 
-def executable_of(pid):
+# ---------------------------------------------------------------- setup
+
+def add(name, hosts=None, username=None, ask=input, secret=getpass.getpass, store=None,
+        interactive=None):
+    interactive = sys.stdin.isatty() if interactive is None else interactive
+    if not interactive:
+        raise Refused("add reads the password from the keyboard; run it in your own terminal", 2)
+    if not LOGIN_NAME.match(name):
+        raise Refused("a login name is lowercase letters, digits, dots, dashes and underscores", 2)
     try:
-        libproc = ctypes.CDLL("/usr/lib/libproc.dylib")
-    except OSError:
-        return None
-    buffer = ctypes.create_string_buffer(4096)
-    length = libproc.proc_pidpath(pid, buffer, ctypes.sizeof(buffer))
-    return buffer.raw[:length].decode("utf-8", "replace") if length > 0 else None
-
-
-def parent_of(pid):
+        hosts = [normalize_host(h) for h in (hosts or ask(
+            "Hosts it signs in on, comma-separated (github.com, www.github.com): ").split(","))
+            if h.strip()]
+    except ValueError as problem:
+        raise Refused(str(problem), 2)
+    if not hosts:
+        raise Refused("a login needs at least one host", 2)
+    username = (username or ask("Username or email: ")).strip()
+    password = secret("Password: ")
+    if not username or not password:
+        raise Refused("a login needs a username and a password", 2)
+    if secret("Password again: ") != password:
+        raise Refused("the two passwords differ; nothing was stored", 2)
+    seed = secret("One-time code seed or otpauth:// URI (Enter for none): ").strip()
+    payload = {"v": 1, "hosts": list(dict.fromkeys(hosts)), "username": username,
+               "password": password}
+    if seed:
+        try:
+            payload["totp"] = parse_totp(seed)
+        except ValueError as problem:
+            raise Refused("the one-time code seed was refused: %s" % problem, 2)
+    own = store is None
+    store = store or Store()
     try:
-        out = subprocess.run(["/bin/ps", "-o", "ppid=", "-p", str(pid)],
-                             capture_output=True, text=True, timeout=5).stdout.strip()
-        return int(out) if out else 0
-    except (OSError, ValueError, subprocess.SubprocessError):
-        return 0
+        store.put(name, payload)
+    finally:
+        if own:
+            store.close()
+    return payload["hosts"]
 
 
-def started_by_chrome():
-    """Whether an ancestor of this process is a Chrome binary Google signed.
-
-    Chrome starts a native messaging host itself. A host whose ancestry never
-    reaches Chrome was started by a shell or a session, and the password it
-    would write to stdout would land wherever that caller reads, which is how a
-    password reaches a transcript.
-    """
-    pid, hops = os.getppid(), 0
-    while pid > 1 and hops < 32:
-        path = executable_of(pid)
-        if path and path.endswith(".app/Contents/MacOS/Google Chrome"):
-            # Checked against the running process rather than the file on disk,
-            # so what is judged is the code that actually started this host.
-            check = subprocess.run(["/usr/bin/codesign", "--verify", "-R=" + CHROME_REQUIREMENT,
-                                    str(pid)], capture_output=True, timeout=30)
-            return check.returncode == 0
-        pid, hops = parent_of(pid), hops + 1
-    return False
-
-
-def read_message(stream):
-    header = stream.read(4)
-    if len(header) < 4:
-        return None
-    (size,) = struct.unpack("=I", header)
-    return json.loads(stream.read(size).decode("utf-8"))
-
-
-def write_message(stream, payload):
-    data = json.dumps(payload).encode("utf-8")
-    stream.write(struct.pack("=I", len(data)))
-    stream.write(data)
-    stream.flush()
-
-
-def run_host(argv):
-    if not argv or argv[0] != CALLER or not started_by_chrome():
-        sys.stderr.write("chrome-login host: refused; only Chrome, for the CryptoFort Login "
-                         "extension, starts the host\n")
-        return 2
-    request = read_message(sys.stdin.buffer)
-    if not isinstance(request, dict):
-        return 1
-    try:
-        reply = handle(request)
-    except Exception as problem:  # the extension shows the reason in the page
-        reply = {"ok": False, "error": "the vault could not be read: %s" % problem}
-    write_message(sys.stdout.buffer, reply)
-    return 0
-
-
-# --- install and check -------------------------------------------------------
-
-def host_manifest():
-    return {"name": HOST_NAME,
-            "description": "CryptoFort Login: fills a sign-in from the CryptoFort vault",
-            "path": str(LAUNCHER), "type": "stdio", "allowed_origins": [CALLER]}
-
-
-def install():
-    SUPPORT.mkdir(parents=True, exist_ok=True)
-    os.chmod(str(SUPPORT), 0o700)
-    built = subprocess.run(["/usr/bin/swiftc", "-O", "-o", str(APPROVER),
-                            str(ASSETS / "approve.swift")], capture_output=True, text=True)
-    if built.returncode != 0:
-        print("could not build the approval prompt:\n" + built.stderr.strip(), file=sys.stderr)
-        return 1
-    # Chrome starts the host with a bare PATH, so the interpreter is named in
-    # full: the one on PATH here, a link that survives a Python upgrade, rather
-    # than the versioned binary this run happens to be.
-    python = shutil.which("python3") or sys.executable
-    LAUNCHER.write_text('#!/bin/sh\nexec "%s" "%s" host "$@"\n' % (python, HERE / "chrome-login.py"))
-    os.chmod(str(LAUNCHER), 0o700)
-    CHROME_HOSTS.mkdir(parents=True, exist_ok=True)
-    (CHROME_HOSTS / (HOST_NAME + ".json")).write_text(json.dumps(host_manifest(), indent=2) + "\n")
-    print("approval prompt  %s" % APPROVER)
-    print("host launcher    %s" % LAUNCHER)
-    print("host manifest    %s" % (CHROME_HOSTS / (HOST_NAME + ".json")))
-    print("extension        %s (id %s)" % (EXTENSION, EXTENSION_ID))
-    print("Load the extension once per Chrome profile: chrome://extensions, Developer mode, "
-          "Load unpacked, choose the extension folder.")
-    return 0
-
-
-def extension_id_from_manifest():
-    import hashlib
-    key = json.loads((EXTENSION / "manifest.json").read_text()).get("key", "")
-    digest = hashlib.sha256(base64.b64decode(key)).hexdigest()[:32]
-    return "".join(chr(ord("a") + int(c, 16)) for c in digest)
+def relay_manifest():
+    return {"name": RELAY, "description": "Chrome Login relay for chrome-login.py",
+            "path": str(KIT / "host.py"), "type": "stdio",
+            "allowed_origins": ["chrome-extension://%s/" % EXTENSION_ID]}
 
 
 def profiles_with_extension():
-    found = []
-    for prefs in sorted(CHROME_PROFILES.glob("*/Secure Preferences")):
+    names = []
+    for prefs in sorted(CHROME.glob("*/Preferences")):
+        profile = prefs.parent
         try:
-            settings = json.loads(prefs.read_text()).get("extensions", {}).get("settings", {})
+            data = json.loads(prefs.read_text(encoding="utf-8"))
+            secure = json.loads((profile / "Secure Preferences").read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        if EXTENSION_ID in settings and not settings[EXTENSION_ID].get("disable_reasons"):
-            found.append(prefs.parent.name)
-    return found
+        settings = dict(data.get("extensions", {}).get("settings", {}))
+        settings.update(secure.get("extensions", {}).get("settings", {}))
+        if EXTENSION_ID in settings:
+            names.append(data.get("profile", {}).get("name") or profile.name)
+    return names
 
 
-def check():
-    problems = []
+def install(say=print):
+    binary = build_approver(force=True)
+    os.chmod(KIT / "host.py", 0o755)
+    target = CHROME / "NativeMessagingHosts" / ("%s.json" % RELAY)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(relay_manifest(), indent=2) + "\n", encoding="utf-8")
+    say("approval prompt: %s" % binary)
+    say("relay registered: %s" % target)
+    say("extension: load %s unpacked in each Chrome profile Claude signs in from"
+        % (KIT / "extension"))
 
-    def line(ok, text):
-        print("%s  %s" % ("ok     " if ok else "MISSING", text))
-        if not ok:
-            problems.append(text)
 
-    line(os.access(str(APPROVER), os.X_OK), "approval prompt at %s" % APPROVER)
-    line(LAUNCHER.is_file() and str(HERE / "chrome-login.py") in LAUNCHER.read_text(),
-         "host launcher at %s" % LAUNCHER)
-    manifest = CHROME_HOSTS / (HOST_NAME + ".json")
+def status(chrome=None, say=print):
+    chrome = chrome or Chrome()
+    target = CHROME / "NativeMessagingHosts" / ("%s.json" % RELAY)
+    rows = []
+    binary = approver_path()
+    ready = binary.is_file() and subprocess.run(
+        [str(binary), "--check"], capture_output=True).returncode == 0
+    rows.append(("approval prompt", ready, str(binary)))
     try:
-        registered = json.loads(manifest.read_text()) == host_manifest()
+        registered = json.loads(target.read_text(encoding="utf-8")) == relay_manifest()
     except (OSError, ValueError):
         registered = False
-    line(registered, "host registered with Chrome at %s" % manifest)
-    line(extension_id_from_manifest() == EXTENSION_ID, "extension key pins id %s" % EXTENSION_ID)
+    rows.append(("relay registered", registered, str(target)))
     profiles = profiles_with_extension()
-    line(bool(profiles), "extension loaded in Chrome (%s)"
-         % (", ".join(profiles) if profiles else "no profile"))
-    try:
-        vault = open_vault()
+    rows.append(("extension loaded", bool(profiles), ", ".join(profiles) or "in no profile"))
+    live = 0
+    for relay in chrome.relays():
         try:
-            count = len(list_logins(vault))
-        finally:
-            vault.close()
-        line(True, "vault reachable, %d login%s held" % (count, "" if count == 1 else "s"))
-    except Exception as problem:
-        line(False, "vault reachable (%s)" % problem)
-    return 1 if problems else 0
+            chrome.ask(relay, {"op": "tabs"}, timeout=5)
+            live += 1
+        except (OSError, RuntimeError, ValueError):
+            pass
+    rows.append(("extension connected", live > 0, "%d profile%s" % (live, "" if live == 1 else "s")))
+    for label, good, detail in rows:
+        say("%-20s %-4s %s" % (label, "ok" if good else "no", detail))
+    return all(good for _, good, _ in rows)
 
 
-# --- the other commands ------------------------------------------------------
-
-def list_command(host_filter=None):
-    vault = open_vault()
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="chrome-login.py", description=__doc__.split("\n")[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("fill", help="fill and submit a sign-in in Chrome")
+    p.add_argument("login", nargs="?")
+    p.add_argument("--tab", type=int)
+    p.add_argument("--url")
+    p.add_argument("--no-submit", action="store_true")
+    sub.add_parser("list", help="every enrolled login, without its secret")
+    p = sub.add_parser("add", help="enrol or replace a login, from your own terminal")
+    p.add_argument("login")
+    p.add_argument("--host", action="append")
+    p.add_argument("--username")
+    sub.add_parser("install", help="build the approval prompt and register the relay")
+    sub.add_parser("status", help="what is built, registered, loaded and connected")
+    args = parser.parse_args(argv)
     try:
-        entries = list_logins(vault)
-    finally:
-        vault.close()
-    if host_filter:
-        wanted = set(lookup_tags(origin_of(host_filter) or origin_of("https://" + host_filter) or ""))
-        entries = [e for e in entries if wanted & set(e.get("tags") or [])]
-    for entry in entries:
-        hosts = [t[len("host:"):] for t in entry.get("tags") or [] if t.startswith("host:")]
-        print("%-40s %-32s %s" % (entry["name"], ", ".join(usernames(entry)), ", ".join(hosts)))
-    print("%d login%s" % (len(entries), "" if len(entries) == 1 else "s"))
+        if args.command == "fill":
+            fill(args.login, args.tab, args.url, not args.no_submit)
+        elif args.command == "list":
+            store = Store()
+            try:
+                logins = store.logins()
+            finally:
+                store.close()
+            for meta in logins:
+                print("%-20s %-40s %s" % (meta["name"], ", ".join(login_hosts(meta)),
+                                          meta.get("description") or ""))
+            if not logins:
+                print("no login is enrolled")
+        elif args.command == "add":
+            hosts = add(args.login, args.host, args.username)
+            print("stored %s for %s" % (args.login, ", ".join(hosts)))
+        elif args.command == "install":
+            install()
+        elif args.command == "status":
+            return 0 if status() else 4
+    except Refused as problem:
+        print("refused: %s" % problem, file=sys.stderr)
+        return problem.status
+    except RuntimeError as problem:
+        print("failed: %s" % problem, file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        return 1
     return 0
-
-
-def import_command(path, dry_run=False):
-    with open(os.path.expanduser(path), newline="", encoding="utf-8-sig") as handle:
-        records, skipped = logins_from_csv(csv.DictReader(handle))
-    if not dry_run and records:
-        vault = open_vault()
-        try:
-            for record in records:
-                store_login(vault, record)
-        finally:
-            vault.close()
-    print("%s %d login%s" % ("would import" if dry_run else "imported", len(records),
-                             "" if len(records) == 1 else "s"))
-    for reason, count in sorted(skipped.items()):
-        print("skipped %d: %s" % (count, reason))
-    if not dry_run:
-        print("The export holds every password in plain text; delete %s now." % path)
-    return 0
-
-
-def main(argv):
-    if not argv or argv[0] in ("-h", "--help"):
-        print(__doc__)
-        return 0 if argv else 2
-    command, rest = argv[0], argv[1:]
-    if command == "host":
-        return run_host(rest)
-    if command == "install":
-        return install()
-    if command == "check":
-        return check()
-    if command == "list":
-        return list_command(rest[0] if rest else None)
-    if command == "import" and rest:
-        return import_command(rest[0], dry_run="--dry-run" in rest[1:])
-    print(__doc__, file=sys.stderr)
-    return 2
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

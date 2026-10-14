@@ -287,6 +287,18 @@ vault, a locked env file, the macOS Keychain or 1Password. Pass a credential's
 name, never its value, and never print, echo, log or paste a decrypted secret
 into a response, file, commit or any shared output.
 
+A sign-in page in Chrome is never typed into. `chrome-login.py fill` finds the
+tab, waits for my Touch ID, and hands the username, password and one-time code
+from the vault's `chrome-login` namespace to the Chrome Login extension, which
+fills and submits them only on the hosts that login names. `list` shows what is
+enrolled. A site with no login enrolled is mine to add with `add` from my own
+terminal, asked for with AskUserQuestion.
+
+```bash
+~/.claude/tools/chrome-login.py fill [<login>] [--tab <id>]
+~/.claude/tools/chrome-login.py list | status
+```
+
 # The host
 
 The always-on host (`host.ssh` in the profile) runs everything visitor-facing

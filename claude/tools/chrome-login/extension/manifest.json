@@ -1,19 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "CryptoFort Login",
+  "name": "Chrome Login",
   "version": "1.0.0",
-  "description": "Fills a site's sign-in from the CryptoFort vault once Touch ID approves it.",
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs5PNDaYn2vZOEJgMhb+mM/OtBy7WwtOoo6DtDByQ/9CcepO1GlNdWzNLBxONFVbBO/JOnTbB1jgPcDR6kYCMkrZ7VkLZ50zotA0DWqtQ6rb2xZjj247hNAfMCL0oYUfzfJZ1JP5q14lucaqqWauPEG/UP7ei8pufdW3WoyXM84dcxYum9oElA/1UNmBrpET267EYPqFC/4764DWHe5sXc1NZbLo61+f2xbpbWZ7aoEE411i6SsGGPbSzwpSSlXNBeSd6q2NmzXGfGvSncZmu2klr8EuqmurPPljE7+8tbFDxyG8/Ygcen2dL6Kp49X3o8JMI7ulUJaDKir8IUOtTiQIDAQAB",
+  "description": "Fills a sign-in from the CryptoFort vault when chrome-login.py asks and the owner has approved it.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhcV5BLTy1G00PbT20bziQoiGkIaXL2hQhWjOoBlE3KnUEoOioH90h+ymxDO3MHMq0U5w9wcfBOpz7cnFbNTUKsvD6oScUtv7Pazk/QWA/uplixgPyJ/qoA08froS8bfx2QfG9+B2J+QuDmQePj15vV9Lz97a7tqgW3MlDiRhcHsLIpBob8vZOif33XGa4MmmTYbhhQKNJs1oCT+4pGtZ94WgEog9wvCdeoe8WhfTlUzMjFiJqurE8jfpguJ3GM6FMJ5SxNg+1rDNmigDAR4jSLl/Ubf7FE/9QxJu+KiYtYkSb9LyHtDZmC9zA10DIALa/FC03b+rexeKSGfpJxsmtwIDAQAB",
   "minimum_chrome_version": "116",
-  "permissions": ["nativeMessaging", "storage", "alarms", "activeTab"],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["content.js"],
-      "all_frames": true,
-      "run_at": "document_idle"
-    }
-  ],
-  "action": { "default_title": "CryptoFort Login", "default_popup": "popup.html" }
+  "permissions": ["nativeMessaging", "scripting", "tabs", "webNavigation"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" }
 }
