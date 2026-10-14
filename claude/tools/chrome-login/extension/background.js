@@ -48,9 +48,28 @@ function reply(id, body) {
 
 async function handle(msg) {
   if (msg.op === 'tabs') return listTabs();
+  // `install` asks for this after the files change, since Chrome runs an
+  // unpacked extension from the copy it loaded until it is told to reload.
+  if (msg.op === 'reload') {
+    setTimeout(() => chrome.runtime.reload(), 100);
+    return 'reloading';
+  }
+  if (msg.front || msg.op === 'fill') await bringForward(msg.tabId);
   if (msg.op === 'probe') return inFrames(msg.tabId, msg.hosts, 'probe', {}, false);
   if (msg.op === 'fill') return inFrames(msg.tabId, msg.hosts, 'fill', msg.values || {}, !!msg.submit);
   throw new Error(`unknown op ${msg.op}`);
+}
+
+// A page in a background tab, or in a window another app covers, is hidden,
+// and a hidden page may not have started its own script: a prerendered form
+// whose framework has not taken it over yet answers a submit by reloading. So
+// the tab the owner just approved a sign-in for is put in front first.
+async function bringForward(tabId) {
+  const tab = await chrome.tabs.get(tabId);
+  if (!tab.active) await chrome.tabs.update(tabId, { active: true });
+  const win = await chrome.windows.get(tab.windowId);
+  if (win.state === 'minimized') await chrome.windows.update(tab.windowId, { state: 'normal' });
+  if (!win.focused) await chrome.windows.update(tab.windowId, { focused: true });
 }
 
 async function listTabs() {
@@ -118,6 +137,12 @@ async function signIn(hosts, mode, values, submit) {
     location.protocol === 'https:' ||
     (location.protocol === 'http:' && loopback.includes(location.hostname));
   if (!hosts.includes(location.hostname) || !secure) return { refused: true };
+  if (mode === 'fill') {
+    for (let i = 0; i < 50 && document.visibilityState !== 'visible'; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
 
   const visible = (el) => {
     if (el.disabled || el.readOnly) return false;
@@ -243,6 +268,20 @@ async function signIn(hosts, mode, values, submit) {
         (b) => usable(b) && LABEL.test((b.innerText || b.value || b.getAttribute('aria-label') || '').trim()),
       );
     }
+    // A form that asks for a password and would send itself by GET is one the
+    // page's script is meant to answer. If nothing has answered it - the script
+    // is still loading - the browser would reload the page with the fields in
+    // the address, so that submission is held and the command line tries again.
+    let held = false;
+    const guard = (event) => {
+      const f = event.target;
+      const sendsByGet = f && f.method === 'get' && f.querySelector('input[type=password]');
+      if (!event.defaultPrevented && sendsByGet) {
+        event.preventDefault();
+        held = true;
+      }
+    };
+    window.addEventListener('submit', guard);
     if (button) {
       button.click();
       submitted = 'clicked';
@@ -250,6 +289,9 @@ async function signIn(hosts, mode, values, submit) {
       form.requestSubmit();
       submitted = 'submitted';
     }
+    await new Promise((r) => setTimeout(r, 50));
+    window.removeEventListener('submit', guard);
+    if (held) submitted = 'held';
   }
   return { ...state, filled, submitted };
 }

@@ -8,14 +8,15 @@ the username, password and one-time code travel from the CryptoFort vault into
 the page inside this process and the Chrome Login extension, rendered nowhere a
 person or a log can read them.
 
-  chrome-login.py fill [LOGIN] [--tab ID | --url PREFIX] [--no-submit]
+  chrome-login.py fill [LOGIN] [--tab ID | --url PREFIX] [--username U] [--no-submit]
   chrome-login.py list                 every enrolled login, without its secret
   chrome-login.py add LOGIN            enrol or replace one, from your own terminal
   chrome-login.py install              build the approval prompt, register the relay
   chrome-login.py status               what is built, registered, loaded and connected
 
 `fill` finds the tab on a host the login names (the one in front when several
-are), checks that it shows sign-in fields, and only then asks for approval. The
+are, or the one --tab names, which is the tab id the Chrome tools report),
+checks that it shows sign-in fields, and only then asks for approval. The
 prompt names the host and the account. Approved, it fills and submits each step
 the site shows in turn - username, password, then the one-time code - and stops
 when the sign-in fields are gone, or when a step is still showing fifteen
@@ -30,6 +31,15 @@ username, neither of which is secret. The hosts inside the secret are the ones
 enforced, so rewriting a record's metadata cannot send its password anywhere
 new, and a page is filled only over https, or http on this machine's loopback.
 
+A host the vault holds no login for is looked up among the passwords Chrome has
+saved, in every profile. The match is the exact host of the saved sign-on realm,
+https only, the most recently used first unless --username names one. After the
+Touch ID approval, macOS asks the owner to release Chrome's own storage key from
+the login keychain; the password is opened with it, copied into the vault as a
+`chrome-login` record named for the host, and filled. From then on the vault is
+the source and only Touch ID is asked. Safari's passwords live in a keychain
+macOS opens to Apple's own apps alone, so they are not a source.
+
 Exit status: 0 filled, 1 refused or failed, 2 usage, 3 not approved, 4 not set up.
 """
 from __future__ import annotations
@@ -41,15 +51,17 @@ import hashlib
 import hmac
 import importlib.util
 import json
+import ctypes
 import os
 import re
 import socket
+import sqlite3
 import struct
 import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 HERE = Path(__file__).resolve().parent
 KIT = HERE / "chrome-login"
@@ -214,6 +226,88 @@ class Store:
         self.vault.close()
 
 
+# ---------------------------------------------------------------- Chrome's saved passwords
+
+def aes_cbc(decrypt, key, iv, data):
+    """AES-CBC with PKCS7 padding through CommonCrypto, which every Mac carries."""
+    lib = ctypes.CDLL("/usr/lib/system/libcommonCrypto.dylib")
+    lib.CCCrypt.restype = ctypes.c_int32
+    lib.CCCrypt.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_char_p,
+                            ctypes.c_size_t, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+                            ctypes.c_void_p, ctypes.c_size_t, ctypes.POINTER(ctypes.c_size_t)]
+    out = ctypes.create_string_buffer(len(data) + 16)
+    moved = ctypes.c_size_t(0)
+    status = lib.CCCrypt(1 if decrypt else 0, 0, 1, key, len(key), iv, data, len(data), out,
+                         len(out), ctypes.byref(moved))
+    if status != 0:
+        raise Refused("Chrome's sealed password would not open (CommonCrypto %d)" % status)
+    return out.raw[:moved.value]
+
+
+def chrome_saved(root=None):
+    """Every https login Chrome has saved, in every profile, without its password."""
+    root = Path(root) if root else CHROME
+    rows = []
+    for db in sorted(root.glob("*/Login Data")) + sorted(root.glob("*/Login Data For Account")):
+        # Read in place and immutable: Chrome holds the file open, and a copy of
+        # a password store left on disk is one more place for it to leak from.
+        try:
+            conn = sqlite3.connect("file:%s?mode=ro&immutable=1" % quote(str(db)), uri=True)
+        except sqlite3.Error:
+            continue
+        try:
+            found = conn.execute(
+                "select signon_realm, username_value, password_value, date_last_used, "
+                "date_password_modified from logins where blacklisted_by_user = 0 "
+                "and scheme = 0").fetchall()
+        except sqlite3.Error:
+            found = []
+        finally:
+            conn.close()
+        for realm, username, sealed, used, modified in found:
+            host = host_of(realm or "")
+            if not (realm or "").startswith("https://") or not host or not username or not sealed:
+                continue
+            rows.append({"host": host, "username": username, "sealed": bytes(sealed),
+                         "profile": db.parent.name, "used": max(used or 0, modified or 0)})
+    return sorted(rows, key=lambda r: -r["used"])
+
+
+def chrome_key(run=subprocess.run):
+    """Chrome's storage key, which macOS releases only once the owner allows it."""
+    try:
+        done = run(["security", "find-generic-password", "-w", "-s", "Chrome Safe Storage",
+                    "-a", "Chrome"], capture_output=True, text=True, timeout=150)
+    except subprocess.TimeoutExpired:
+        done = None
+    if done is None or done.returncode != 0 or not done.stdout.strip():
+        raise Refused("macOS did not release Chrome's password key from the keychain", 3)
+    return hashlib.pbkdf2_hmac("sha1", done.stdout.strip().encode("utf-8"), b"saltysalt", 1003, 16)
+
+
+def chrome_open(sealed, key):
+    if sealed[:3] not in (b"v10", b"v11"):
+        raise Refused("Chrome sealed this password in a form this tool cannot open")
+    try:
+        return aes_cbc(True, key, b" " * 16, sealed[3:]).decode("utf-8")
+    except UnicodeDecodeError:
+        raise Refused("Chrome's password key did not open this password")
+
+
+def take_from_chrome(row, logins, store, key=chrome_key):
+    """Copy one saved Chrome login into the vault, returning its name and record."""
+    payload = {"v": 1, "hosts": [row["host"]], "username": row["username"],
+               "password": chrome_open(row["sealed"], key())}
+    taken = {m.get("name") for m in logins}
+    name = row["host"]
+    count = 2
+    while name in taken:
+        name = "%s-%d" % (row["host"], count)
+        count += 1
+    store.put(name, payload)
+    return name, payload
+
+
 # ---------------------------------------------------------------- the browser
 
 class Chrome:
@@ -255,8 +349,9 @@ class Chrome:
                 found.append(dict(row, relay=str(relay)))
         return found
 
-    def probe(self, tab, hosts):
-        return self.ask(tab["relay"], {"op": "probe", "tabId": tab["tabId"], "hosts": hosts})
+    def probe(self, tab, hosts, front=False):
+        return self.ask(tab["relay"], {"op": "probe", "tabId": tab["tabId"], "hosts": hosts,
+                                       "front": front})
 
     def fill(self, tab, hosts, values, submit):
         return self.ask(tab["relay"], {"op": "fill", "tabId": tab["tabId"], "hosts": hosts,
@@ -276,7 +371,8 @@ def choose_tab(tabs, hosts, tab_id=None, url=None):
     if url:
         matching = [t for t in matching if t.get("url", "").startswith(url)]
     if not matching:
-        raise Refused("no open tab is on %s" % ", ".join(hosts))
+        raise Refused("no open tab is on %s" % (
+            ", ".join(hosts) if len(hosts) <= 4 else "a host with a login the vault or Chrome holds"))
     for key in ("front", "active"):
         picked = [t for t in matching if t.get(key)]
         if len(picked) == 1:
@@ -287,24 +383,32 @@ def choose_tab(tabs, hosts, tab_id=None, url=None):
         ", ".join(hosts), "; ".join("%s %s" % (t["tabId"], t["url"]) for t in matching)))
 
 
-def choose(logins, tabs, name=None, tab_id=None, url=None):
-    """The login and the tab a fill acts on."""
+def choose(logins, tabs, name=None, tab_id=None, url=None, username=None, saved=()):
+    """The login and the tab a fill acts on, and the saved Chrome login when the vault has none."""
     if name:
         meta = next((m for m in logins if m.get("name") == name), None)
         if meta is None:
             raise Refused("no login named %s is enrolled; `chrome-login.py list` shows them"
                           % name)
-        return meta, choose_tab(tabs, login_hosts(meta), tab_id, url)
-    enrolled = sorted({h for m in logins for h in login_hosts(m)})
-    if not enrolled:
-        raise Refused("no login is enrolled; one is added with `chrome-login.py add`")
-    tab = choose_tab(tabs, enrolled, tab_id, url)
+        return meta, choose_tab(tabs, login_hosts(meta), tab_id, url), None
+    known = sorted({h for m in logins for h in login_hosts(m)} | {r["host"] for r in saved})
+    if not known:
+        raise Refused("neither the vault nor Chrome holds a login for any host")
+    tab = choose_tab(tabs, known, tab_id, url)
     host = host_of(tab["url"])
-    owners = [m for m in logins if host in login_hosts(m)]
+    owners = [m for m in logins if host in login_hosts(m)
+              and (not username or m.get("description") == username)]
     if len(owners) > 1:
         raise Refused("several logins sign in on %s; name one: %s"
                       % (host, ", ".join(m["name"] for m in owners)))
-    return owners[0], tab
+    if owners:
+        return owners[0], tab, None
+    rows = [r for r in saved if r["host"] == host and (not username or r["username"] == username)]
+    if not rows:
+        raise Refused("neither the vault nor Chrome holds a login for %s%s"
+                      % (host, " as %s" % username if username else ""))
+    row = rows[0]
+    return {"name": None, "description": row["username"], "tags": ["host:%s" % host]}, tab, row
 
 
 # ---------------------------------------------------------------- approval
@@ -402,6 +506,10 @@ def drive(chrome, tab, payload, submit=True, clock=time.monotonic, sleep=time.sl
             continue
         if result.get("refused"):
             raise Refused("the tab is no longer on %s" % ", ".join(hosts))
+        if any(f.get("submitted") == "held" for f in result.get("frames") or []):
+            # The page's script had not taken the form over yet; nothing was sent.
+            sleep(1)
+            continue
         kinds = [k for k in ("username", "password", "totp")
                  if any(k in (f.get("filled") or []) for f in result.get("frames") or [])]
         missed = [k for k in values if k not in kinds]
@@ -419,7 +527,8 @@ def drive(chrome, tab, payload, submit=True, clock=time.monotonic, sleep=time.sl
 
 
 def fill(name=None, tab_id=None, url=None, submit=True, store=None, chrome=None,
-         approver=approve, say=print, **timing):
+         approver=approve, say=print, username=None, saved=chrome_saved, key=chrome_key,
+         **timing):
     chrome = chrome or Chrome()
     if not chrome.relays():
         raise Refused("the Chrome Login extension is not connected; "
@@ -428,16 +537,23 @@ def fill(name=None, tab_id=None, url=None, submit=True, store=None, chrome=None,
     store = store or Store()
     try:
         logins = store.logins()
-        meta, tab = choose(logins, chrome.tabs(), name, tab_id, url)
+        meta, tab, row = choose(logins, chrome.tabs(), name, tab_id, url, username,
+                                () if name else saved())
         host = host_of(tab["url"])
-        probe = chrome.probe(tab, login_hosts(meta))
+        probe = chrome.probe(tab, login_hosts(meta), front=True)
         if probe.get("refused") or not any(fields_of(probe).values()):
             raise Refused("%s shows no sign-in fields" % host)
         account = meta.get("description") or meta["name"]
         verdict = approver("sign in to %s as %s in Chrome" % (host, account))
         if verdict != "approved":
             raise Refused("the sign-in to %s was %s" % (host, verdict), 3)
-        payload = store.secret(meta["name"])
+        if row is None:
+            payload = store.secret(meta["name"])
+        else:
+            taken, payload = take_from_chrome(row, logins, store, key)
+            say("copied the %s login for %s from Chrome into the vault as %s"
+                % (account, host, taken))
+            meta = dict(meta, name=taken)
     finally:
         if own:
             store.close()
@@ -519,6 +635,15 @@ def install(say=print):
     target.write_text(json.dumps(relay_manifest(), indent=2) + "\n", encoding="utf-8")
     say("approval prompt: %s" % binary)
     say("relay registered: %s" % target)
+    reloaded = 0
+    for relay in Chrome().relays():
+        try:
+            Chrome().ask(relay, {"op": "reload"}, timeout=5)
+            reloaded += 1
+        except (OSError, RuntimeError, ValueError):
+            pass
+    if reloaded:
+        say("extension reloaded in %d profile%s" % (reloaded, "" if reloaded == 1 else "s"))
     say("extension: load %s unpacked in each Chrome profile Claude signs in from"
         % (KIT / "extension"))
 
@@ -558,6 +683,7 @@ def main(argv=None):
     p.add_argument("login", nargs="?")
     p.add_argument("--tab", type=int)
     p.add_argument("--url")
+    p.add_argument("--username")
     p.add_argument("--no-submit", action="store_true")
     sub.add_parser("list", help="every enrolled login, without its secret")
     p = sub.add_parser("add", help="enrol or replace a login, from your own terminal")
@@ -569,7 +695,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "fill":
-            fill(args.login, args.tab, args.url, not args.no_submit)
+            fill(args.login, args.tab, args.url, not args.no_submit, username=args.username)
         elif args.command == "list":
             store = Store()
             try:

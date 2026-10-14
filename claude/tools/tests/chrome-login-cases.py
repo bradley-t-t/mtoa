@@ -83,6 +83,7 @@ class FakeChrome:
         self.url = url
         self.lands_on = lands_on
         self.stuck = False
+        self.unready = 0
         self.fills = []
 
     def relays(self):
@@ -102,12 +103,16 @@ class FakeChrome:
             fields.update(dict.fromkeys(self.steps[0], True))
         return {"host": host, "refused": False, "frames": [dict(fields, **(extra or {}))]}
 
-    def probe(self, tab, hosts):
+    def probe(self, tab, hosts, front=False):
         return self._answer(hosts)
 
     def fill(self, tab, hosts, values, submit):
         self.fills.append(dict(values))
         shown = self.steps[0] if self.steps else ()
+        if self.unready:
+            self.unready -= 1
+            return self._answer(hosts, {"filled": [k for k in values if k in shown],
+                                        "submitted": "held"})
         answer = self._answer(hosts, {"filled": [k for k in values if k in shown]})
         if submit and self.steps and set(shown) <= set(values) and not self.stuck:
             self.steps.pop(0)
@@ -183,8 +188,17 @@ def choice_cases(mod):
         check("two logins on one host need a name", False, True)
     except mod.Refused as problem:
         check("the refusal names both logins", "one, two" in str(problem), True)
-    meta, tab = mod.choose(store.logins(), tabs, name="two")
-    check("a named login is used", (meta["name"], tab["tabId"]), ("two", 2))
+    meta, tab, row = mod.choose(store.logins(), tabs, name="two")
+    check("a named login is used", (meta["name"], tab["tabId"], row), ("two", 2, None))
+    saved = [{"host": "example.com", "username": "new@example.com", "sealed": b"", "used": 9},
+             {"host": "example.com", "username": "old@example.com", "sealed": b"", "used": 1}]
+    meta, tab, row = mod.choose([], tabs, saved=saved)
+    check("Chrome's most recent login stands in for a missing record", row["username"],
+          "new@example.com")
+    meta, tab, row = mod.choose([], tabs, username="old@example.com", saved=saved)
+    check("--username picks among Chrome's logins", row["username"], "old@example.com")
+    meta, tab, row = mod.choose(FakeStore({"site": payload()}).logins(), tabs, saved=saved)
+    check("a vault record outranks Chrome", (meta["name"], row), ("site", None))
 
 
 def run_fill(mod, chrome, store, verdict="approved", **kwargs):
@@ -197,6 +211,7 @@ def run_fill(mod, chrome, store, verdict="approved", **kwargs):
     status = 0
     with redirect_stdout(out):
         try:
+            kwargs.setdefault("saved", lambda: [])
             mod.fill(kwargs.pop("name", None), store=store, chrome=chrome, approver=approver,
                      say=said.append, clock=clock, sleep=clock.sleep, **kwargs)
         except mod.Refused as problem:
@@ -267,11 +282,78 @@ def fill_cases(mod):
     status, _, said = run_fill(mod, chrome, store)
     check("a redirect after the password finishes", status, 0)
 
+    # A page whose script has not taken the form over is filled again, not given up on.
+    chrome = FakeChrome([("username", "password")])
+    chrome.unready = 2
+    store = FakeStore({"site": payload(totp=False)})
+    status, _, _ = run_fill(mod, chrome, store)
+    check("a held submit is tried again until the page answers", (status, len(chrome.fills)),
+          (0, 3))
+
     # --no-submit fills once and stops.
     chrome = FakeChrome([("username", "password")])
     store = FakeStore({"site": payload()})
     status, _, _ = run_fill(mod, chrome, store, submit=False)
     check("--no-submit fills once", (status, len(chrome.fills)), (0, 1))
+
+
+KEY = bytes(range(16))
+
+
+def sealed(mod, text):
+    return b"v10" + mod.aes_cbc(False, KEY, b" " * 16, text.encode())
+
+
+def chrome_cases(mod):
+    check("a sealed password opens", mod.chrome_open(sealed(mod, PASSWORD), KEY), PASSWORD)
+    import sqlite3
+    with tempfile.TemporaryDirectory() as root:
+        profile = Path(root) / "Default"
+        profile.mkdir()
+        db = sqlite3.connect(str(profile / "Login Data"))
+        db.execute("create table logins (signon_realm text, username_value text, "
+                   "password_value blob, date_last_used int, date_password_modified int, "
+                   "blacklisted_by_user int, scheme int)")
+        rows = [("https://example.com/", "owner@example.com", sealed(mod, PASSWORD), 5, 1, 0, 0),
+                ("http://plain.example.com/", "owner", sealed(mod, PASSWORD), 9, 9, 0, 0),
+                ("https://never.example.com/", "owner", sealed(mod, PASSWORD), 9, 9, 1, 0),
+                ("android://hash@com.example/", "owner", sealed(mod, PASSWORD), 9, 9, 0, 0)]
+        db.executemany("insert into logins values (?, ?, ?, ?, ?, ?, ?)", rows)
+        db.commit()
+        db.close()
+        found = mod.chrome_saved(root)
+        check("only https logins Chrome saves for use are read",
+              [(r["host"], r["username"]) for r in found], [("example.com", "owner@example.com")])
+
+        # Approval first, then Chrome's key, then the vault gets a copy and the page a fill.
+        order = []
+        stored = {}
+
+        class Vault(FakeStore):
+            def put(self, name, data):
+                stored[name] = data
+
+        def key():
+            order.append("key")
+            return KEY
+        chrome = FakeChrome([("username", "password")])
+        status, asked, said = run_fill(mod, chrome, Vault({}), saved=lambda: found, key=key)
+        check("a Chrome login fills", status, 0)
+        check("its prompt names the saved account", asked,
+              ["sign in to example.com as owner@example.com in Chrome"])
+        check("the key is asked for once, after approval", order, ["key"])
+        check("the vault keeps a copy named for the host",
+              (list(stored), stored.get("example.com", {}).get("password")),
+              (["example.com"], PASSWORD))
+        check("the page gets the Chrome password", chrome.fills[0].get("password"), PASSWORD)
+        check("nothing printed carries the Chrome password", any(PASSWORD in x for x in said),
+              False)
+
+        order.clear()
+        chrome = FakeChrome([("username", "password")])
+        status, _, _ = run_fill(mod, chrome, Vault({}), verdict="denied", saved=lambda: found,
+                                key=key)
+        check("a denied Chrome login never touches the key", (status, order), (3, []))
 
 
 def add_cases(mod):
@@ -349,6 +431,7 @@ def main():
     host_cases(mod)
     choice_cases(mod)
     fill_cases(mod)
+    chrome_cases(mod)
     add_cases(mod)
     relay_cases(mod)
     for row in FAILURES:
