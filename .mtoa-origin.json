@@ -2011,6 +2011,38 @@
   "intelligence",
   "tools/checklist-runs.py"
  ],
+ "claude/tools/chrome-login.py": [
+  "intelligence",
+  "tools/chrome-login.py"
+ ],
+ "claude/tools/chrome-login/approve.swift": [
+  "intelligence",
+  "tools/chrome-login/approve.swift"
+ ],
+ "claude/tools/chrome-login/extension/background.js": [
+  "intelligence",
+  "tools/chrome-login/extension/background.js"
+ ],
+ "claude/tools/chrome-login/extension/content.js": [
+  "intelligence",
+  "tools/chrome-login/extension/content.js"
+ ],
+ "claude/tools/chrome-login/extension/manifest.json": [
+  "intelligence",
+  "tools/chrome-login/extension/manifest.json"
+ ],
+ "claude/tools/chrome-login/extension/popup.html": [
+  "intelligence",
+  "tools/chrome-login/extension/popup.html"
+ ],
+ "claude/tools/chrome-login/extension/popup.js": [
+  "intelligence",
+  "tools/chrome-login/extension/popup.js"
+ ],
+ "claude/tools/chrome-login/extension/totp.js": [
+  "intelligence",
+  "tools/chrome-login/extension/totp.js"
+ ],
  "claude/tools/config-sync.py": [
   "intelligence",
   "tools/config-sync.py"
@@ -2094,6 +2126,10 @@
  "claude/tools/tests/checklist-runs-cases.py": [
   "intelligence",
   "tools/tests/checklist-runs-cases.py"
+ ],
+ "claude/tools/tests/chrome-login-cases.py": [
+  "intelligence",
+  "tools/tests/chrome-login-cases.py"
  ],
  "claude/tools/tests/config-sync-cases.py": [
   "intelligence",

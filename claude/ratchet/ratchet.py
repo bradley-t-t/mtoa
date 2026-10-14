@@ -853,9 +853,14 @@ def shape_hold(cfg, payload, transcript, text, turn):
                 return False
             if DRY:
                 return True
-            if shape.approve(session, turn, text) > 3:
-                shape.release(session, turn)
-                NOTES.append(("shape: a reply was resent three times and never matched, so the next is shown as written", True))
+            # Approve, and release the turn in the same breath, so the display
+            # hook shows the next thing it sees no matter what: the app's resend
+            # arriving with a word changed, an approved-text match that misses, a
+            # judge that overran its budget. The reply has been confirmed as the
+            # turn's close, so the one job left is to make sure the user sees it,
+            # and a message withheld once must never stay invisible.
+            shape.approve(session, turn, text)
+            shape.release(session, turn)
             emit(decision="block", reason=shape.RESEND if outcome[0] == "plain" else shape.RESEND_WITHHELD)
             return True
         _, found, why = outcome

@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "CryptoFort Login",
+  "version": "1.0.0",
+  "description": "Fills a site's sign-in from the CryptoFort vault once Touch ID approves it.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs5PNDaYn2vZOEJgMhb+mM/OtBy7WwtOoo6DtDByQ/9CcepO1GlNdWzNLBxONFVbBO/JOnTbB1jgPcDR6kYCMkrZ7VkLZ50zotA0DWqtQ6rb2xZjj247hNAfMCL0oYUfzfJZ1JP5q14lucaqqWauPEG/UP7ei8pufdW3WoyXM84dcxYum9oElA/1UNmBrpET267EYPqFC/4764DWHe5sXc1NZbLo61+f2xbpbWZ7aoEE411i6SsGGPbSzwpSSlXNBeSd6q2NmzXGfGvSncZmu2klr8EuqmurPPljE7+8tbFDxyG8/Ygcen2dL6Kp49X3o8JMI7ulUJaDKir8IUOtTiQIDAQAB",
+  "minimum_chrome_version": "116",
+  "permissions": ["nativeMessaging", "storage", "alarms", "activeTab"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_title": "CryptoFort Login", "default_popup": "popup.html" }
+}
