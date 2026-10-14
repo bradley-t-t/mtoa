@@ -61,7 +61,8 @@ def prune_sessions(keep: set[str], dry_run: bool) -> None:
             continue
         cwd = data.get("originCwd") or data.get("cwd") or ""
         name = basename_of(project_root(cwd))
-        if name in keep:
+        # A pinned session is kept on purpose, whatever folder it works in.
+        if name in keep or data.get("isStarred"):
             kept += 1
             continue
         to_delete.append(record)
