@@ -87,6 +87,9 @@ REFUSAL_PATTERNS = [
     r"(?:\bnot|n['’]t) something I\b",
     r"\boff[- ]limits\b",
     r"\b(?:isn['’]?t|is not|not) (?:possible|allowed|permitted) (?:under|given|per|because of|with) (?:your|my|the|our)\b",
+    r"\bI(?:['’]ll| will) pass on\b",
+    r"\bI(?:['’]m| am) skipping\b",
+    r"\bI(?:['’]d| would) rather hold\b",
     # Something smaller done in its place.
     r"\binstead\s*(?:[.;:!]|,\s*I\b|$)",
     # A verdict that is itself the no. A bare No is how a yes-or-no question is

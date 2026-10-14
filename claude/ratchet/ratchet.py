@@ -1072,8 +1072,11 @@ def refusal_hold(cfg, payload, transcript, text, turn):
         return False
     verdict, found = refusal.ask(text, transcript, turn, cfg, binary)
     if verdict is None:
-        NOTES.append(("refusal: %s - letting the stop through" % found, True))
-        return False
+        # The first stage already found a refusal phrase, so a judge that
+        # timed out or answered badly must not turn that into a pass. The
+        # per-turn hold cap above bounds how long this can keep a stop.
+        NOTES.append(("refusal: judge failed (%s) - holding on the phrase" % found, True))
+        verdict, found = "refused", None
     if verdict != "refused":
         return False
     record(path, (turn or "unknown") + ":refusal", count + 1)
