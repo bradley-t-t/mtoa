@@ -163,12 +163,29 @@ more out of a reply that had been right since the second. From the outside it
 read as an agent that would not listen. It was listening; the check was quoting
 a message that no longer existed.
 
-So a hold quotes the text about to be sent and nothing earlier, and a second
-hold on the same turn says outright that rewriting the sentence is not the exit.
-Both hold texts name the two ways out and no third - do the work, or say in one
-line why it cannot be done here - because a check whose only satisfiable move is
-deleting a true sentence buys a clean closing paragraph by making the reply
-worse. `selftest` replays the loop against a synthetic transcript.
+So a hold quotes the text about to be sent and nothing earlier. Both hold texts
+name the two ways out and no third - do the work, or say in one line why it
+cannot be done here - because a check whose only satisfiable move is deleting a
+true sentence buys a clean closing paragraph by making the reply worse.
+`selftest` replays the loop against a synthetic transcript.
+
+<br />
+
+## Said once
+
+Every hold is drawn in the conversation, so a check that fired three times on
+the same text put the same block on screen three times and changed nothing. The
+turn had read it the first time and come back with the very thing it was held
+on, which is a decision already made, not a reply that missed the message.
+
+So each check says its piece once per user message. The first hold of a kind
+carries the full reason. A second hold from the same check on text it has not
+quoted yet carries only the new quote and a line pointing back at the reason
+already in the turn. A hold on exactly what it quoted before is not said again,
+and the stop goes through. A notice already shown on that message is not shown
+again either. What was said lives in `<session>.said.json`, apart from the count,
+and the display hook reads it too, so a reply the stop hook will let through is
+never kept off the screen. `selftest` checks the ledger both ways.
 
 <br />
 

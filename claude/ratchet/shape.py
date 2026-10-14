@@ -645,11 +645,20 @@ If what is left genuinely needs the user - an approval, a decision, a credential
 %s"""
 
 
+def quote(found):
+    """The lines a hold was given on, as the hold quotes them."""
+    return "".join('  "%s"\n      %s\n' % (clip(line), why) for line, why in found[:6])
+
+
+def unfinished(found):
+    """Whether the hold is about work left undone rather than about the layout."""
+    return any(PARTIAL in why or WAITING in why for _, why in found)
+
+
 def reason(found):
-    quoted = "".join('  "%s"\n      %s\n' % (clip(line), why) for line, why in found[:6])
-    if any(PARTIAL in why or WAITING in why for _, why in found):
-        return UNFINISHED % (quoted, reminder())
-    return HOLD % (quoted, reminder())
+    if unfinished(found):
+        return UNFINISHED % (quote(found), reminder())
+    return HOLD % (quote(found), reminder())
 
 
 # --- selftest -------------------------------------------------------------------

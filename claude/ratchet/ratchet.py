@@ -50,6 +50,7 @@ not a confession about it.
   ratchet.py selftest          the corpus both ways
   ratchet.py doctor            wiring, config, judge reachability
 """
+import hashlib
 import json
 import os
 import re
@@ -525,6 +526,65 @@ def record(path, turn, count):
         pass
 
 
+def said_path(session):
+    return state_root() / ("%s.said.json" % re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"))
+
+
+def heard(session, turn):
+    """Every hold and notice this turn has already been given, by kind.
+
+    Its own file, because the count file is rewritten by whichever check held
+    last, and a record of what was said that another hold could wipe would let
+    the same hold be said again.
+    """
+    try:
+        body = json.loads(said_path(session).read_text())
+        return (body.get("said") or {}) if body.get("turn") == (turn or "unknown") else {}
+    except (OSError, ValueError, TypeError, AttributeError):
+        return {}
+
+
+def fingerprint(trigger):
+    flat = re.sub(r"\W+", " ", str(trigger or "").lower()).strip()
+    return hashlib.sha1(flat.encode("utf-8")).hexdigest()[:16]
+
+
+def told(session, turn, kind, trigger):
+    """How much of a hold the turn still needs to hear.
+
+    A hold is drawn in the conversation, so a check that fired three times on
+    the same text put the same block on screen three times and changed nothing:
+    the turn had read it the first time and come back with the very thing it was
+    held on, which is a decision already made. So a check says its piece once
+    per user message. "full" is the first hold of its kind; "short" is the same
+    check holding again on text it has not quoted yet, which quotes only the new
+    text, since the full reason is already in the turn; None is a hold on
+    exactly what it quoted before, which is not said again, and the stop goes
+    through.
+    """
+    said = heard(session, turn).get(kind) or []
+    if not said:
+        return "full"
+    return None if fingerprint(trigger) in said else "short"
+
+
+def tell(session, turn, kind, trigger):
+    """Mark a hold or notice as said. Nothing in a dry run, which only asks."""
+    if DRY:
+        return
+    said = heard(session, turn)
+    marks = said.setdefault(kind, [])
+    if fingerprint(trigger) not in marks:
+        marks.append(fingerprint(trigger))
+    path = said_path(session)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"turn": turn or "unknown", "said": said,
+                                    "at": int(time.time())}) + "\n")
+    except OSError:
+        pass
+
+
 def rows(transcript):
     try:
         with open(transcript, "r", encoding="utf-8", errors="replace") as handle:
@@ -673,12 +733,10 @@ Do not ask again in softer words, do not describe the statement instead of \
 running it, and do not delete the sentence and stop anyway."""
 
 
-REPEAT = """
+AGAIN = """%s: held again, on text this turn has not been held on before.
 
-This turn has been held before and its closing text still trips the check. \
-Rewriting the sentence is not the way out and never was: a vaguer version of a \
-true sentence is not an improvement, and deleting it is not a fix. Do the work \
-it names; where it needs the user, ask them with AskUserQuestion and finish."""
+%s
+The hold earlier in this turn says what to do, and it still applies."""
 
 LAST = "\n\nThis is the last hold on this turn; the next stop goes through."
 
@@ -688,6 +746,9 @@ LAST = "\n\nThis is the last hold on this turn; the next stop goes through."
 # JSON object and a second one printed after it turns the whole answer to noise.
 NOTES = []
 EMITTED = []
+# The session and user message the hooks are answering, so a notice already
+# shown this turn is not shown again.
+HERE = {}
 # Set while the display hook asks "would the stop hook hold this?": nothing is
 # printed and no hold is counted, the answers are only collected.
 DRY = []
@@ -697,14 +758,16 @@ CAPTURED = []
 SKIP_SHAPE = []
 
 
-def emit(failure=False, **body):
+def emit(failure=False, again=False, **body):
     """Print the hook's one answer.
 
     An on-screen notice is kept only when a check failed - a judge that could
     not be reached, a check that threw. A routine hold or release says nothing
     on screen, because the user reads only the finished reply; the turn being
     held reads the reason, and that is where the reason goes. `notices: all`
-    in config.json brings every notice back.
+    in config.json brings every notice back. A notice already shown on this
+    user message is not shown again, and a hold given `again` - its full
+    reason already in the turn - carries no tail either.
     """
     if DRY:
         CAPTURED.append(body)
@@ -714,7 +777,13 @@ def emit(failure=False, **body):
     if body.get("systemMessage") and (failure or loud):
         said.append(body["systemMessage"])
     body.pop("systemMessage", None)
-    if body.get("decision") == "block" and not str(body.get("reason", "")).startswith("Shape:"):
+    if "session" in HERE:
+        fresh = [text for text in said if told(HERE["session"], HERE["turn"], "notice", text)]
+        for text in fresh:
+            tell(HERE["session"], HERE["turn"], "notice", text)
+        said = fresh
+    if (body.get("decision") == "block" and not again
+            and not str(body.get("reason", "")).startswith("Shape:")):
         body["reason"] = body["reason"] + ("\n\nThe display hook kept that reply off the screen, "
                                            "so the user has not seen any of it.")
     if said:
@@ -752,6 +821,8 @@ def checks(verb, payload=None, reply=None):
         text = reply
     if not text:
         return 0
+    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    HERE.update(session=session, turn=turn)
 
     if not sidechain and shape_hold(cfg, payload, transcript, text, turn):
         return 0
@@ -772,31 +843,38 @@ def checks(verb, payload=None, reply=None):
     if hold or (not found and not banned and not standing):
         return 0
 
-    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
     path, count = held_count(session, turn or "unknown")
     if count >= int(cfg["holds_per_turn"]):
         return 0
+    last = LAST if count + 1 >= int(cfg["holds_per_turn"]) else ""
 
     if standing:
-        record(path, turn or "unknown", count + 1)
         quoted = "".join('  "%s"   [%s]\n' % (sentence, name) for name, sentence in standing[:4])
-        reason = STANDING % quoted
-        if count + 1 >= int(cfg["holds_per_turn"]):
-            reason += LAST
-        emit(decision="block", reason=reason,
-             systemMessage="ratchet: the yes for SQL is already standing")
-        return 0
+        how = told(session, turn, "standing", quoted)
+        if how:
+            record(path, turn or "unknown", count + 1)
+            tell(session, turn, "standing", quoted)
+            reason = STANDING % quoted if how == "full" else AGAIN % ("Ratchet", quoted)
+            emit(again=how == "short", decision="block", reason=reason + last,
+                 systemMessage="ratchet: the yes for SQL is already standing")
+            return 0
 
     if banned:
-        record(path, turn or "unknown", count + 1)
         quoted = "".join('  "%s"   [%s]\n' % (sentence, name) for name, sentence in banned[:4])
-        reason = CUT % quoted
-        if count:
-            reason += REPEAT
-        if count + 1 >= int(cfg["holds_per_turn"]):
-            reason += LAST
-        emit(decision="block", reason=reason,
-             systemMessage="ratchet: cut the closing (%s)" % ", ".join(n for n, _ in banned[:3]))
+        how = told(session, turn, "cut", quoted)
+        if how:
+            record(path, turn or "unknown", count + 1)
+            tell(session, turn, "cut", quoted)
+            reason = CUT % quoted if how == "full" else AGAIN % ("Ratchet", quoted)
+            emit(again=how == "short", decision="block", reason=reason + last,
+                 systemMessage="ratchet: cut the closing (%s)" % ", ".join(n for n, _ in banned[:3]))
+            return 0
+
+    if not found:
+        return 0
+    quoted = "".join('  "%s"   [%s]\n' % (sentence, name) for name, sentence in found[:4])
+    how = told(session, turn, "work", quoted)
+    if not how:
         return 0
 
     work = "finish the work named above"
@@ -814,13 +892,12 @@ def checks(verb, payload=None, reply=None):
             work = detail
 
     record(path, turn or "unknown", count + 1)
-    quoted = "".join('  "%s"   [%s]\n' % (sentence, name) for name, sentence in found[:4])
-    reason = REASON % (quoted, work)
-    if count:
-        reason += REPEAT
-    if count + 1 >= int(cfg["holds_per_turn"]):
-        reason += LAST
-    emit(decision="block", reason=reason,
+    tell(session, turn, "work", quoted)
+    if how == "full":
+        reason = REASON % (quoted, work)
+    else:
+        reason = AGAIN % ("Ratchet", quoted + "Do this now: %s\n" % work)
+    emit(again=how == "short", decision="block", reason=reason + last,
          systemMessage="ratchet: held the stop (%s)" % ", ".join(n for n, _ in found[:3]))
     return 0
 
@@ -848,15 +925,29 @@ def shape_hold(cfg, payload, transcript, text, turn):
             # resend, so there is nothing stranded off the screen to send back.
             return False
         _, found, why = outcome
+        kind, quoted = shape_said(found)
+        how = told(session, turn, kind, quoted)
+        if not how:
+            return False
         if not DRY:
             shape.count_hold(session, turn)
+            tell(session, turn, kind, quoted)
     except Exception as problem:
         NOTES.append(("shape: the check failed (%s: %s) - let through unchecked"
                       % (type(problem).__name__, str(problem)[:80]), True))
         return False
-    emit(decision="block", reason=shape.reason(found),
+    emit(again=how == "short",
+         reason=shape.reason(found) if how == "full" else AGAIN % ("Shape", quoted),
+         decision="block",
          systemMessage="shape: held a reply out of shape" + (" (judge: %s)" % why if why else ""))
     return True
+
+
+def shape_said(found):
+    """What a shape hold is recorded under: a hold on the layout and a hold on
+    unfinished work say different things, so each is said once in full."""
+    import shape
+    return ("shape:unfinished" if shape.unfinished(found) else "shape"), shape.quote(found)
 
 
 def would_hold(payload, text, skip_shape=False):
@@ -962,8 +1053,12 @@ def display():
             # answer is shown as written, because its only "rewrite" is an
             # identical word-for-word resend, and this app build drops an
             # identical resend as a duplicate - so hiding one loses it for good.
-            shown = hidden if outcome[0] == "hold" else text
-            if outcome[0] == "show" and would_hold(payload, text):
+            # A shape hold the turn has already been given on this very text
+            # is not given again, so the stop hook lets it through.
+            holding = outcome[0] == "hold" and told(session, turn, *shape_said(outcome[1]))
+            shown = hidden if holding else text
+            if (outcome[0] == "show" or (outcome[0] == "hold" and not holding)) \
+                    and would_hold(payload, text):
                 shown = hidden
         except OutOfTime:
             shown = text
@@ -1018,8 +1113,14 @@ def premature_hold(cfg, payload, transcript, text, turn):
     verdict, claim = premature.ask(text, flight, cfg, binary, judge_env(), str(ROOT), transcript)
     if verdict != "premature":
         return False
+    quoted = '  "%s"\n' % (claim or "(see the closing text)")
+    how = told(session, turn, "premature", quoted)
+    if not how:
+        return False
     record(path, (turn or "unknown") + ":premature", count + 1)
-    emit(decision="block", reason=premature.reason(claim, flight),
+    tell(session, turn, "premature", quoted)
+    emit(again=how == "short", decision="block",
+         reason=premature.reason(claim, flight) if how == "full" else AGAIN % ("Ratchet", quoted),
          systemMessage="ratchet: stated as done while still in progress")
     return True
 
@@ -1033,8 +1134,15 @@ def recall_hold(cfg, payload, transcript, text, turn):
     path, count = held_count(session, (turn or "unknown") + ":recall")
     if count >= int(cfg["holds_per_turn"]):
         return False
+    cue = recall.cue(transcript)
+    quoted = '  "%s"\n' % (cue or "(see the message)")
+    how = told(session, turn, "recall", quoted)
+    if not how:
+        return False
     record(path, (turn or "unknown") + ":recall", count + 1)
-    emit(decision="block", reason=recall.reason(recall.cue(transcript)),
+    tell(session, turn, "recall", quoted)
+    emit(again=how == "short", decision="block",
+         reason=recall.reason(cue) if how == "full" else AGAIN % ("Ratchet", quoted),
          systemMessage="ratchet: recurring work - search the transcripts first")
     return True
 
@@ -1052,8 +1160,14 @@ def unchecked_hold(cfg, payload, transcript, text, turn):
     verdict, claim = unchecked.ask(text, transcript, cfg, binary)
     if verdict != "unchecked":
         return False
+    quoted = '  "%s"\n' % (claim or "(see the closing text)")
+    how = told(session, turn, "unchecked", quoted)
+    if not how:
+        return False
     record(path, (turn or "unknown") + ":unchecked", count + 1)
-    emit(decision="block", reason=unchecked.reason(claim),
+    tell(session, turn, "unchecked", quoted)
+    emit(again=how == "short", decision="block",
+         reason=unchecked.reason(claim) if how == "full" else AGAIN % ("Ratchet", quoted),
          systemMessage="ratchet: said you can't without checking for a route")
     return True
 
@@ -1071,22 +1185,31 @@ def refusal_hold(cfg, payload, transcript, text, turn):
     if count >= int(cfg["holds_per_turn"]):
         return False
     verdict, found = refusal.ask(text, transcript, turn, cfg, binary)
+    failed = None
     if verdict is None:
         # The first stage already found a refusal phrase, so a judge that
         # timed out or answered badly must not turn that into a pass. The
         # per-turn hold cap above bounds how long this can keep a stop.
-        NOTES.append(("refusal: judge failed (%s) - holding on the phrase" % found, True))
-        verdict, found = "refused", None
+        failed, verdict, found = found, "refused", None
     if verdict != "refused":
         return False
+    quoted = '  "%s"\n' % ((found or ("", ""))[0] or refusal.flags(text) or "(see the closing text)")
+    # With no judge to quote the refusal, the phrase alone - often just a No
+    # verdict - is the same in every reply, so the reply itself is what is
+    # compared.
+    trigger = text if failed else quoted
+    how = told(session, turn, "refusal", trigger)
+    if not how:
+        return False
+    if failed:
+        NOTES.append(("refusal: judge failed (%s) - holding on the phrase" % failed, True))
     record(path, (turn or "unknown") + ":refusal", count + 1)
-    reason = refusal.reason(found)
-    if count:
-        reason += REPEAT
+    tell(session, turn, "refusal", trigger)
     # No LAST here. Told that the next stop goes through, a turn that is
     # refusing only has to say no once more to get its way - the reason the
     # shape hold never announces its cap either.
-    emit(decision="block", reason=reason,
+    emit(again=how == "short", decision="block",
+         reason=refusal.reason(found) if how == "full" else AGAIN % ("Ratchet", quoted),
          systemMessage="ratchet: turned down what the user asked for")
     return True
 
@@ -1124,8 +1247,13 @@ def pre_ask():
     verdict, found = refusal.ask(text, transcript, turn, cfg, binary, refusal.CARD_PROMPT)
     if verdict != "refused":
         return 0
+    quoted = '  "%s"\n' % ((found or ("", ""))[0] or "(see the question)")
+    how = told(session, turn, "card", quoted)
+    if not how:
+        return 0
     record(path, (turn or "unknown") + ":refusal", count + 1)
-    reason = refusal.card_reason(found)
+    tell(session, turn, "card", quoted)
+    reason = refusal.card_reason(found) if how == "full" else AGAIN % ("Ratchet", quoted)
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
                                              "permissionDecision": "deny",
                                              "permissionDecisionReason": reason}}))
@@ -1154,8 +1282,16 @@ def pre_say():
     verdict, rule, claim = premature.ask_speech(spoken, flight, cfg, binary, transcript, shown)
     if verdict != "broken":
         return 0
+    turn = closing_message(transcript, False)[1]
+    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    quoted = '  "%s"   [%s]\n' % (claim or spoken, rule)
+    how = told(session, turn, "say", quoted)
+    if not how:
+        return 0
+    tell(session, turn, "say", quoted)
+    reason = premature.speech_reason(rule, claim) if how == "full" else AGAIN % ("Ratchet", quoted)
     emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
-                             "permissionDecisionReason": premature.speech_reason(rule, claim)})
+                             "permissionDecisionReason": reason})
     return 0
 
 
@@ -1205,6 +1341,39 @@ def transcript_test():
     return bad
 
 
+def said_test():
+    """A hold is said once in full, once more only on new text, and never twice the same.
+
+    Every hold is drawn in the conversation, and a check that fired again on the
+    text it had already quoted put the same block on screen three times over.
+    """
+    import tempfile
+    old = os.environ.get("RATCHET_STATE")
+    os.environ["RATCHET_STATE"] = tempfile.mkdtemp()
+    bad = 0
+    try:
+        steps = [(told("t", "u1", "recall", "see transcripts"), "full", "first hold"),
+                 (tell("t", "u1", "recall", "see transcripts"), None, "record"),
+                 (told("t", "u1", "recall", "See   transcripts."), None, "same text again"),
+                 (told("t", "u1", "recall", "like last time"), "short", "new text, same check"),
+                 (told("t", "u1", "refusal", "see transcripts"), "full", "another check"),
+                 (told("t", "u2", "recall", "see transcripts"), "full", "next user message")]
+        DRY.append(True)
+        tell("t", "u2", "work", "dry")
+        DRY.pop()
+        steps.append((told("t", "u2", "work", "dry"), "full", "a dry run records nothing"))
+        for got, want, name in steps:
+            if got != want:
+                bad += 1
+                print("SAID:   %s came back %r, wanted %r" % (name, got, want))
+    finally:
+        if old is None:
+            os.environ.pop("RATCHET_STATE", None)
+        else:
+            os.environ["RATCHET_STATE"] = old
+    return bad
+
+
 def selftest():
     body = json.loads((ROOT / "corpus.json").read_text())
     bad = 0
@@ -1233,11 +1402,12 @@ def selftest():
             print("FALSE:  %s  <- %s" % (" ".join(text.split())[:66],
                                          (found or banned)[0][0]))
     bad += transcript_test()
+    bad += said_test()
     import shape
     bad += shape.selftest()
     import refusal
     bad += refusal.selftest()
-    print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, %d wrong"
+    print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))
     return 1 if bad else 0

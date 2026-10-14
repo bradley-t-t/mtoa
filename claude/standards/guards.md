@@ -68,6 +68,14 @@ never named, or something only their hands can do is let through, and a card
 that touches a hard limit (mail deletion, money, credentials) never reaches the
 judge at all.
 
+Every hold is drawn in the conversation, so no check says the same thing twice
+on one user message. The first hold of a kind carries the full reason; a second
+from the same check on new text quotes only the new text; a hold on exactly what
+it quoted before is not said again, and the stop goes through. The same goes for
+the question-card and Sunday-announcement denials and for on-screen notices.
+`<session>.said.json` records what was said, and the display hook reads it, so
+a reply the stop hook will release is never hidden.
+
 `tells.json` is the word list and `corpus.json` is what it must catch and must
 not; edit either and run `selftest`. `RATCHET_OFF=1` stands it down for one run.
 
