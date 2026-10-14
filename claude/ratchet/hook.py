@@ -9,6 +9,7 @@ an error, so anything unexpected lets the stop through.
   hook.py stop        Stop
   hook.py subagent    SubagentStop
   hook.py say         PreToolUse on Bash (a Sunday announcement)
+  hook.py ask         PreToolUse on AskUserQuestion (a yes asked for again)
   hook.py prompt      UserPromptSubmit (the reply shape, before the turn writes)
   hook.py display     MessageDisplay (text out of shape is kept off the screen)
 """
@@ -27,6 +28,8 @@ if __name__ == "__main__":
     try:
         if verb == "say":
             sys.exit(ratchet.pre_say() or 0)
+        if verb == "ask":
+            sys.exit(ratchet.pre_ask() or 0)
         if verb == "prompt":
             sys.exit(ratchet.prompt_context() or 0)
         if verb == "display":

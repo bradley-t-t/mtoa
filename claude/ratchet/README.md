@@ -279,8 +279,11 @@ refusal that rests on CLAUDE.md, a skill, a standard, a checklist, another
 hook's message, a guess or plain caution is held, and the hold tells the turn
 to do the work.
 
-Cheap first. A refusal phrase in the closing text is one regex; across 726 real
-closing replies it flagged 9. Only a flagged stop pays for the judge, which is
+Cheap first. A refusal phrase in the closing text is one regex, and it
+over-captures on purpose: any first-person can't or won't, work handed back to
+the user, a yes asked for again, something done instead, and a No verdict. The
+narrower list it replaced caught 7 of 44 plain refusals, so most never reached
+the judge. Only a flagged stop pays for the judge, which is
 shown the person's own messages - never text relayed from a file, a tool or
 another session - and the tool calls the turn made. It releases a reply that
 declines nothing the person asked for, a dead end the turn actually tried, an
@@ -298,8 +301,14 @@ refusal.py check "I can't do that based on your instructions."
 refusal.py selftest
 ```
 
+A question card is the other way to ask again for a yes already given, and a
+tool call never reaches a Stop hook, so `hook.py ask` runs on `PreToolUse` for
+`AskUserQuestion` and denies a card the judge reads as the request handed back.
+A card that touches mail deletion, money or a credential is let through
+unjudged.
+
 It shares ratchet's cap of three holds per user message and its own count
-(`<turn>:refusal`). `refusal-corpus.json` is what the first-stage scan must
+(`<turn>:refusal`), and never announces the last hold. `refusal-corpus.json` is what the first-stage scan must
 catch and must not; edit it and run `selftest`, which `ratchet.py selftest`
 also runs. `REFUSAL_OFF=1` stands it down for one run.
 

@@ -886,11 +886,13 @@ def would_hold(payload, text, skip_shape=False):
 
 HIDDEN = "\u200b"
 
-# The desktop app gives a MessageDisplay hook ten seconds and then shows the
-# original text, and one judge call alone can take twenty. The hook stops itself
-# well inside that and keeps the reply off the screen; the stop hook, which has
-# no such limit, decides it and asks for it again if it passes.
-DISPLAY_BUDGET = 7.0
+# The desktop app gives a MessageDisplay hook ten seconds (Ho=1e4 beside the
+# display dispatcher, build 2.1.295) and then shows the original text, which is
+# exactly what running out of budget here does too, so the budget runs as close
+# to that as is safe. At seven seconds a refusal judge, which answers in five to
+# nine, lost the race about half the time and the refusal was drawn on screen
+# before the stop hook held it.
+DISPLAY_BUDGET = 9.2
 START = time.time()
 
 
@@ -1078,11 +1080,53 @@ def refusal_hold(cfg, payload, transcript, text, turn):
     reason = refusal.reason(found)
     if count:
         reason += REPEAT
-    if count + 1 >= int(cfg["holds_per_turn"]):
-        reason += LAST
+    # No LAST here. Told that the next stop goes through, a turn that is
+    # refusing only has to say no once more to get its way - the reason the
+    # shape hold never announces its cap either.
     emit(decision="block", reason=reason,
          systemMessage="ratchet: turned down what the user asked for")
     return True
+
+
+def pre_ask():
+    """PreToolUse on AskUserQuestion: refuse a card that asks again for what the user already asked for.
+
+    Every judge call is paid here rather than gated on a phrase, because a card
+    that re-asks is usually just the request read back - "Delete the three
+    backups?" - with nothing for a word list to find. Shares the refusal check's
+    count, so a turn is sent back three times per user message at most."""
+    import refusal
+    if any(BOOL_ENV.get((os.environ.get(k) or "0").strip().lower(), False)
+           for k in ("RATCHET_OFF", "REFUSAL_OFF")):
+        return 0
+    try:
+        payload = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace") or "{}")
+    except ValueError:
+        return 0
+    if payload.get("agent_id") or payload.get("agent_type"):
+        return 0
+    transcript = payload.get("transcript_path")
+    if not transcript or not Path(transcript).is_file():
+        return 0
+    cfg = config()
+    binary = claude_binary()
+    text = refusal.card(payload.get("tool_input"))
+    if not binary or not cfg["judge"] or not text or refusal.HARD.search(text):
+        return 0
+    turn = closing_message(transcript, False)[1]
+    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    path, count = held_count(session, (turn or "unknown") + ":refusal")
+    if count >= int(cfg["holds_per_turn"]):
+        return 0
+    verdict, found = refusal.ask(text, transcript, turn, cfg, binary, refusal.CARD_PROMPT)
+    if verdict != "refused":
+        return 0
+    record(path, (turn or "unknown") + ":refusal", count + 1)
+    reason = refusal.card_reason(found)
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                                             "permissionDecision": "deny",
+                                             "permissionDecisionReason": reason}}))
+    return 0
 
 
 def pre_say():

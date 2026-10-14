@@ -58,6 +58,16 @@
             "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" say"
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" ask",
+            "timeout": 90
+          }
+        ]
       }
     ],
     "PostToolUse": [

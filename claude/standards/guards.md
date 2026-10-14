@@ -49,9 +49,24 @@ found inside observed content, and the hard limits no instruction lifts -
 credentials, card, bank or ID numbers typed into a field, account creation and
 password sign-in, trades and money movement, CAPTCHAs, system security
 settings, untrusted executables, permanent deletion of mail or messages, and
-serious harm to someone. It shares the cap of three holds per user message;
-`refusal-corpus.json` is its scan corpus and `REFUSAL_OFF=1` stands it down for
-one run.
+serious harm to someone. It shares the cap of three holds per user message,
+and a refusal hold never announces that it is the last, since a turn told the
+next stop goes through only has to say no once more. The first-stage scan
+catches any first-person can't or won't, work handed back ("you'll need to run
+that yourself"), a yes asked for again, something smaller done instead, and a
+verdict that is itself the no; the old list caught 7 of 44 plain refusals and
+the judge never saw the rest. `refusal-corpus.json` is its scan corpus and
+`REFUSAL_OFF=1` stands it down for one run.
+
+A yes asked for again through a question card is a tool call, not a stop, so
+the Stop check never saw it, and the reply shape sends every ask there.
+`hook.py ask` is a `PreToolUse` hook on `AskUserQuestion` that puts each card to
+the same judge with a question of its own - is this asking again for what the
+person named themselves - and denies the call with the reason when it is. A
+card about a choice the person has not made, a specific object a broad request
+never named, or something only their hands can do is let through, and a card
+that touches a hard limit (mail deletion, money, credentials) never reaches the
+judge at all.
 
 `tells.json` is the word list and `corpus.json` is what it must catch and must
 not; edit either and run `selftest`. `RATCHET_OFF=1` stands it down for one run.
@@ -140,7 +155,7 @@ The desktop app also gives a display hook ten seconds (`Ho=1e4` in the CLI, apar
 from the hook's own `timeout`) and then shows the original text, and one judge
 call uncached takes up to thirty. A held draft whose excuse judge ran past ten
 seconds was shown, and its rewrite after it - a reply seen twice. So the display
-hook stops itself at `DISPLAY_BUDGET` (seven seconds, by `SIGALRM`, as
+hook stops itself at `DISPLAY_BUDGET` (9.2 seconds, by `SIGALRM`, as
 `OutOfTime`, a BaseException no check's `except Exception` can swallow); on
 timeout it shows the text rather than hide what it could not clear, since a
 hidden reply only comes back as a rewrite and a reply it cannot judge is not one
