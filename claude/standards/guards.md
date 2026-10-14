@@ -176,10 +176,16 @@ after it, labelled lines of at most two sentences - and a reply in the shape is
 then read for asides - "by the way", "you'll need to", "left for later", "let me
 know" - so every compliant stop clears in milliseconds. A reply out of shape is
 excused on sight when this turn's message was a slash command, since the skill
-sets its own output. Anything else goes to a headless Haiku with one question:
-did the user ask, in their own words, for this reply to take another form. It
-must quote the words, the quote must appear in what the user wrote, and it must
-name a form (`form_words`), so "fix it" is never read as a request for a table.
+sets its own output. A reply built on the shape itself - a bold verdict and
+nothing but labelled lines - took no other form, so it is held at once with no
+judge: the judge's seconds were seconds the draft sat on screen before the
+display hook could hide it, and the rewrite then put the same reply up twice. A
+shape hold quotes the lines it was held on and no copy of the shape, since the
+prompt hook already put the shape at the top of the message. Anything else goes
+to a headless Haiku with one question: did the user ask, in their own words, for
+this reply to take another form. It must quote the words, the quote must appear
+in what the user wrote, and it must name a form (`form_words`), so "fix it" is
+never read as a request for a table.
 An excuse holds for the rest of the turn.
 
 Only a session a person reads is shaped. A run with an `sdk-` entrypoint -

@@ -353,8 +353,8 @@ def cmd_preflight(yard, which):
             yard.git("remote", "add", "upstream", f"https://github.com/{build}.git", cwd=yard.root)
         if yard.git("fetch", "--quiet", "upstream", "main", cwd=yard.root) is None:
             raise Refuse(f"could not read main on {build}")
-        if yard.git("merge-base", "--is-ancestor", "upstream/main", "origin/main", cwd=yard.root) is None:
-            extra = yard.git("log", "--oneline", "origin/main..upstream/main", cwd=yard.root) or ""
+        if yard.git("merge-base", "--is-ancestor", "upstream/main", "origin/develop", cwd=yard.root) is None:
+            extra = yard.git("log", "--oneline", "origin/develop..upstream/main", cwd=yard.root) or ""
             raise Refuse(f"{build} holds commits this side does not, and this release could not be "
                          f"pushed to it:\n{extra}\nCollect them into develop first - docs/COLLABORATION.md.")
 

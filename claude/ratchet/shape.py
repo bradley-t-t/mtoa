@@ -177,6 +177,14 @@ def layout(text, body):
     return out
 
 
+def skeleton(text):
+    """A bold verdict first, then only labelled lines."""
+    lines = [line.rstrip() for line in text.strip().split("\n")]
+    rest = [line for line in lines[1:] if line.strip()]
+    return bool(VERDICT.match(lines[0].strip()) and rest
+                and all(BULLET.match(line) for line in rest))
+
+
 def narration(text, body):
     """Plain prose short enough to be a running commentary: one paragraph, no
     list, table or code, and no more sentences than a progress note takes."""
@@ -551,6 +559,12 @@ def decide(text, transcript, session, turn, cfg, body=None):
         # while they work, never a table or a draft anyone asked for, so no
         # excuse reaches it and no judge is paid to say so.
         return ("hold", found, None)
+    if skeleton(text):
+        # Built on the shape itself - a bold verdict and nothing but labelled
+        # lines - so it took no other form and there is no excuse to ask about.
+        # The judge's seconds were seconds the draft sat on screen before the
+        # display hook could hide it, and the rewrite then drew it twice.
+        return ("hold", found, None)
     if mark.get("excused"):
         return ("excused", mark["excused"])
     why = None
@@ -573,11 +587,9 @@ def count_hold(session, turn):
     save(path, mark)
 
 
-HOLD = """Shape: that reply was out of shape, so it was kept off the screen and the user has not seen it. Write the reply again, in the shape, short enough to read at a glance.
+HOLD = """Shape: that reply was out of shape, so it was kept off the screen and the user has not seen it. Write the reply again, in the shape at the top of this turn's message, short enough to read at a glance.
 
 %s
-%s
-
 Keep every fact that answers the request and drop the rest. Where a sentence you are dropping named work you can still do, do it before you send the reply rather than mentioning it."""
 
 
@@ -640,9 +652,7 @@ UNFINISHED = """Shape: that reply reports unfinished work, so it was kept off th
 %s
 Go back to the work. Finish it and prove it yourself - run it, measure it, play the audio, load the page - and only then write the reply. Changing the verdict without changing the work is a false report, and a reply that still says the work is unfinished is held again.
 
-If what is left genuinely needs the user - an approval, a decision, a credential only they hold, or their own hands on something - ask them with the AskUserQuestion tool now, inside this turn, get the answer, and finish the work. A turn never ends waiting on the user, and a reply never hands them a step.
-
-%s"""
+If what is left genuinely needs the user - an approval, a decision, a credential only they hold, or their own hands on something - ask them with the AskUserQuestion tool now, inside this turn, get the answer, and finish the work. A turn never ends waiting on the user, and a reply never hands them a step."""
 
 
 def quote(found):
@@ -656,9 +666,12 @@ def unfinished(found):
 
 
 def reason(found):
+    # No copy of the shape itself: the prompt hook put it at the top of the
+    # message this turn answers, and a hold is drawn in the conversation, so a
+    # copy here was the same rules on screen twice.
     if unfinished(found):
-        return UNFINISHED % (quote(found), reminder())
-    return HOLD % (quote(found), reminder())
+        return UNFINISHED % quote(found)
+    return HOLD % quote(found)
 
 
 # --- selftest -------------------------------------------------------------------
