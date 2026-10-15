@@ -31,6 +31,7 @@
   "plain_sentences": 2,
   "plain_max_chars": 320,
   "plain_claims": "\\bI(?:'ve|\\u2019ve| have)? (?:just )?(?:fixed|changed|updated|deleted|removed|added|deployed|shipped|merged|pushed|restarted|installed|created|moved|renamed|rewrote|wrote|built|released|sent|set up|turned (?:on|off)|enabled|disabled|cleaned|replaced|reverted|committed|patched)\\b|(?:^|[.!?]\\s+)(?:Fixed|Done|Shipped|Deployed|Merged|Cleaned|Built|Released|Installed|Restarted|Updated|Changed|Removed|Deleted)\\b",
+  "work_cue": "^\\s*(?:(?:okay|ok|alright|right|sure|now|first|next|then|so),?\\s+)*(?:let me\\b|let['\\u2019]?s\\b|i['\\u2019]?ll\\b|i will\\b|i['\\u2019]?m going to\\b|i am going to\\b|i['\\u2019]?m about to\\b|going to\\b|time to\\b)|^\\s*(?:checking|looking|reading|running|searching|verifying|digging|investigating|inspecting|starting|testing|scanning|grepping|tracing|pulling|fetching|opening|loading)\\b|\\blet me (?:check|look|see|run|read|verify|dig|investigate|pull|grep|fetch|open|inspect|start|test|confirm|trace|find|search|scan|load|diagnose|reproduce|gather)\\b",
   "progress_verdicts": [
     "Working",
     "Checking",

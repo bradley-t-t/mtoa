@@ -479,6 +479,14 @@ def plain(text, body, changed=False):
     if claim:
         out.append((clip(text), "\"%s\" reports work done, which takes the shape with its proof"
                                 % claim.group(0)))
+    cue = body.get("work_cue") and re.search(body["work_cue"], text, re.I)
+    if cue:
+        # "Let me check...", "I'll run...", "Checking..." reads exactly like a
+        # one-sentence plain answer, so it slips past every other test and is
+        # drawn as written. It is narration - work announced, not an answer - so
+        # it fails plain() here and is held off the screen like any other.
+        out.append((clip(text), "\"%s\" announces work in progress - narration, not an answer"
+                                % cue.group(0)))
     return out + asides(text, body) + waiting(text, body)
 
 
