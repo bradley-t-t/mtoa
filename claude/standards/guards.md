@@ -68,11 +68,25 @@ never named, or something only their hands can do is let through, and a card
 that touches a hard limit (mail deletion, money, credentials) never reaches the
 judge at all.
 
+A Sunday announcement (`hook.py say`, `PreToolUse` on Bash, for a command that
+sends `/say`) is read twice before it is spoken. First `ratchet/ear.py`, with
+no judge: anything written for the eye rather than the ear - an abbreviated or
+numeric date, a time zone, a clock time or amount in figures, a symbol, an
+aside in brackets, shorthand, a unit, a link, path, file name, version or ID, a
+chat reply's labels or list, or more than ninety words - is denied with each
+piece named and how a person would say it. Then the judge reads it against the
+speech rules. The ear check holds the same text every time it is sent, because
+a pattern says exactly what needs rewriting and there is nothing to judge.
+`EAR_OFF=1` stands it down for one run; `ear.py selftest` runs its cases, and
+`ratchet.py selftest` runs them too.
+
 Every hold is drawn in the conversation, so no check says the same thing twice
 on one user message. The first hold of a kind carries the full reason; a second
 from the same check on new text quotes only the new text; a hold on exactly what
 it quoted before is not said again, and the stop goes through. The same goes for
-the question-card and Sunday-announcement denials and for on-screen notices.
+the question-card and Sunday-announcement denials and for on-screen notices,
+except the ear check, which denies every announcement written for the eye and
+quotes only the pieces after its first full reason.
 `<session>.said.json` records what was said, and the display hook reads it, so
 a reply the stop hook will release is never hidden.
 

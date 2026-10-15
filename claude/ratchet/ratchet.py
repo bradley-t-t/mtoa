@@ -1452,6 +1452,21 @@ def pre_say():
         return 0
     spoken = premature.say_text((payload.get("tool_input") or {}).get("command", ""))
     transcript = payload.get("transcript_path")
+    if spoken and not BOOL_ENV.get((os.environ.get("EAR_OFF") or "0").lower(), False):
+        # Written for the eye: held every time it is sent that way, with no judge, since the
+        # fix is always the same rewrite and a pattern says exactly what needs it.
+        import ear
+        found = ear.findings(spoken)
+        if found:
+            readable = transcript and Path(transcript).is_file()
+            turn = closing_message(transcript, False)[1] if readable else None
+            session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+            quoted = "".join('  "%s"\n' % frag for _, frag, _ in found[:8])
+            short = told(session, turn, "ear", quoted) != "full"
+            tell(session, turn, "ear", quoted)
+            emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                     "permissionDecisionReason": ear.reason(found, short)})
+            return 0
     binary = claude_binary()
     if not spoken or not transcript or not binary or not cfg["judge"]:
         return 0
@@ -1627,6 +1642,8 @@ def selftest():
     bad += shape.selftest()
     import refusal
     bad += refusal.selftest()
+    import ear
+    bad += ear.selftest()
     print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))

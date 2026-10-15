@@ -208,11 +208,21 @@ def reason(claim, flight):
     return HOLD % (claim or "(see the closing text)", "; ".join(label for label, _ in flight.values()))
 
 
+# The other ways a command hands /say its text: "text=..." in double quotes, and ?text= in the URL.
+SAY_TEXT_QUOTED = re.compile(r'"text=((?:[^"\\]|\\.)*)"', re.S)
+SAY_TEXT_URL = re.compile(r"[?&]text=([^&'\"\s]+)")
+
+
 def say_text(command):
     if not SAY.search(command or ""):
         return ""
     m = SAY_TEXT.search(command)
     text = m.group(1) if m else ""
+    if not text and (m := SAY_TEXT_QUOTED.search(command)):
+        text = re.sub(r'\\(["\\$`])', r"\1", m.group(1))
+    if not text and (m := SAY_TEXT_URL.search(command)):
+        import urllib.parse
+        text = urllib.parse.unquote_plus(m.group(1))
     # The text often sits in a shell variable set earlier in the same command.
     def expand(v):
         found = re.search(r"(?:^|[\s;&])%s=(\"(.*?)\"|'(.*?)')" % re.escape(v.group(1) or v.group(2)), command, re.S)

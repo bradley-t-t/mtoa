@@ -1799,6 +1799,10 @@
   "intelligence",
   "ratchet/corpus.json"
  ],
+ "claude/ratchet/ear.py": [
+  "intelligence",
+  "ratchet/ear.py"
+ ],
  "claude/ratchet/hook.py": [
   "intelligence",
   "ratchet/hook.py"
