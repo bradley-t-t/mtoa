@@ -120,8 +120,11 @@ is held as unfinished, and every hold - shape and ratchet alike - points the
 turn at the AskUserQuestion tool: ask inside the turn, get the answer, finish.
 
 A question that one or two sentences answer gets a plain answer instead: at most
-two unformatted sentences and 320 characters, no claim of work done
-(`plain_claims`), no aside, and only in a turn that used no edit tool. A plain
+two unformatted sentences, 30 words and 320 characters, no claim of work done
+(`plain_claims`), no aside, and only in a turn that used no edit tool. In such a
+turn a yes or no is the bare word or the word and a clause of at most twelve
+words (`yes_no_max_words`), never a `**Yes.**` with labelled lines, and nothing
+excuses a longer one (`brevity`). A plain
 answer is written inside a respond block - ```respond, then `plain: ...`, then
 the fence - and the display hook draws its render (`respond.block`). Bare prose
 is never drawn. The CLI calls the display hook on a finished text block and

@@ -17,7 +17,7 @@ These rules cover how to reply to a request without drifting away from it.
 ## 3. The reply shape, nothing more
 
 - Every reply is a bold verdict line and at most four labelled lines - Why, What, Touched, Proof - one line each, in that order, with Proof on every finished verdict. The shape is in `CLAUDE.md`, and ratchet refuses a reply that leaves it.
-- A question that one or two sentences answer, in a turn that changed nothing, gets one or two plain sentences instead, with no formatting and nothing beside the answer.
+- A question with a short answer, in a turn that changed nothing, gets it in as few words as it takes: "Yes." or "No." alone, or the word and one short clause; anything else one plain sentence, two at most, under thirty words, with no formatting and nothing beside the answer.
 - No headings, extra paragraphs, other labels or sign-offs around it.
 - If it doesn't fit the shape, you're answering more than was asked. Cut until it fits.
 - A form the user asks for in their own words, such as a table, a draft, code or a long explanation, is the one exception.

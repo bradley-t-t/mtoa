@@ -436,7 +436,50 @@ def plain(text, body, changed=False):
         # it fails plain() here and is held off the screen like any other.
         out.append((clip(text), "\"%s\" announces work in progress - narration, not an answer"
                                 % cue.group(0)))
-    return out + asides(text, body) + waiting(text, body)
+    return out + brevity(text, body, changed) + asides(text, body) + waiting(text, body)
+
+
+# A yes or no is the word itself, followed at once by its full stop or comma: "No one
+# replied" is not one.
+YES_NO = re.compile(r"(?:yes|no)(?=[.,;:!\u2014\u2013-]|\s*$)", re.I)
+TERSE = ("a yes or no answer is the bare word - \"Yes.\" or \"No.\" - or the word and one short "
+         "clause under %d words, as a plain answer in a respond block. Drop the explanation")
+WORDY = "%d words - a short answer takes %d at most. Cut it to the answer itself"
+
+
+def brevity(text, body, changed=False):
+    """A short answer said in more words than it takes: [(line, why)], empty when it is lean.
+
+    A yes or no in a turn that changed nothing is the bare word, or the word and one
+    short clause, never the shape or a sentence of explanation; any other plain answer
+    is held to plain_max_words. A turn that changed something owes the shape and is
+    not read here."""
+    if changed:
+        return []
+    text = text.strip()
+    if text in (body.get("bare") or []):
+        return []
+    most = int(body.get("yes_no_max_words") or 12)
+    first = text.split("\n")[0].strip()
+    head = VERDICT.match(first)
+    if head and head.group("verdict").rstrip(".?!").strip().lower() in ("yes", "no"):
+        # The verdict alone, or with one short clause after it; never the labelled lines.
+        rest = head.group("rest") or ""
+        lines = [line for line in text.split("\n")[1:] if line.strip()]
+        if lines or len(re.findall(r"[\w'\u2019-]+", rest)) > most or sentences(rest) > 1:
+            return [(first, TERSE % most)]
+        return []
+    if "\n" in text or "**" in text or "```" in text:
+        return []
+    m = YES_NO.match(text)
+    if m:
+        rest = re.findall(r"[\w'\u2019-]+", text[m.end():])
+        if len(rest) > most or sentences(text) > 1:
+            return [(clip(text), TERSE % most)]
+        return []
+    count = len(re.findall(r"[\w'\u2019-]+", text))
+    cap = int(body.get("plain_max_words") or 30)
+    return [(clip(text), WORDY % (count, cap))] if count > cap else []
 
 
 def is_plain(text, transcript, turn, body=None):
@@ -522,7 +565,17 @@ def decide(text, transcript, session, turn, cfg, body=None):
         return ("show", None)
     if text.strip() in (body.get("bare") or []):
         return ("show", None)
-    if not plain(text, body, changed_this_turn(transcript, turn)):
+    changed = changed_this_turn(transcript, turn)
+    terse = brevity(text, body, changed)
+    if terse:
+        # Said in more words than the answer takes. Nothing excuses it: a longer
+        # form asked for in so many words is a table or an explanation, and that
+        # is not a yes, a no or a one-line answer.
+        mark = load(state(session), turn or "unknown")
+        if int(mark.get("count") or 0) >= int(body.get("holds") or 5):
+            return ("capped", int(mark.get("count") or 0))
+        return ("hold", terse, None)
+    if not plain(text, body, changed):
         # A sentence or two of plain prose is also exactly what narration looks
         # like, and nothing at display time says which this is. The caller
         # tells them apart by the respond block: a plain answer rendered from
@@ -582,7 +635,11 @@ Keep every fact that answers the request and drop the rest. Where a sentence you
 # twice, once wrong and once fixed, and the only real cure is the first draft.
 REMINDER = """Every closing reply takes one of two forms, unless this message asks for another in so many words (a table, a draft, code, a long explanation).
 
-1. A question that one or two sentences answer, in a turn that changes nothing: exactly that. One or two plain sentences, under %(plain)d words, no bold, no list - the answer itself and nothing beside it - written inside a respond block, which is what puts it on the screen as plain sentences:
+1. A question with a short answer, in a turn that changes nothing: the answer and nothing else, in as few words as it takes. A yes or no is "Yes." or "No." alone, or the word and one short clause under %(yes_no)d words, never the shape. Anything else is one plain sentence, two at most, under %(plain)d words, no bold, no list - written inside a respond block, which is what puts it on the screen as plain sentences:
+
+```respond
+plain: No.
+```
 
 ```respond
 plain: Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain and example.com's DMARC policy rejects that.
@@ -621,7 +678,8 @@ Rules:
 
 def reminder(body=None):
     body = body or rules()
-    return REMINDER % {"plain": int(body.get("plain_max_words") or 45),
+    return REMINDER % {"plain": int(body.get("plain_max_words") or 30),
+                       "yes_no": int(body.get("yes_no_max_words") or 12),
                        "sentence": int(body.get("sentence_max_words") or 30),
                        "line": int(body.get("line_max_words") or 40)}
 
@@ -698,6 +756,9 @@ def decide_test(corpus, body):
         cases = [(t, ("show",)) for t in (corpus.get("pass") or [])[:6]]
         cases += [(t, ("hold",)) for t in (corpus.get("hold") or [])[:12] if plain(t, body)]
         cases += [(t, ("plain",)) for t in corpus.get("plain_pass") or []]
+        # Said in more words than a yes, a no or a one-line answer takes, in a turn that
+        # changed nothing: held whatever its layout.
+        cases += [(t, ("hold",)) for t in corpus.get("terse_hold") or []]
         cases += [("| Unit | State |\n| :-- | :-- |\n| relay | up |\n\nAll units are up.", ("hold",))]
         for text, want in cases:
             try:
@@ -751,9 +812,10 @@ def selftest():
         print("\n".join(bad))
         print("\n%d failure(s)" % len(bad))
         return 1
-    print("shape selftest: %d pass, %d hold, %d plain pass, %d plain hold, decide end to end, 0 wrong"
+    print("shape selftest: %d pass, %d hold, %d plain pass, %d plain hold, %d terse hold, decide end to end, 0 wrong"
           % (len(corpus.get("pass") or []), len(corpus.get("hold") or []),
-             len(corpus.get("plain_pass") or []), len(corpus.get("plain_hold") or [])))
+             len(corpus.get("plain_pass") or []), len(corpus.get("plain_hold") or []),
+             len(corpus.get("terse_hold") or [])))
     return 0
 
 

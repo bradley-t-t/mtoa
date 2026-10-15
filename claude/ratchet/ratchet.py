@@ -679,6 +679,90 @@ def closing_message(transcript, sidechain):
     return "\n".join(t for t in text if t).strip(), turn
 
 
+def held_rows(transcript):
+    """The uuids of the main-chain assistant rows closing_message() reads as the
+    attempt about to be sent - the rows a stop hold sends back."""
+    found = []
+    for row in reversed(list(rows(transcript))):
+        if row.get("isSidechain"):
+            continue
+        if row.get("type") == "assistant":
+            if parts(row, "tool_use"):
+                break
+            if parts(row, "text") and row.get("uuid"):
+                found.append(row["uuid"])
+        elif row.get("type") == "user":
+            break
+    return found
+
+
+# What a blanked attempt's text becomes, JSON-escaped: a zero-width space, the
+# same thing the display hook draws in its place, then spaces to the old length.
+# The zero-width space keeps the text from being whitespace alone, which the API
+# refuses when a resumed session sends the history back.
+BLANK = b"\\u200b"
+
+
+def blank_held(transcript):
+    """Blank a held attempt in the saved transcript. Returns how many rows changed.
+
+    The display hook hides a held reply only in the live stream. The CLI keeps
+    the stored message as written, and the desktop app redraws a chat from that
+    file whenever it loads it - opening it, switching back to it, a restart -
+    so every reply the stop hook sent back came back on reload, directly above
+    its rewrite: the same report twice in a row. This makes the file say what
+    the screen said.
+
+    The CLI appends to this file while the turn runs, so it is never truncated
+    or rewritten whole: only the bytes of the held text are overwritten in place,
+    with the same number of bytes, and a row that does not match exactly is left
+    as it is.
+    """
+    wanted = set(held_rows(transcript))
+    if not wanted:
+        return 0
+    patches, offset = [], 0
+    with open(transcript, "rb") as handle:
+        for line in handle:
+            start, offset = offset, offset + len(line)
+            if b'"uuid"' not in line:
+                continue
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("uuid") not in wanted or row.get("type") != "assistant":
+                continue
+            new = line
+            for part in (row.get("message") or {}).get("content") or []:
+                if not isinstance(part, dict) or part.get("type") != "text":
+                    continue
+                text = part.get("text") or ""
+                if not text.replace("​", "").strip():
+                    continue
+                key = b'"text":' + json.dumps(text, ensure_ascii=False).encode("utf-8")
+                width = len(key) - len(b'"text":""')
+                if new.count(key) != 1 or width < len(BLANK):
+                    continue
+                new = new.replace(key, b'"text":"' + BLANK + b" " * (width - len(BLANK)) + b'"')
+            if new == line or len(new) != len(line):
+                continue
+            try:
+                json.loads(new)
+            except ValueError:
+                continue
+            patches.append((start, new))
+    if not patches:
+        return 0
+    fd = os.open(transcript, os.O_WRONLY)
+    try:
+        for start, new in patches:
+            os.pwrite(fd, new, start)
+    finally:
+        os.close(fd)
+    return len(patches)
+
+
 def pending_prose(transcript):
     """Assistant prose written since the last tool call or real user message.
 
@@ -833,6 +917,11 @@ def emit(failure=False, again=False, **body):
         body["systemMessage"] = "; ".join(said)
     if not body:
         return
+    if body.get("decision") == "block" and HERE.get("blank"):
+        try:
+            blank_held(HERE["blank"])
+        except Exception:
+            pass
     EMITTED.append(True)
     print(json.dumps(body))
 
@@ -866,6 +955,10 @@ def checks(verb, payload=None, reply=None):
         return 0
     session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
     HERE.update(session=session, turn=turn)
+    if verb == "stop" and not sidechain and not DRY and reply is None:
+        # A hold from here on sends this attempt back; emit() blanks it in the
+        # saved transcript so a reloaded chat does not show it above the rewrite.
+        HERE["blank"] = transcript
 
     if not sidechain and not DRY and was_shown(session, turn, text):
         # The display hook already drew this reply. Holding it now would leave it

@@ -15,7 +15,8 @@
     "**Shipped.** Acme is live at 2026.41.24, and nothing on develop is waiting.\n\n- **What:** Release 2026.41.24 already carried everything, so the release had nothing new to move.\n- **Touched:** Local develop and main synced, and the merged fix/previews-fit-viewport branch deleted.\n- **Proof:** example.com serves 2026.41.24 matching main, the Vercel deploy succeeded, and the console is clean.",
     "**Fixed.** Sunday reads forwards again after 9 p.m.\n\n- **Why:** Piper loads a second speaker at 21:00 that reads right to left.\n- **What:** I pinned Piper to speaker 0 and restarted the voice server once.\n- **Touched:** `/data/sunday/config.json` on the cube, and the voice server on the Pi.\n- **Proof:** At 9:14 p.m. the cube said \"four\" forwards.",
     "**Kokoro af_heart.** It is the best free voice that runs on the Pi.\n\n- **Why:** Kokoro reads more naturally than Piper's medium voices.\n- **Proof:** I timed it at 0.3s per sentence on the Pi.",
-    "**Fixed.** The checkout page loads again.\n\n- **What:** I reverted the CSP header in [vercel.json](vercel.json:12) and redeployed.\n- **Proof:** The checkout page returned 200 and rendered with no console errors."
+    "**Fixed.** The checkout page loads again.\n\n- **What:** I reverted the CSP header in [vercel.json](vercel.json:12) and redeployed.\n- **Proof:** The checkout page returned 200 and rendered with no console errors.",
+    "**Fixed.** The right-hand rail no longer overlaps the clock.\n\n- **What:** I moved the rail below the clock in `deck.css`.\n- **Proof:** The installed deck shows the rail and the clock side by side."
   ],
   "hold": [
     "The grindlewump won't florp because its snazzle is in backwards.",
@@ -66,13 +67,21 @@
     "**Waiting on you.** Sending needs a restore request on alex@example.com, and your yes to sending about 680 held emails at once.\n\n- **Why:** Google disabled that account at 8:37 p.m. Tuesday for violating Google's policies.\n- **What:** The new password is in place and reply-reading works again.\n- **Proof:** Gmail accepted the new password for reading mail but refused it for sending.",
     "**Done.** The new password is in place and outreach reads replies again.\n\n- **What:** Sending resumes once you approve the 680 held emails.\n- **Proof:** Gmail accepted the new password for reading mail.",
     "**Fixed.** The checkout loads again, pending your sign-off on the CSP change.\n\n- **Proof:** The page returned 200.",
-    "**Blocked.** The migration needs your decision on the pricing floor."
+    "**Blocked.** The migration needs your decision on the pricing floor.",
+    "**You're right.** Since my last fix, 13 drafts in 5 sessions were written out, wiped and rewritten.\n\n- **What:** The hook hid each draft only on the live screen.\n- **Proof:** Replaying the hook hid all 11 drafts.",
+    "**Fixed.** Fair catch - the bar no longer cuts off the circle on the Mac or the PC.\n\n- **What:** I gave the bar one fixed width.\n- **Proof:** The installed bar showed in full after the overlay closed.",
+    "**Done.** You were right that the list had field jobs in it, so I took them out.\n\n- **What:** I searched every description for field work.\n- **Proof:** The republished list has none of the four roles.",
+    "**Yes.** As you suspected, the hook only hides the draft on the live screen.\n\n- **Proof:** The CLI documents the replacement as display-only."
   ],
   "plain_pass": [
     "Google is bouncing everything sent from you@example.com with a 550 5.7.26 error, because the domain's DMARC record fails alignment for that mailbox.",
     "It means Gmail rejects the outreach mailbox's messages before they reach an inbox. The domain's SPF record doesn't list the server that sends them.",
     "The relay retries three times and then drops the message.",
-    "Yes, the Pi runs the error monitor every fifteen minutes."
+    "Yes, the Pi runs the error monitor every fifteen minutes.",
+    "Right-click the session in the sidebar and choose Open in Split View.",
+    "Yes, every two hours.",
+    "No, the release on Tuesday carried it.",
+    "No. The release on Tuesday carried that commit."
   ],
   "plain_hold": [
     "Google is bouncing everything from the outreach mailbox. The DMARC record fails alignment. Every outreach message has bounced since Tuesday.",
@@ -85,6 +94,15 @@
     "- Google rejects the mail because DMARC fails.",
     "Fixed. Sunday reads forwards again after 9 p.m.",
     "The outreach mailbox sends again once you restore the account.",
-    "It is up to you whether the roster keeps the column."
+    "It is up to you whether the roster keeps the column.",
+    "You're absolutely right, the cron runs every fifteen minutes.",
+    "Good point, the roster keeps the column.",
+    "Yes, the overlay is running on both machines and the small bar now matches the caption design from the deck.",
+    "The Pi runs the error monitor every ten minutes, and it only starts a turn when a ticket labelled auto-report or maintenance is open and nobody has claimed it yet this morning or any time since then."
+  ],
+  "terse_hold": [
+    "**Yes.** The bar matches the caption.\n\n- **Proof:** The installed bar showed in full.",
+    "**No.** It did not reach the Pi, because the deploy script stopped before the restart and the old server kept running.",
+    "Yes, the overlay is running on both machines and the small bar now matches the caption design from the deck."
   ]
 }
