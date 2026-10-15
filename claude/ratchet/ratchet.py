@@ -668,6 +668,28 @@ def closing_message(transcript, sidechain):
     return "\n".join(t for t in text if t).strip(), turn
 
 
+def pending_prose(transcript):
+    """Assistant prose written since the last tool call or real user message.
+
+    This is narration - a line put on the screen before the work is finished.
+    Empty when the step opened straight on a tool call, which is how a turn
+    should run. A tool call ends the step; so does any user row, whether a real
+    message or a tool result coming back. Thinking is not counted, only text the
+    user would have seen."""
+    text = []
+    for row in reversed(list(rows(transcript))):
+        if row.get("isSidechain"):
+            continue
+        kind = row.get("type")
+        if kind == "assistant":
+            if parts(row, "tool_use"):
+                break
+            text = parts(row, "text") + text
+        elif kind == "user":
+            break
+    return "\n".join(t for t in text if t and t.strip()).strip()
+
+
 REASON = """Ratchet: this turn is ending while its own closing text names work it \
 did not do.
 
@@ -739,6 +761,11 @@ AGAIN = """%s: held again, on text this turn has not been held on before.
 The hold earlier in this turn says what to do, and it still applies."""
 
 LAST = "\n\nThis is the last hold on this turn; the next stop goes through."
+
+NARRATE = """Ratchet: this turn wrote prose before the work was finished, and the app drew it on the user's screen as narration.
+
+%s
+Write nothing until the finished reply. No progress notes - not what you are about to do, not what you just did, not a word between tool calls. Run the tools in silence and write the one reply when the work is done and proven. Re-run the tool you were about to; this will not stop that line again."""
 
 
 # A check that lets a stop through can still have something to say about it. It
@@ -1306,6 +1333,48 @@ def pre_say():
         return 0
     tell(session, turn, "say", quoted)
     reason = premature.speech_reason(rule, claim) if how == "full" else AGAIN % ("Ratchet", quoted)
+    emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                             "permissionDecisionReason": reason})
+    return 0
+
+
+def pre_guard():
+    """PreToolUse on the work tools: deny a tool call that follows narration.
+
+    The shape says write nothing until the work is finished, and neither backstop
+    can hold a turn to it. The display hook cannot: when a line of prose streams,
+    the tool call that would mark it as narration does not exist in the transcript
+    yet, so it is byte for byte a plain answer and is drawn. The stop hook will
+    not: it judges only the sign-off after the last tool call and steps past
+    everything before it. So prose between tool calls reaches the screen with
+    nothing watching. The one moment it is detectable is the tool call it sits in
+    front of, so the tool is denied here, once per piece of prose - the turn then
+    stops writing more. It cannot pull back what already drew; the app streams a
+    line as it is written and nothing can. It is the enforcement the other two
+    structurally cannot give."""
+    if BOOL_ENV.get((os.environ.get("RATCHET_OFF") or "0").strip().lower(), False):
+        return 0
+    try:
+        payload = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace") or "{}")
+    except ValueError:
+        return 0
+    if payload.get("agent_id") or payload.get("agent_type"):
+        return 0
+    transcript = payload.get("transcript_path")
+    if not transcript or not Path(transcript).is_file():
+        return 0
+    prose = pending_prose(transcript)
+    if len(prose.split()) < 3:
+        return 0
+    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    turn = closing_message(transcript, False)[1]
+    one = " ".join(prose.split())
+    quoted = '  "%s"\n' % (one if len(one) <= 100 else one[:97] + "...")
+    how = told(session, turn, "narrate", quoted)
+    if not how:
+        return 0
+    tell(session, turn, "narrate", quoted)
+    reason = NARRATE % quoted if how == "full" else AGAIN % ("Ratchet", quoted)
     emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
                              "permissionDecisionReason": reason})
     return 0

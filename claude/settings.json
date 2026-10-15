@@ -70,6 +70,15 @@
             "timeout": 90
           }
         ]
+      },
+      {
+        "matcher": "Bash|Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Glob|Task|Skill|WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" guard"
+          }
+        ]
       }
     ],
     "PostToolUse": [
