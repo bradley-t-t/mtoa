@@ -68,6 +68,21 @@ CASES = [
         heard(0, "q1", "Sunday, yes. What are my Mac's speakers doing?"), said(1, "q1", NEWS),
         heard(300, "q2", "Sunday, yes. What time does the roofer get here?"), said(301, "q2", NEWS),
     ]),
+    # Asking what was said is asking for it again, and the answer is the line itself. The
+    # 1:24:28 PM answer of 2026-10-15 to "Sunday, what did you say?" went out as a repeat.
+    ("asked what was said, and heard the last line again", 0, [
+        heard(0, "q1", "Sunday, how many previews have we sent today?"), said(1, "q1", NEWS),
+        heard(60, "q2", "Sunday, what did you say?"), said(61, "q2", NEWS),
+    ]),
+    ("asked to repeat with something said in between", 0, [
+        heard(0, "q1", "What are my Mac's speakers doing?"), said(1, "q1", NEWS),
+        said(40, "q2", TIME, source="say"),
+        heard(80, "q3", "Sunday, say that again."), said(81, "q3", NEWS),
+    ]),
+    ("asking what was said about something else is a question of its own", 1, [
+        heard(0, "q1", "What are my Mac's speakers doing?"), said(1, "q1", NEWS),
+        heard(300, "q2", "Sunday, what did you say about the roofer?"), said(301, "q2", NEWS),
+    ]),
     ("asked again, but the first ask was never kept", 1, [
         heard(0, "q1", "What are my Mac's speakers doing?", discarded="not his voice"),
         said(1, "q1", NEWS, source="say"),

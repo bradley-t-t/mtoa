@@ -10,7 +10,8 @@ and why it was cut off). This reads the last few hours of both and flags:
 
   repeat       the same or nearly the same line said twice within half an hour,
                unasked for the second time - asked again counts however differently
-               the mic wrote the second ask down
+               the mic wrote the second ask down, and asking what was said is asking
+               for it again
   self-heard   a "heard" line the server kept that is Sunday's own recent speech picked
                up by the mic
   double-heard the same words heard twice within a minute, with no answer in between
@@ -90,6 +91,38 @@ def same_line(a: str, b: str) -> bool:
 # a different question from "Sunday, Sunday, what time is it?" twenty-seven seconds before.
 ASK_NOISE = re.compile(r"^(?:sunday|sundays|sunday's|sundae|sundaes|someday|sonday|sundy"
                        r"|monday|mondays|sunny|hey|ok|okay|yo|um|uh|so|and)$")
+
+
+# Asking to hear something again. The guard already works this way - a request of his moves
+# the starting point, so the line the request asks for is never held back at the speaker -
+# and the audit has to draw the same line or every "what did you say?" goes out as a fault:
+# "Sunday, what did you say?" at 1:24:28 PM on 2026-10-15 was answered with the previews
+# count from eight minutes before, correctly, and mailed as a repeat. The ask has to be the
+# whole of what he said once the wake word is off it, because "What did you say about the
+# roofer?" is a question with an answer of its own rather than a request to hear the last
+# one back, and a line said again off one of those is still a fault.
+SAY_AGAIN = re.compile(r"^(?:(?:sorry|please|wait|again)\s+)*"
+                       r"(?:(?:can|could|will|would)\s+you\s+)?(?:please\s+)?"
+                       r"(?:what\s+(?:did|do)\s+you\s+(?:just\s+)?say"
+                       r"|what\s+was\s+(?:that|it)"
+                       r"|say\s+(?:that|it)\s+again"
+                       r"|say\s+again"
+                       r"|repeat\s+(?:that|it|yourself)"
+                       r"|repeat"
+                       r"|come\s+again"
+                       r"|one\s+more\s+time"
+                       r"|i\s+(?:didn't|did\s+not|couldn't|could\s+not)\s+(?:hear|catch)"
+                       r"\s+(?:you|that|it|what\s+you\s+said)"
+                       r"|i\s+missed\s+that)"
+                       r"(?:\s+(?:again|please|one\s+more\s+time|for\s+me))*$")
+
+
+def asked_to_repeat(text) -> bool:
+    """He asked to hear the last thing again, rather than asking anything new."""
+    words = norm(text).split()
+    while words and ASK_NOISE.match(words[0]):
+        words.pop(0)
+    return bool(words) and bool(SAY_AGAIN.match(" ".join(words)))
 
 
 def ask_core(text: str) -> list:
@@ -219,7 +252,7 @@ def audit(rows, window_start):
             if a.get("qid") == b.get("qid") and a.get("device") != b.get("device"):
                 continue
             if same_line(spoken_text(a), spoken_text(b)):
-                if asked_again(a, b):
+                if asked_again(a, b) or asked_to_repeat(asked_for.get(b.get("qid"))):
                     continue
                 kind = "late-relay" if a.get("source") == b.get("source") == "relay" else "repeat"
                 flag(kind, b["at"], f'{when(b["at"])} said again ({b.get("source")}, first at {when(a["at"])}): '
