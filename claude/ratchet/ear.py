@@ -61,7 +61,7 @@ RULES = [
                         r"|`[^`]+`|\b[a-z]+(?:_[a-z0-9]+)+\b|\bv?\d+\.\d+\.\d+\b"),
      "a link, path, file name or code cannot be said; name the thing instead: \"the status page\", \"the voice server\""),
     ("ID", re.compile(r"\b(?=[A-Za-z0-9_]*\d)(?=[A-Za-z0-9_]*[A-Za-z])[A-Za-z0-9_]{9,}\b|\b(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{7,40}\b"),
-     'an ID or hash is noise aloud; leave it out or name what it belongs to: "the go-kart account"'),
+     'an ID or hash is noise aloud; leave it out or name what it belongs to: "the client\'s account"'),
 ]
 
 # Past this, it is a written report, not something said.
@@ -134,7 +134,7 @@ HELD = [
     "Copied 1,204 files.",
     "It answered in 250 ms.",
     "The numbers add up: 792.30 − 24.77 = 767.53.",
-    "Those went to acct_1SeczMD0BsBh1eOg.",
+    "Those went to acct_1AbcDEfgHIjkLMno.",
     "The fix is in voice_server.py now.",
     "It's live at https://example.com/status.",
     "Fix the copy, e.g. the hero line.",
@@ -159,7 +159,7 @@ CLEAR = [
     "The site is live, and the letters go out at seven tomorrow morning.",
     "On your emails, nothing new from a person since yesterday.",
     "I'm rebuilding the overlay now, and I'll tell you when it's on your Mac.",
-    "Acme kept about two hundred forty-four dollars in October.",
+    "You kept about two hundred forty-four dollars in October.",
     "Yes, all thirteen previews loaded on a phone.",
     "The breakdown is on your screen.",
     "It's three times faster than it was this morning.",
