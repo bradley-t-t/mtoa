@@ -1112,6 +1112,13 @@ def display():
         if shape.skipped(transcript, body):
             return 0
         session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        # The turn this reply answers, keyed exactly as the stop hook keys it, so
+        # the "shown" record below lands where was_shown() will read it. Computed
+        # before the budget timer starts, since it walks the transcript. Without
+        # this `turn` was never defined here: tell() raised NameError, the except
+        # swallowed it, nothing was ever recorded, and the stop hook held every
+        # reply already on screen - the double render that kept coming back.
+        turn = closing_message(transcript, False)[1] if transcript else None
         delta = payload.get("delta") or ""
         final = bool(payload.get("final", True))
         whole = payload.get("index", 0) == 0 and final
