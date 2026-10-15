@@ -108,15 +108,19 @@ turn at the AskUserQuestion tool: ask inside the turn, get the answer, finish.
 A question that one or two sentences answer gets a plain answer instead: at most
 two unformatted sentences and 320 characters, no claim of work done
 (`plain_claims`), no aside, and only in a turn that used no edit tool. A plain
-answer is shown as written, not hidden. It once was hidden like narration and
-brought back by a word-for-word resend once the stop hook confirmed it ended the
-turn, but the desktop app (build 2.37337+) drops an identical resend as a
-duplicate and never draws it, so every short reply vanished - hidden, then its
-resend swallowed. The display hook now only hides what the turn will replace
-with DIFFERENT text that the app does draw: a genuine hold, or an in-shape reply
-the stop pipeline sends back. The cost is that a bare mid-turn narration line,
-which reads like a plain answer, can show; the silent-turn reminder that drove
-most of those is off, so it is rare.
+answer is written inside a respond block - ```respond, then `plain: ...`, then
+the fence - and the display hook draws its render (`respond.block`). Bare prose
+is never drawn. The CLI calls the display hook on a finished text block and
+waits on it before it reads the next one (probed headless: a hook that waited
+eight seconds for the following tool call held that call back for exactly as
+long), so when a line of prose is drawn nothing anywhere says whether a tool call
+follows it, and a line of narration and a one-line answer are the same bytes.
+The block is what marks the answer. Bare prose that ends a turn is held
+(`shape.PROSE`) and comes back as a block - different text from the hidden draft,
+and drawn with a trailing zero-width space, because the desktop app (build
+2.37337+) drops a byte-identical resend as a duplicate; that drop is why the old
+word-for-word resend made every short reply vanish. Replayed over every narration
+line in two long sessions, 153 of 153 were hidden.
 
 Three hooks share one decision (`shape.decide`) and one per-turn state, so the
 screen and the stop never disagree. `MessageDisplay` (`hook.py display`) runs

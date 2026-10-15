@@ -86,6 +86,43 @@ def respond(fields, body=None):
 HEAD = re.compile(r"^\*\*(?P<verdict>[^*]+?)\.\*\*(?:\s+(?P<answer>.*))?$")
 BULLET = re.compile(r"^-\s+\*\*(?P<label>Why|What|Touched|Proof):\*\*\s*(?P<value>.*)$", re.I)
 
+# A respond block: ```respond, then `key: value` lines, then the same fence. A
+# longer fence (````respond) lets a form carry a code block of its own. A line
+# that starts no key continues the one above it, and a form runs to the fence.
+FENCE = re.compile(r"(?ms)^(?P<fence>`{3,})respond[ \t]*\n(?P<body>.*?)^(?P=fence)[ \t]*$")
+KEY = re.compile(r"^\s*(verdict|answer|why|what|touched|proof|plain|form)\s*:[ \t]?(.*)$", re.I)
+
+
+def block_fields(text):
+    """The fields of the last respond block in the text, or None when it has none."""
+    found = None
+    for found in FENCE.finditer(text or ""):
+        pass
+    if found is None:
+        return None
+    fields, key = {}, None
+    for line in found.group("body").splitlines():
+        hit = None if key == "form" else KEY.match(line)
+        if hit:
+            key = hit.group(1).lower()
+            fields[key] = hit.group(2).rstrip()
+        elif key:
+            fields[key] += "\n" + line
+    fields = {k: v.strip() for k, v in fields.items() if v.strip()}
+    return fields or None
+
+
+def block(text):
+    """The reply a respond block renders to, or None when the text carries none.
+
+    This is how a plain answer reaches the screen. Bare prose is never shown,
+    because when it is drawn nothing yet says whether a tool call follows it -
+    a one-line answer and a line of narration are the same bytes. A respond
+    block is never narration, so the display hook draws its render and hides
+    everything else."""
+    fields = block_fields(text)
+    return render(fields) if fields else None
+
 
 def parse(text):
     """A reply's text back into fields, or None when it is not a reply we can
@@ -97,15 +134,8 @@ def parse(text):
     text = (text or "").strip()
     if not text:
         return None
-    block = re.search(r"```respond\s*\n(.*?)```", text, re.S)
-    if block:
-        fields = {}
-        for line in block.group(1).splitlines():
-            m = re.match(r"\s*(verdict|answer|why|what|touched|proof|plain|form)\s*:\s*(.*)",
-                         line, re.I)
-            if m:
-                fields[m.group(1).lower()] = m.group(2).strip()
-        return fields or None
+    if FENCE.search(text):
+        return block_fields(text)
     lines = text.split("\n")
     head = HEAD.match(lines[0].strip())
     if head:
@@ -197,6 +227,26 @@ def selftest():
                  "Okay, now I'll run the tests, then sync, then report back to you."):
         if canonical(junk, body)[0] is not None:
             bad.append("canonical rendered narration as a reply: %r" % junk)
+    # a respond block renders; bare prose and a shaped reply carry none
+    answer = "Gmail bounced it because the DMARC policy rejects Resend's signing domain."
+    blocks = [
+        ("plain block", "```respond\nplain: %s\n```" % answer, answer),
+        ("prose before the block is dropped", "Here it is.\n\n```respond\nplain: %s\n```" % answer, answer),
+        ("a value runs onto the next line", "```respond\nplain: Gmail bounced it because the DMARC\npolicy rejects Resend's signing domain.\n```",
+         "Gmail bounced it because the DMARC\npolicy rejects Resend's signing domain."),
+        ("shape block", "```respond\nverdict: Yes\n```", "**Yes.**"),
+        ("form carries its own code fence", "````respond\nform: Run this:\n```bash\nls\n```\n````",
+         "Run this:\n```bash\nls\n```"),
+        ("the last block is the reply", "```respond\nplain: first\n```\n```respond\nplain: %s\n```" % answer, answer),
+    ]
+    for name, text, want in blocks:
+        got = block(text)
+        if got != want:
+            bad.append("block (%s): wanted %r, got %r" % (name, want, got))
+    for name, text in (("bare prose", answer), ("narration", "Confirmed. Now the fix - compute turn in display():"),
+                       ("shaped reply", hand)):
+        if block(text) is not None:
+            bad.append("block rendered %s, which carries no respond block" % name)
     if bad:
         print("\n".join(bad))
         print("\n%d failure(s)" % len(bad))

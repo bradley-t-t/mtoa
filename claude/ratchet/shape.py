@@ -40,9 +40,9 @@ Three stages, cheapest first.
 A question that one or two sentences answer, in a turn that edited nothing, is
 answered in exactly that: one or two plain sentences, no formatting, nothing
 off the point (`plain`). Plain prose is also what narration looks like, and
-nothing at display time says which it is, so a plain answer is kept off the
-screen until the stop hook has seen it end the turn; the stop hook then asks
-for it again word for word (RESEND), and the resend is shown.
+nothing at display time says which it is, so a plain answer is written inside a
+respond block and only its render is shown; bare prose is kept off the screen
+and sent back to be written as a block (PROSE).
 
 The same decision runs twice. The MessageDisplay hook sees each message before
 it is drawn and keeps one out of shape off the screen; the Stop hook then sends
@@ -524,9 +524,10 @@ def decide(text, transcript, session, turn, cfg, body=None):
         return ("show", None)
     if not plain(text, body, changed_this_turn(transcript, turn)):
         # A sentence or two of plain prose is also exactly what narration looks
-        # like, and nothing at display time says which this is. So it stays off
-        # the screen until the stop hook has seen it end the turn, and is shown
-        # when it is sent again (see RESEND).
+        # like, and nothing at display time says which this is. The caller
+        # tells them apart by the respond block: a plain answer rendered from
+        # one is shown, and bare prose is held off the screen (ratchet's
+        # shape_hold, PROSE) and sent back to be written as one.
         return ("plain", approved(session, turn, text))
     found = problems(text, body)
     if not found:
@@ -581,7 +582,13 @@ Keep every fact that answers the request and drop the rest. Where a sentence you
 # twice, once wrong and once fixed, and the only real cure is the first draft.
 REMINDER = """Every closing reply takes one of two forms, unless this message asks for another in so many words (a table, a draft, code, a long explanation).
 
-1. A question that one or two sentences answer, in a turn that changes nothing: exactly that. One or two plain sentences, under %(plain)d words, no bold, no list - the answer itself and nothing beside it. For example: Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain and example.com's DMARC policy rejects that. It is held back until the stop check confirms it ends the turn, and you are then asked to send it again word for word - do, unchanged.
+1. A question that one or two sentences answer, in a turn that changes nothing: exactly that. One or two plain sentences, under %(plain)d words, no bold, no list - the answer itself and nothing beside it - written inside a respond block, which is what puts it on the screen as plain sentences:
+
+```respond
+plain: Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain and example.com's DMARC policy rejects that.
+```
+
+Prose outside a respond block or the shape below is never shown. A line of prose is drawn before anything says whether a tool call follows it, so narration and a short answer are the same until the block marks which is which.
 
 2. Work that was done, or an answer that needs more: the shape. It looks exactly like this:
 
@@ -617,6 +624,18 @@ def reminder(body=None):
     return REMINDER % {"plain": int(body.get("plain_max_words") or 45),
                        "sentence": int(body.get("sentence_max_words") or 30),
                        "line": int(body.get("line_max_words") or 40)}
+
+
+PROSE = """Shape: that reply was kept off the screen and the user has not seen it. Prose is only ever shown inside a respond block or in the shape, because a line of prose is drawn before anything says whether a tool call follows it, and narration looks exactly like a short answer.
+
+%s
+Send the answer again as a respond block, with nothing before or after it:
+
+```respond
+plain: <the answer, one or two sentences>
+```
+
+If the turn changed anything, or the answer needs more than two sentences, write it in the shape instead. Output a slash command's skill sets out for itself goes in the block as `form:`."""
 
 
 RESEND = """Shape: that reply is a plain answer, and it is confirmed as the turn's final reply. Plain text is kept off the screen until this check has seen it end the turn, because a sentence or two of prose is exactly what narration looks like - so the user has not seen it yet.

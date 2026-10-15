@@ -135,9 +135,10 @@ what you are doing is answered by finishing the work.
 
 A question that one or two sentences answer, in a turn that changed nothing, gets
 exactly that instead of the shape: one or two plain sentences, no formatting,
-the answer itself and nothing beside it. Plain prose looks like narration until
-the turn has ended, so it is held back until the stop check confirms it and is
-then sent again word for word, and that copy is the one I see.
+the answer itself and nothing beside it. Plain prose is drawn before anything
+says whether a tool call follows it, so it looks exactly like narration; the
+answer is written inside a ```respond block and shown as plain sentences, and
+prose outside a block or the shape never reaches my screen.
 
 **Ratchet** refuses a stop whose closing prose names work the turn could have
 done itself. One user message buys three holds at most. A hold is answered by

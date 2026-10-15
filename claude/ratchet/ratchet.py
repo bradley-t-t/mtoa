@@ -873,7 +873,19 @@ def checks(verb, payload=None, reply=None):
         # been recurring. The checks all ran at display time, before the draw.
         return 0
 
-    if not sidechain and shape_hold(cfg, payload, transcript, text, turn):
+    # A respond block is judged as the reply it renders to - the plain sentences
+    # or the shape - since that is what the display hook draws.
+    blocked = False
+    if not sidechain:
+        try:
+            import respond
+            rendered = respond.block(text)
+        except Exception:
+            rendered = None
+        if rendered is not None:
+            text, blocked = rendered, True
+
+    if not sidechain and shape_hold(cfg, payload, transcript, text, turn, blocked):
         return 0
 
     if not sidechain and respond_hold(cfg, payload, transcript, text, turn):
@@ -954,8 +966,13 @@ def checks(verb, payload=None, reply=None):
     return 0
 
 
-def shape_hold(cfg, payload, transcript, text, turn):
+def shape_hold(cfg, payload, transcript, text, turn, blocked=False):
     """Hold a reply that is not in the reply shape, unless the user asked for another form.
+
+    `blocked` says the text is the render of a respond block. A plain answer is
+    shown only from one: bare prose is held, because at display time nothing
+    says whether a tool call follows it, and a line of narration and a one-line
+    answer are the same bytes.
 
     Walled off from the rest: a broken shape.json or a parse that throws lets this
     one check through and leaves every other check in the file running.
@@ -970,11 +987,30 @@ def shape_hold(cfg, payload, transcript, text, turn):
             NOTES.append(("shape: out of shape on request - %s" % outcome[1], False))
         if outcome[0] == "capped":
             NOTES.append(("shape: let a reply through out of shape after %d holds" % outcome[1], False))
+        if outcome[0] == "plain" and not blocked:
+            # Bare prose. It never reaches the screen, and the rewrite is a
+            # respond block - different text, so the app draws it rather than
+            # dropping it as a duplicate the way it dropped a word-for-word
+            # resend. Past the turn's hold limit it is let through, and the
+            # display hook, deciding the same way, shows it as written.
+            mark = shape.load(shape.state(session), turn or "unknown")
+            if int(mark.get("count") or 0) >= int(shape.rules().get("holds") or 5):
+                return False
+            kind, quoted = "shape:prose", '  "%s"\n' % shape.clip(text)
+            how = told(session, turn, kind, quoted)
+            if not how:
+                return False
+            if not DRY:
+                shape.count_hold(session, turn)
+                tell(session, turn, kind, quoted)
+            emit(again=how == "short",
+                 reason=shape.PROSE % quoted if how == "full" else AGAIN % ("Shape", quoted),
+                 decision="block",
+                 systemMessage="shape: held bare prose off the screen")
+            return True
         if outcome[0] != "hold":
-            # A plain answer is shown as written at display time, and anything
-            # excused or past the hold cap is let through. The display hook
-            # never withholds a reply whose only recovery is an identical
-            # resend, so there is nothing stranded off the screen to send back.
+            # A plain answer from a respond block is shown as rendered, and
+            # anything excused or past the hold cap is let through.
             return False
         _, found, why = outcome
         kind, quoted = shape_said(found)
@@ -1013,6 +1049,12 @@ def respond_hold(cfg, payload, transcript, text, turn):
     """
     try:
         import respond
+        import shape
+        # Only a reply in the shape is respond's to render. A slash command's
+        # own output, or anything shape let through past the hold limit, is not
+        # a verdict reply and was never meant to parse as one.
+        if shape.command(transcript, turn) or not respond.HEAD.match(text.strip().split("\n")[0]):
+            return False
         rendered, problems = respond.canonical(text)
         if not problems:
             return False
@@ -1167,8 +1209,16 @@ def display():
                 # what the screen carries.
                 try:
                     import respond
-                    rendered, _ = respond.canonical(text)
-                    shown = rendered if rendered is not None else text
+                    drawn = respond.block(text)
+                    if drawn is not None:
+                        # A respond block is drawn as its render. The trailing
+                        # zero-width space keeps the drawn text from ever being
+                        # byte-identical to bare prose held earlier in the turn,
+                        # which the app would drop as a duplicate.
+                        shown = drawn + HIDDEN
+                    else:
+                        rendered, _ = respond.canonical(text)
+                        shown = rendered if rendered is not None else text
                 except Exception:
                     shown = text
         except OutOfTime:
