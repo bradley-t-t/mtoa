@@ -385,6 +385,17 @@ def squash(text):
     return " ".join(re.sub(r"[‘’]", "'", re.sub(r"[“”]", '"', text)).lower().split())
 
 
+def command(transcript, turn):
+    """The slash command the user typed this turn, or None. The cheap, judge-free
+    half of the slash-command excuse, so the truth-judges (premature, unchecked,
+    recall) can stand down on a /command turn the way the shape check already
+    does - the skill sets its own output and has run its own verification, and
+    re-judging its summary only churns a rewrite the display hook shows twice."""
+    current, _ = words(transcript, turn)
+    m = re.search(r"<command-name>\s*(/[^<\s]+)", current or "")
+    return m.group(1) if m else None
+
+
 def excused(transcript, turn, text, cfg):
     """(True, why) when the person asked for another form, else (False, problem-or-None)."""
     import ratchet

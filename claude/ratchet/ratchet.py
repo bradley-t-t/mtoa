@@ -1102,6 +1102,9 @@ def prompt_context():
 def premature_hold(cfg, payload, transcript, text, turn):
     """Hold a stop whose closing text states as done what is still running."""
     import premature
+    import shape
+    if shape.command(transcript, turn):
+        return False
     flight = premature.in_flight(transcript)
     binary = claude_binary()
     if not flight or not binary or not cfg["judge"]:
@@ -1128,6 +1131,9 @@ def premature_hold(cfg, payload, transcript, text, turn):
 def recall_hold(cfg, payload, transcript, text, turn):
     """Hold a stop when the user flagged recurring work and the turn never read the transcripts."""
     import recall
+    import shape
+    if shape.command(transcript, turn):
+        return False
     if not recall.should_hold(transcript):
         return False
     session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
@@ -1150,6 +1156,9 @@ def recall_hold(cfg, payload, transcript, text, turn):
 def unchecked_hold(cfg, payload, transcript, text, turn):
     """Hold a stop that hands back an inability the turn never checked for a route to."""
     import unchecked
+    import shape
+    if shape.command(transcript, turn):
+        return False
     binary = claude_binary()
     if not binary or not cfg["judge"] or not unchecked.flags(text):
         return False
