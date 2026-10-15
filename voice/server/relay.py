@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pass a spoken message to one of the owner's existing Claude Code chats.
 
-    relay.py send <session id> "<message>"
+    relay.py send <session id> "<message>"   a copy goes to the desk too, so work it has running adapts
     relay.py new <folder on the Mac> "<task>"
     relay.py ask <session id> "<question>"    waits up to ASK_WAIT seconds for that chat's answer; a
                                               question about where work stands goes to the desk, which
@@ -139,7 +139,17 @@ SPEAK_BACK = (
 )
 
 
+# Every change of course the desk hears is applied to the work it has running, its background agents too,
+# because the desk takes the voice tasks and hands each one to an agent of its own.
+ADAPT = ("\n\n(If this touches work you are running or have handed to a background agent, apply it there "
+         "before anything else: send it to that agent with SendMessage, or stop the agent and brief a new one, "
+         "and change any work of your own the same way. What is said by voice outranks an earlier answer in chat.)")
+
+
 def send(sid: str, message: str):
+    if not message.strip():
+        log("send refused, nothing to send, was for", sid)
+        sys.exit("nothing to send")
     row = session(sid)
     if row[3] != DESK and machinery(row):
         # A judge or a delivery run never did the work, so a change of course goes to the desk.
@@ -147,19 +157,34 @@ def send(sid: str, message: str):
         message += f"\n\n(This is about the work titled {json.dumps(row[3] or 'untitled')}.)"
         row = session("desk")
     sid, machine, cwd, title = row
-    subprocess.Popen([sys.executable, __file__, "_run", sid, message],
+    subprocess.Popen([sys.executable, __file__, "_run", sid, message + (ADAPT if title == DESK else "")],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    if title != DESK:
+        # The desk may be running this same work in an agent of its own, so the change reaches it too.
+        subprocess.Popen([sys.executable, __file__, "_copy", title or "untitled", message],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     print(f"passing it to '{title}' on {machine}; its reply will be spoken when it arrives")
 
 
-def deliver_live(title: str, message: str) -> bool:
+def copy_to_desk(title: str, message: str):
+    """Put a change of course sent to another chat in front of the live desk as well. Nothing is
+    said aloud for it unless it changed work the desk had running; the chat it was for answers."""
+    note = (_render("\n\n(A copy of what {user} said by voice to the chat titled ") + json.dumps(title)
+            + _render(", which answers {him}. If it touches nothing you are running, do nothing and have nothing "
+                      "read aloud. If you changed or stopped work for it, say so in one plain sentence by running: ")
+            + "ssh " + HOST + " \"curl -s --get localhost:8794/say --data-urlencode text='<that sentence>'\")" + VOICE)
+    log("copy ->", DESK, "| was for", title, "|", message)
+    deliver_live(DESK, message + ADAPT, note)
+
+
+def deliver_live(title: str, message: str, back: str = SPEAK_BACK) -> bool:
     """Hand the message to the live desktop session with this title, if one is open."""
     if not title:
         return False
     prompt = (
         "Call ListAgents. If a session titled exactly " + json.dumps(title) + " is listed, call SendMessage "
         "to it with exactly the text between the markers, unchanged, and then print DELIVERED. If no such "
-        "session is listed, print NOT_LIVE and do nothing else.\n<<<\n" + message + SPEAK_BACK + "\n>>>"
+        "session is listed, print NOT_LIVE and do nothing else.\n<<<\n" + message + back + "\n>>>"
     )
     p = on("mac", "cd ~ && claude -p --permission-mode bypassPermissions --output-format text "
                   + shlex.quote(prompt) + " < /dev/null", 300)
@@ -218,7 +243,9 @@ def _run_new(folder: str, task: str):
     log("new chat in", folder, "|", task)
     brief = (_render("New task from {user} by voice.") + f" Work it in {folder}.\n\n{task}{NEW_SUFFIX}\n\n"
              "(Run it in a background agent with a complete brief, as you do for every task here, and keep "
-             "taking messages. When it finishes, or needs his decision, have the answer read aloud as below.)")
+             "taking messages. Whatever is said by voice about this work later reaches you here: pass it to that "
+             "agent before anything else, or stop the agent and brief a new one. When it finishes, or needs his "
+             "decision, have the answer read aloud as below.)")
     if deliver_live(DESK, brief):
         return ""   # the desk speaks the result itself
     log("desk not live; running headless, which lacks his app connectors")
@@ -442,6 +469,8 @@ if __name__ == "__main__":
         send(sys.argv[2], sys.argv[3])
     elif len(sys.argv) == 4 and sys.argv[1] == "_run":
         run(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 4 and sys.argv[1] == "_copy":
+        copy_to_desk(sys.argv[2], sys.argv[3])
     elif len(sys.argv) == 4 and sys.argv[1] == "ask":
         print(ask(sys.argv[2], sys.argv[3]))
     elif len(sys.argv) == 6 and sys.argv[1] == "_ask":

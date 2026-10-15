@@ -2563,10 +2563,6 @@
   "voice",
   "popup/host.js"
  ],
- "voice/popup/index.html": [
-  "voice",
-  "popup/index.html"
- ],
  "voice/popup/main.js": [
   "voice",
   "popup/main.js"
@@ -2591,9 +2587,29 @@
   "voice",
   "popup/native/ear-audio.swift"
  ],
+ "voice/popup/native/front-watch": [
+  "voice",
+  "popup/native/front-watch"
+ ],
+ "voice/popup/native/front-watch.ps1": [
+  "voice",
+  "popup/native/front-watch.ps1"
+ ],
+ "voice/popup/native/front-watch.swift": [
+  "voice",
+  "popup/native/front-watch.swift"
+ ],
  "voice/popup/native/game-watch.ps1": [
   "voice",
   "popup/native/game-watch.ps1"
+ ],
+ "voice/popup/native/presentation.m": [
+  "voice",
+  "popup/native/presentation.m"
+ ],
+ "voice/popup/native/presentation.node": [
+  "voice",
+  "popup/native/presentation.node"
  ],
  "voice/popup/package-lock.json": [
   "voice",

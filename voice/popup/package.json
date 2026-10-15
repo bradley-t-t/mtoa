@@ -9,7 +9,7 @@
     "start": "electron .",
     "dist:mac": "npm run vendor && npm run host && npm run build:native && electron-builder --mac zip --arm64",
     "dist:win": "npm run vendor && npm run host && electron-builder --win zip --x64",
-    "build:native": "swiftc -O -target arm64-apple-macos14.2 -o native/audio-playing native/audio-playing.swift && swiftc -O -target arm64-apple-macos14.2 -o native/ear-audio native/ear-audio.swift",
+    "build:native": "swiftc -O -target arm64-apple-macos14.2 -o native/audio-playing native/audio-playing.swift && swiftc -O -target arm64-apple-macos14.2 -o native/ear-audio native/ear-audio.swift && swiftc -O -target arm64-apple-macos14.2 -o native/front-watch native/front-watch.swift && clang -O2 -target arm64-apple-macos14.2 -bundle -undefined dynamic_lookup -framework AppKit -I\"$(node -p \"require('path').resolve(process.execPath, '../../include/node')\")\" -o native/presentation.node native/presentation.m",
     "vendor": "node vendor.js",
     "host": "node host.js"
   },
@@ -20,7 +20,9 @@
       "main.js",
       "host.json",
       "preload.js",
-      "index.html",
+      "deck.html",
+      "deck.css",
+      "deck.js",
       "canvas.html",
       "canvas.css",
       "canvas.js",
@@ -51,6 +53,14 @@
             "mac_ear.py",
             "wake/**"
           ]
+        },
+        {
+          "from": "native/front-watch",
+          "to": "front-watch"
+        },
+        {
+          "from": "native/presentation.node",
+          "to": "presentation.node"
         }
       ]
     },
@@ -64,6 +74,10 @@
         {
           "from": "native/game-watch.ps1",
           "to": "game-watch.ps1"
+        },
+        {
+          "from": "native/front-watch.ps1",
+          "to": "front-watch.ps1"
         }
       ]
     },

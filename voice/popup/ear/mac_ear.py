@@ -30,6 +30,8 @@ Sunday.app starts this at login:  mac_ear.py <ear-audio helper> <wake model dir>
 
 import asyncio
 import base64
+import ctypes
+import ctypes.util
 import json
 import os
 import re
@@ -154,6 +156,25 @@ def ding():
         subprocess.Popen(["afplay", DING], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except OSError as e:
         log("ding failed:", e)
+
+
+# How long since he last typed, clicked or moved the pointer on this Mac. The brain says what
+# comes back on its own (an announcement, a late answer) on the computer he is at, and this is
+# how it knows he is at this one. CoreGraphics answers it without any permission.
+try:
+    _cg = ctypes.cdll.LoadLibrary(ctypes.util.find_library("CoreGraphics"))
+    _cg.CGEventSourceSecondsSinceLastEventType.restype = ctypes.c_double
+    _cg.CGEventSourceSecondsSinceLastEventType.argtypes = [ctypes.c_int, ctypes.c_uint32]
+except (OSError, AttributeError):
+    _cg = None
+
+
+def idle_seconds():
+    """Seconds since the last keyboard or pointer event, or None when it cannot be read."""
+    if _cg is None:
+        return None
+    # kCGEventSourceStateHIDSystemState, kCGAnyInputEventType
+    return round(_cg.CGEventSourceSecondsSinceLastEventType(1, 0xFFFFFFFF), 1)
 
 
 def at_home() -> bool:
@@ -614,14 +635,15 @@ class Ear:
     # ---- connection
 
     async def presence(self):
+        # Where it is, and how long since he last used this Mac, every quarter minute.
         while True:
             away = not await asyncio.to_thread(at_home)
             if away != self.away:
                 self.away = away
                 log("away from home" if away else "at home")
-                if self.ws:
-                    await self._safe(self.ws.send(json.dumps({"type": "presence", "away": away})))
-            await asyncio.sleep(30)
+            if self.ws:
+                await self._safe(self.ws.send(json.dumps({"type": "presence", "away": away, "idle": idle_seconds()})))
+            await asyncio.sleep(15)
 
     async def connect_forever(self):
         delay = 1
@@ -629,7 +651,7 @@ class Ear:
             try:
                 async with websockets.connect(SERVER, max_size=None, open_timeout=10, ping_interval=20) as ws:
                     await ws.send(json.dumps({"type": "hello", "device": DEVICE, "role": "ear",
-                                              "away": bool(self.away)}))
+                                              "away": bool(self.away), "idle": idle_seconds()}))
                     self.ws = ws
                     log("connected to", SERVER)
                     delay = 1

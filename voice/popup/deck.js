@@ -4,9 +4,13 @@
 // from here. This page owns the connection to Sunday and everything the panels show, so the
 // panels carry no script of their own.
 //
-// Two modes. The deck: conversation on the left, systems and work on the right, the reactor in
-// the middle and the dock under it. Focus: everything folds away but a small bar at the top
+// Two modes. The deck: the reactor in the middle with the work in progress orbiting it as chips,
+// the live exchange as a caption under it, the last few answers fading at the bottom left and the
+// controls in a rail down the right edge. Focus: everything folds away but a small bar at the top
 // while Sunday is listening or answering, and a few notes at the top right.
+//
+// With the overlay off nothing is drawn but that small bar, and only while he is speaking to
+// Sunday and it answers him: his words as they are heard, then the answer for a moment.
 
 const api = window.sunday;
 const isMac = !!api.isMac;
@@ -24,7 +28,6 @@ const ANSWER_LINGER_MS = 45000;     // an answer stays in the middle of the deck
 const FOCUS_LINGER_MS = 9000;       // and in the focus bar this long
 const TASK_DONE_MS = 4000;          // finished work stays in the list this long
 const TOAST_MS = 9000;
-const STALE_FEED_MS = 15 * 60000;
 const SETTLE_MS = 3000;
 const LOST_AFTER_MS = 20000;
 const SILENT_AFTER_MS = 35000;
@@ -59,14 +62,6 @@ function setText(el, text) {
 const pad2 = (n) => String(n).padStart(2, "0");
 const timeOf = (ms) => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-
-function ago(ms) {
-  const s = Math.max(0, (Date.now() - ms) / 1000);
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
 
 function lasted(ms) {
   const s = Math.floor(Math.max(0, ms) / 1000);
@@ -146,13 +141,6 @@ const spokes = [...reactorEl.querySelectorAll(".r-bars line")].map((el, i) => {
   const a = (i * 2 * Math.PI) / BARS;
   return { el, s: Math.sin(a), c: Math.cos(a), phase: (i * 2.399) % (Math.PI * 2) };
 });
-const waveEl = $("wave");
-const waveBars = [];
-for (let i = 0; i < 96; i++) {
-  const bar = document.createElement("i");
-  waveEl.append(bar);
-  waveBars.push({ el: bar, phase: (i * 1.7) % (Math.PI * 2), env: 0.3 + 0.7 * Math.sin((Math.PI * i) / 95) });
-}
 
 // A level that moves like speech: two slow waves against each other per bar, so neighbours
 // rise and fall together and the whole thing breathes rather than flickers. Drawn only while
@@ -166,17 +154,20 @@ function animate() {
   requestAnimationFrame(frame);
 }
 
+// At rest the spokes still breathe, slowly and low, so the reactor is never a still picture.
 function frame(t) {
   const kind = live.kind;
-  const on = (kind === "listening" || kind === "speaking") && ui.mode === "deck" && !detailsOpen() && !reduced.matches;
-  const amp = kind === "speaking" ? 30 : 20;
+  const shown = overlayOn && ui.mode === "deck" && !detailsOpen() && !reduced.matches;
+  const on = (kind === "listening" || kind === "speaking") && shown;
+  const amp = kind === "speaking" ? 30 : kind === "listening" ? 20 : kind === "thinking" ? 9 : 6;
+  const pace = on ? 1 : 0.35;
   for (const b of spokes) {
-    const r = 46 + (on ? amp * level(b.phase, t) : 2);
+    const r = 46 + (shown ? amp * level(b.phase, t * pace) : 2);
     b.el.setAttribute("x2", (180 + r * b.s).toFixed(1));
     b.el.setAttribute("y2", (180 - r * b.c).toFixed(1));
   }
   for (const b of waveBars) b.el.style.transform = `scaleY(${on ? (0.08 + 0.92 * level(b.phase, t) * b.env).toFixed(3) : 0.06})`;
-  if (on) requestAnimationFrame(frame);
+  if (shown) requestAnimationFrame(frame);
   else animating = false;
 }
 
@@ -203,14 +194,6 @@ function openPanel(name, cls) {
   return p;
 }
 
-function header(p, idx, title) {
-  const ph = make(p.d, "div", "ph");
-  const meta = make(p.d, "span", "meta");
-  ph.append(make(p.d, "span", "idx", idx), make(p.d, "span", "title", title), make(p.d, "span", "rule"), meta);
-  p.root.append(ph);
-  return meta;
-}
-
 function roundButton(doc, name, title, onClick) {
   const b = make(doc, "button", "round");
   b.type = "button";
@@ -220,46 +203,47 @@ function roundButton(doc, name, title, onClick) {
   return b;
 }
 
-// ---- conversation
+// ---- the caption: the live exchange, on glass under the reactor
 
-const conv = openPanel("conversation", "conversation");
-const convMeta = header(conv, "01", "Conversation");
-const cardsEl = make(conv.d, "div", "cards");
-const convEmpty = make(conv.d, "div", "empty", "Your exchanges with Sunday show here as you talk.");
-conv.root.append(cardsEl, convEmpty);
+const caption = openPanel("caption", "caption");
+const capText = make(caption.d, "div", "text");
+const capLine = make(caption.d, "div", "line");
+const capDot = make(caption.d, "span", "dot");
+const capLabel = make(caption.d, "span", "state-label");
+const capAsked = make(caption.d, "span", "asked");
+const capMeta = make(caption.d, "span", "meta");
+capLine.append(capDot, capLabel, capAsked, capMeta);
+const capSaid = make(caption.d, "div", "said");
+const capChips = make(caption.d, "div", "chips");
+capText.append(capLine, capSaid, capChips);
+const waveEl = make(caption.d, "div", "wave");
+caption.root.append(capText, waveEl);
+const waveBars = [];
+for (let i = 0; i < 36; i++) {
+  const bar = make(caption.d, "i");
+  waveEl.append(bar);
+  waveBars.push({ el: bar, phase: (i * 1.7) % (Math.PI * 2), env: 0.3 + 0.7 * Math.sin((Math.PI * i) / 35) });
+}
 
-// ---- systems
+// ---- the work in progress: a chip of glass for each task, on the reactor's orbit
 
-const sys = openPanel("systems", "systems");
-const sysMeta = header(sys, "02", "Systems");
-const statsEl = make(sys.d, "div", "stats");
-const sitesEl = make(sys.d, "div", "sites");
-const sysFoot = make(sys.d, "div", "foot");
-const sysEmpty = make(sys.d, "div", "empty", "Waiting for the first reading.");
-sys.root.append(statsEl, sitesEl, sysFoot, sysEmpty);
-
-// ---- work in progress
-
-const work = openPanel("work", "work");
-const workMeta = header(work, "03", "Work in Progress");
-const tasksEl = make(work.d, "div", "tasks");
-const workEmpty = make(work.d, "div", "empty", "Nothing running right now.");
-const workFoot = make(work.d, "div", "foot");
-work.root.append(tasksEl, workEmpty, workFoot);
-
-// ---- incidents
-
-const inc = openPanel("incidents", "incidents");
-const incMeta = header(inc, "04", "Incidents");
-const incEl = make(inc.d, "div", "list");
-const incEmpty = make(inc.d, "div", "empty", "No incidents on record.");
-inc.root.append(incEl, incEmpty);
+const CHIPS = 4;
+const chips = [];
+for (let i = 0; i < CHIPS; i++) {
+  const p = openPanel(`task${i}`, "taskchip hug");
+  const top = make(p.d, "div", "head");
+  p.$ = { what: make(p.d, "span", "what"), elapsed: make(p.d, "span", "elapsed"), detail: make(p.d, "div", "detail") };
+  top.append(make(p.d, "span", "dot"), p.$.what, p.$.elapsed);
+  p.root.append(top, p.$.detail, make(p.d, "div", "track"));
+  p.task = null;
+  chips.push(p);
+}
 
 // ---- status capsule
 
 const status = openPanel("status", "status-capsule hug");
 const statusItems = {};
-for (const key of ["mic", "systems", "tasks"]) {
+for (const key of ["mic", "tasks"]) {
   const item = make(status.d, "div", "item");
   const dot = make(status.d, "span", "dot");
   const text = make(status.d, "span", "label");
@@ -267,14 +251,8 @@ for (const key of ["mic", "systems", "tasks"]) {
   status.root.append(item);
   statusItems[key] = { item, dot, text };
 }
-const statusButtons = make(status.d, "div", "buttons");
-const statusFocus = roundButton(status.d, "focus", "Focus", () => setMode("focus"));
-const statusPass = roundButton(status.d, "pointer", "Pass Clicks", () => setPass(!ui.pass));
-const statusSettings = roundButton(status.d, "sliders", "Settings", () => api.settingsMenu());
-statusButtons.append(statusFocus, statusPass, statusSettings);
-status.root.append(statusButtons);
 
-// ---- dock
+// ---- the rail of controls down the right edge
 
 const dock = openPanel("dock", "dock hug");
 const dockButtons = {};
@@ -293,9 +271,10 @@ dockButton("mute", "mic", "Mute", () => send({ type: muted ? "unmute" : "mute" }
 dockButton("voice", "voice", "Voice", toggleVoice);
 dockButton("details", "details", "Details", toggleDetails);
 dockButton("focus", "focus", "Focus", () => setMode("focus"));
-dockButton("pass", "pointer", "Pass Clicks", () => setPass(!ui.pass));
+dockButton("pass", "pointer", "Clicks", () => setPass(!ui.pass));
 dockButton("settings", "sliders", "Settings", () => api.settingsMenu());
 dockButtons.voice.b.title = "ElevenLabs Voice";
+dockButtons.pass.b.title = "Pass Clicks";
 
 // ---- the head: the live exchange in one line, over the details or as the focus bar
 
@@ -317,10 +296,61 @@ head.root.append(headMini, headText, headBack);
 const toastPanel = openPanel("toasts", "toasts");
 const toasts = [];
 
+// ---------------------------------------------------------------- moving panels
+
+// On the deck the status capsule and the rail can be dragged by their glass between the buttons.
+// Where they end up is kept per screen size; Reset Panel Layout in Settings puts them back.
+const MOVABLE = new Set(["status", "dock"]);
+const screenKey = () => `o:${window.innerWidth}x${window.innerHeight}`;
+
+function rectOf(p) {
+  const [x, y, width, height] = String(p.placed || "").split(",").map(Number);
+  return Number.isFinite(height) ? { x, y, width, height } : null;
+}
+
+function gestureFrom(p, el) {
+  el.addEventListener("pointerdown", (e) => {
+    const r = rectOf(p);
+    if (e.target.closest("button") || !r || e.button !== 0 || ui.mode !== "deck") return;
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    const key = screenKey();
+    const sx = e.screenX, sy = e.screenY;
+    const move = (ev) => {
+      const L = (layouts[key] ||= {});
+      L[p.name] = { x: r.x + ev.screenX - sx, y: r.y + ev.screenY - sy };
+      layout();
+    };
+    const end = () => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", end);
+      el.removeEventListener("pointercancel", end);
+      saveUi();
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+  });
+}
+
+for (const p of panels.values()) {
+  if (!MOVABLE.has(p.name)) continue;
+  p.root.classList.add("handle");
+  gestureFrom(p, p.root);
+}
+
+function resetLayout() {
+  delete layouts[screenKey()];
+  saveUi();
+  layout();
+}
+api.onResetLayout(resetLayout);
+
 // ---------------------------------------------------------------- the deck's own drawing
 
-const hud = $("hud");
 const stage = $("stage");
+const orbitEl = $("orbit");
+const clockEl = document.querySelector(".clock");
 const hintsEl = $("hints");
 hintsEl.append(keyCaps(document, KEYS.show, "Show or Hide"), keyCaps(document, KEYS.mode, "Deck or Focus"));
 const focusHint = $("focusHint");
@@ -328,23 +358,104 @@ focusHint.append(keyCaps(document, KEYS.mode, "Brings the deck back"));
 
 function tickClock() {
   const now = new Date();
-  setText($("time"), timeOf(now));
+  const parts = new Intl.DateTimeFormat([], { hour: "numeric", minute: "2-digit" }).formatToParts(now);
+  setText($("time"), parts.filter((p) => p.type !== "dayPeriod").map((p) => p.value).join("").trim());
+  setText($("ampm"), parts.find((p) => p.type === "dayPeriod")?.value || "");
   const day = now.toLocaleDateString([], { weekday: "long" });
   const month = now.toLocaleDateString([], { month: "short" });
   setText($("date"), `${day} ${pad2(now.getDate())} ${month} ${now.getFullYear()}`);
+}
+
+// The devices the brain has connected, under the clock: each ear by its computer, each cube as a
+// speaker, amber while its mute button is on.
+const EARS = { mac: "Mac", pc: "PC", windows: "PC" };
+let devicesKey = "";
+function renderDevices() {
+  const list = [];
+  if (devices) {
+    const ears = Array.isArray(devices.ears) ? devices.ears : Object.keys(devices.ears || {});
+    for (const e of ears) list.push([EARS[String(e).toLowerCase()] || String(e).replace(/^\w/, (c) => c.toUpperCase()), "cyan"]);
+    const cubes = Array.isArray(devices.cubes) ? devices.cubes : [];
+    cubes.forEach((c, i) => list.push([cubes.length > 1 ? `Speaker ${i + 1}` : "Speaker", devices.hw_muted?.includes(c) ? "amber" : "mint"]));
+  }
+  const key = JSON.stringify(list);
+  if (key === devicesKey) return;
+  devicesKey = key;
+  $("devices").replaceChildren(...list.map(([name, tone]) => {
+    const d = make(document, "span", `device tone-${tone}`);
+    d.append(make(document, "span", "dot"), make(document, "span", null, name));
+    return d;
+  }));
+}
+
+// The last few answers, fading as they age, at the bottom left. What the caption is showing is
+// left out until it has gone quiet.
+const recentEl = $("recent");
+let recentKey = "";
+function renderRecent() {
+  const showing = live.kind === "idle" ? null : live.card;
+  const done = [...cards.values()]
+    .filter((c) => c.finished && !c.audible && c.reply && !c.filler && c !== showing)
+    .sort((a, b) => b.at - a.at).slice(0, 3);
+  const key = done.map((c) => `${c.id}:${c.reply}`).join("|");
+  if (key === recentKey) return;
+  recentKey = key;
+  recentEl.replaceChildren();
+  recentEl.hidden = !done.length;
+  if (!done.length) return;
+  recentEl.append(make(document, "div", "label", "Earlier"));
+  for (const c of done) {
+    const row = make(document, "div", "line");
+    row.append(make(document, "span", "mono", timeOf(c.at)), make(document, "span", "text", c.reply));
+    recentEl.append(row);
+  }
+}
+
+// The orbit round the reactor: a ring of ticks turning slowly, the range ring beyond it, the
+// guides out to the sides, and a lead from the ring to each chip of work.
+let orbitKey = "";
+function drawOrbit(g, leads) {
+  const key = JSON.stringify([g, leads]);
+  if (key === orbitKey) return;
+  orbitKey = key;
+  const { W, H, cx, cy, orbit, range } = g;
+  const f = (n) => n.toFixed(1);
+  const at = (r, deg) => [cx + r * Math.cos((deg * Math.PI) / 180), cy + r * Math.sin((deg * Math.PI) / 180)];
+  let minor = "", major = "";
+  for (let a = 0; a < 360; a += 5) {
+    const [x0, y0] = at(orbit, a), [x1, y1] = at(orbit + (a % 30 ? 6 : 12), a);
+    const d = `M${f(x0)} ${f(y0)}L${f(x1)} ${f(y1)}`;
+    if (a % 30) minor += d; else major += d;
+  }
+  const g0 = orbit + 30;
+  const guides = `M${cx - g0} ${cy}H${cx - orbit - 190}M${cx + g0} ${cy}H${cx + orbit + 190}M${cx} ${cy - g0}V${cy - orbit - 70}`;
+  let lines = "";
+  for (const l of leads) {
+    lines += `<g class="o-lead tone-${l.tone}"><path d="M${f(l.px)} ${f(l.py)}H${f(l.ex)}"/>`
+      + `<circle class="o-node" cx="${f(l.px)}" cy="${f(l.py)}" r="4"/><circle cx="${f(l.px)}" cy="${f(l.py)}" r="9"/></g>`;
+  }
+  orbitEl.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  orbitEl.innerHTML = `<circle class="o-range" cx="${cx}" cy="${cy}" r="${range}"/>`
+    + `<path class="o-guides" d="${guides}"/>`
+    + `<circle class="o-ring" cx="${cx}" cy="${cy}" r="${orbit}"/>`
+    + `<g class="o-spin" style="transform-origin: ${cx}px ${cy}px"><path class="o-minor" d="${minor}"/><path class="o-major" d="${major}"/></g>`
+    + lines;
 }
 
 // ---------------------------------------------------------------- mode, pass clicks and layout
 
 let ui = { mode: "deck", pass: false };
 let focusHintTimer = null;
+// The panels he has moved, per screen size: { "o:WxH": { name: { x, y } } }.
+let layouts = {};
+const saveUi = () => api.ui({ ...ui, layouts });
 
 function setMode(mode) {
   if (mode !== "deck" && mode !== "focus") return;
   const was = ui.mode;
   ui.mode = mode;
-  api.ui(ui);
-  hud.classList.toggle("focus", mode === "focus");
+  saveUi();
+  document.body.classList.toggle("focus", mode === "focus");
   clearTimeout(focusHintTimer);
   focusHint.classList.toggle("on", mode === "focus" && was !== "focus");
   if (mode === "focus") focusHintTimer = setTimeout(() => { focusHint.classList.remove("on"); }, 6000);
@@ -353,7 +464,7 @@ function setMode(mode) {
 
 function setPass(on) {
   ui.pass = !!on;
-  api.ui(ui);
+  saveUi();
   api.pass(ui.pass);
   render();
 }
@@ -378,39 +489,68 @@ function place(p, rect) {
   api.place(p.name, rect ? { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) } : null);
 }
 
+// Where the chips of work sit on the orbit, in degrees clockwise from three o'clock: two above
+// the reactor, then one below on each side.
+const CHIP_ANGLES = [-146, -34, 22, 158];
+const CHIP_LEAD = 56;
+
 let lastDetails = "";
 function layout() {
   const W = window.innerWidth, H = window.innerHeight;
   if (!W || !H) return;
   const narrow = W < 1700;
-  const m = narrow ? 32 : 40, col = narrow ? 340 : 400, top = narrow ? 84 : 98, gap = 16;
+  const m = narrow ? 32 : 40, top = narrow ? 84 : 98, gap = 16;
   document.documentElement.style.setProperty("--m", `${m}px`);
   document.body.classList.toggle("short", H < 900);
   for (const p of panels.values()) p.d.body.classList.toggle("narrow", narrow);
   const at = {};
-  const sx = m + col + 24, sw = W - 2 * sx;
-  const dockSize = measure(dock, null);
-  const dockY = H - 24 - dockSize.height;
+  // The reactor in the middle, a little above centre, with the orbit round it and the caption
+  // under it; the recent answers and the hints keep the bottom corners to either side.
+  const lens = Math.round(Math.max(220, Math.min(440, H * 0.378, W * 0.26)));
+  const orbit = Math.round(lens * 0.714), range = Math.round(lens * 0.976);
+  const cx = Math.round(W / 2), cy = Math.round(Math.max(top + orbit + 12, H * 0.406));
+  const side = Math.min(340, Math.round(W * 0.2));
+  const sx = m + side, sw = W - 2 * sx;
+  const headH = measure(head, sw).height;
+  const leads = [];
   let details;
 
-  if (ui.mode === "deck") {
-    const incH = measure(inc, col).height;
-    at.incidents = { x: m, y: H - m - incH, width: col, height: incH };
-    const convH = H - m - incH - gap - top;
-    conv.root.style.height = `${convH}px`;
-    at.conversation = { x: m, y: top, width: col, height: convH };
-    const sysH = measure(sys, col).height;
-    at.systems = { x: W - m - col, y: top, width: col, height: sysH };
-    const workTop = top + sysH + gap;
-    const workH = Math.min(measure(work, col).height, H - m - workTop);
-    at.work = workH > 80 ? { x: W - m - col, y: workTop, width: col, height: workH } : null;
+  if (ui.mode === "deck" && overlayOn) {
+    const L = layouts[screenKey()] || {};
+    const open = detailsOpen();
     const st = measure(status, null);
-    at.status = { x: W - m - st.width, y: 22 + (56 - st.height) / 2, width: st.width, height: st.height };
-    at.dock = { x: sx + (sw - dockSize.width) / 2, y: dockY, width: dockSize.width, height: dockSize.height };
-    const headH = measure(head, sw).height;
-    if (detailsOpen()) at.head = { x: sx, y: top, width: sw, height: headH };
+    at.status = { x: m, y: 22 + 56 + 8, width: st.width, height: st.height };
+    const ds = measure(dock, null);
+    const railTop = Math.ceil(clockEl.getBoundingClientRect().bottom) + 24;
+    at.dock = { x: W - m - ds.width, y: Math.max(railTop, Math.min(H - m - ds.height, cy - ds.height / 2)), width: ds.width, height: ds.height };
+    // Where he has put a panel wins over where it would go, kept inside the screen.
+    for (const name of MOVABLE) {
+      const r = at[name], saved = L[name];
+      if (!r || !saved) continue;
+      at[name] = {
+        x: Math.max(0, Math.min(W - r.width, saved.x ?? r.x)),
+        y: Math.max(0, Math.min(H - r.height, saved.y ?? r.y)),
+        width: r.width, height: r.height,
+      };
+    }
+    if (!open) {
+      const capW = Math.min(980, sw);
+      const capH = measure(caption, capW).height;
+      at.caption = { x: cx - capW / 2, y: Math.min(cy + orbit + 44, H - m - capH), width: capW, height: capH };
+      chips.forEach((p, i) => {
+        if (!p.task) return;
+        const a = (CHIP_ANGLES[i] * Math.PI) / 180;
+        const px = cx + orbit * Math.cos(a), py = cy + orbit * Math.sin(a);
+        const left = Math.cos(a) < 0;
+        const ex = left ? px - CHIP_LEAD : px + CHIP_LEAD;
+        const size = measure(p, null);
+        at[p.name] = { x: left ? ex - size.width : ex, y: py - size.height / 2, width: size.width, height: size.height };
+        leads.push({ px, py, ex, tone: p.task.ended ? "mint" : "amber" });
+      });
+    }
+    if (open) at.head = { x: sx, y: top, width: sw, height: headH };
     const dy = top + headH + gap;
-    details = { x: sx, y: dy, width: sw, height: dockY - gap - dy };
+    details = { x: sx, y: dy, width: sw, height: H - m - dy };
     at.toasts = null;
   } else {
     const hs = measure(head, null);
@@ -424,20 +564,11 @@ function layout() {
     focusHint.style.top = `${headOn ? 22 + hs.height + 14 : 30}px`;
   }
 
-  // The stage: the reactor's lens and what is being said, between the columns and above the dock.
-  const hintsTop = dockY - 44;
-  const room = hintsTop - top;
-  const lens = Math.round(Math.max(200, Math.min(420, sw * 0.62, room * 0.5)));
-  const lensTop = Math.round(Math.min(56, room * 0.08));
-  stage.style.left = `${sx}px`;
-  stage.style.width = `${sw}px`;
-  stage.style.top = `${top}px`;
-  stage.style.height = `${H - top}px`;
-  stage.style.setProperty("--lens", `${lens}px`);
-  stage.style.setProperty("--lens-top", `${lensTop}px`);
-  stage.style.setProperty("--live-top", `${lensTop + lens + 34}px`);
-  stage.style.setProperty("--live-bottom", `${H - top - (hintsTop - 18)}px`);
-  hintsEl.style.top = `${hintsTop - top}px`;
+  document.documentElement.style.setProperty("--cx", `${cx}px`);
+  document.documentElement.style.setProperty("--cy", `${cy}px`);
+  document.documentElement.style.setProperty("--lens", `${lens}px`);
+  document.documentElement.style.setProperty("--side", `${side - 24}px`);
+  drawOrbit({ W, H, cx, cy, orbit, range }, leads);
   stage.classList.toggle("compact", detailsOpen());
 
   for (const p of panels.values()) {
@@ -456,9 +587,9 @@ window.addEventListener("resize", relayout);
 // ---------------------------------------------------------------- the exchange cards
 
 // Every query gets its own card, keyed by the id the server puts on each event about it. A card
-// shows one state at a time (Listening, Thinking, Answering...), his words as they were heard,
-// one plain line of what is being done while it works, and the answer. Cards stay as the
-// conversation's history, newest on top; the middle of the deck follows the newest.
+// holds one state at a time (Listening, Thinking, Answering...), his words as they were heard,
+// one plain line of what is being done while it works, and the answer. The caption follows the
+// newest; the answers before it are the recent ones at the bottom left.
 const STATES = {
   listening: ["Listening", "listening"],
   thinking: ["Thinking", "thinking"],
@@ -486,14 +617,13 @@ function makeCard(id, kind = "question") {
     id, kind, state: "idle", look: "quiet", label: "Sunday", finished: false, audible: false, endState: "idle",
     at: Date.now(), touched: Date.now(), doneAt: 0, you: "", partial: false, earlier: false,
     status: "", statusWant: "", statusAt: 0, statusTimer: null, steps: [], reply: "", filler: false,
-    note: "", ear: false, hasCanvas: false, heard: false, el: null,
+    note: "", ear: false, heard: false,
   };
   cards.set(id, card);
   while (cards.size > MAX_CARDS) {
     const old = [...cards.values()].find((c) => c.finished && c !== current);
     if (!old) break;
     cards.delete(old.id);
-    old.el?.remove();
   }
   return card;
 }
@@ -507,7 +637,7 @@ function cardFor(id, create, kind) {
 
 function follow(card) {
   current = card;
-  dirty(card);
+  dirty();
 }
 
 function setState(card, state) {
@@ -515,7 +645,7 @@ function setState(card, state) {
   card.state = state;
   card.look = look;
   card.label = label;
-  dirty(card);
+  dirty();
 }
 
 function setYou(card, text, partial, earlier) {
@@ -523,7 +653,7 @@ function setYou(card, text, partial, earlier) {
   card.partial = !!partial;
   card.earlier = !!earlier;
   if (!partial && text) card.heard = true;
-  dirty(card);
+  dirty();
 }
 
 function setStatus(card, text) {
@@ -536,7 +666,7 @@ function setStatus(card, text) {
     card.status = card.statusWant;
     card.statusAt = Date.now();
     if (card.status && card.steps[card.steps.length - 1] !== card.status) card.steps.push(card.status);
-    dirty(card);
+    dirty();
   };
   const wait = card.statusAt + STATUS_MIN_MS - Date.now();
   if (!text || wait <= 0) apply();
@@ -546,7 +676,7 @@ function setStatus(card, text) {
 function setReply(card, text, filler) {
   card.reply = text || "";
   card.filler = !!filler;
-  dirty(card);
+  dirty();
 }
 
 function playingState(card) {
@@ -555,7 +685,7 @@ function playingState(card) {
 
 function active(card) {
   card.finished = false;
-  dirty(card);
+  dirty();
 }
 
 function finish(card, state) {
@@ -570,68 +700,24 @@ function finish(card, state) {
   setState(card, card.audible ? playingState(card) : state);
   card.finished = true;
   card.doneAt = Date.now();
-  dirty(card);
+  dirty();
 }
 
-let pending = new Set(), flushQueued = false;
-function dirty(card) {
-  if (card) pending.add(card);
+let flushQueued = false;
+function dirty() {
   if (flushQueued) return;
   flushQueued = true;
   queueMicrotask(() => {
     flushQueued = false;
-    const list = pending;
-    pending = new Set();
-    for (const c of list) if (cards.get(c.id) === c) renderCard(c);
     render();
   });
-}
-
-function renderCard(card) {
-  const d = conv.d;
-  if (!card.el) {
-    const el = make(d, "div", "card");
-    const top = make(d, "div", "head");
-    card.$ = {
-      label: make(d, "span", "label"),
-      time: make(d, "span", "time"),
-      you: make(d, "div", "you"),
-      status: make(d, "div", "status"),
-      reply: make(d, "div", "reply"),
-      note: make(d, "div", "note"),
-      details: make(d, "div", "details"),
-    };
-    top.append(card.$.label, make(d, "span", "grow"), card.$.time);
-    el.append(top, card.$.you, card.$.status, card.$.reply, card.$.note, card.$.details);
-    const show = make(d, "button", "chip-button", "Show Details");
-    show.type = "button";
-    card.$.details.append(show);
-    el.addEventListener("click", () => { if (canShowDetails(card)) reopenDetails(card.id); });
-    card.el = el;
-    cardsEl.prepend(el);
-    cardsEl.scrollTop = 0;
-    if (!reduced.matches) {
-      el.animate([{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
-        { duration: 320, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
-    }
-  }
-  const tone = TONE[card.look] || "idle";
-  card.el.className = `card tone-${tone}${card.finished && !card.audible ? " done" : ""}${canShowDetails(card) ? " has-details" : ""}`;
-  setText(card.$.label, card.label);
-  setText(card.$.time, (card.ear ? (isMac ? "This Mac · " : "Mac · ") : "") + timeOf(card.at));
-  setText(card.$.you, card.you);
-  card.$.you.classList.toggle("partial", card.partial);
-  setText(card.$.status, card.finished ? "" : card.status);
-  setText(card.$.reply, card.reply);
-  card.$.reply.classList.toggle("filler", card.filler);
-  setText(card.$.note, card.note);
-  card.$.details.hidden = !canShowDetails(card);
 }
 
 // ---------------------------------------------------------------- what is live right now
 
 let live = { kind: "idle" };
 let lingerTimer = null;
+let overlayOn = true;
 
 function liveState() {
   if (!connected && unreachableSaid) return { kind: "offline" };
@@ -644,7 +730,7 @@ function liveState() {
     return { kind, card: c };
   }
   if (c.audible) return { kind: "speaking", card: c };
-  const linger = ui.mode === "deck" ? ANSWER_LINGER_MS : FOCUS_LINGER_MS;
+  const linger = ui.mode === "deck" && overlayOn ? ANSWER_LINGER_MS : FOCUS_LINGER_MS;
   const left = c.doneAt + linger - Date.now();
   if (left > 0 && (c.look === "answered" || c.look === "alert")) {
     clearTimeout(lingerTimer);
@@ -654,9 +740,24 @@ function liveState() {
   return { kind: "idle", card: c };
 }
 
+// In focus mode the head is a strip that never goes away: his words as they are heard, and
+// between questions the last thing he said.
 function headWanted() {
+  if (!overlayOn) return stripWanted();
   if (ui.mode === "deck") return detailsOpen();
-  return live.kind !== "idle";
+  return true;
+}
+
+// The overlay is off: the bar shows only for an exchange he started, never for an announcement.
+const EXCHANGE = new Set(["listening", "thinking", "speaking", "answered", "error"]);
+function stripWanted() {
+  return EXCHANGE.has(live.kind) && !!live.card && live.card.kind !== "announce" && live.card.kind !== "late";
+}
+
+function lastHeard() {
+  let last = null;
+  for (const c of cards.values()) if (c.you && c.kind !== "announce" && (!last || c.at >= last.at)) last = c;
+  return last;
 }
 
 const QUIET = {
@@ -695,24 +796,22 @@ function renderLive() {
   const look = REACTOR_LOOK[live.kind] || "idle";
   const view = describe(live);
   reactorEl.className = `reactor ${look}`;
-  const labelEl = $("stateLabel");
-  setText(labelEl, view.label);
-  labelEl.className = `state-label tone-${view.tone}`;
-  setText($("asked"), view.asked || "");
-  const said = $("said");
-  setText(said, view.said || "");
-  said.classList.toggle("quiet", !!view.quiet);
-  said.classList.toggle("tail", !!view.partial);
+  capDot.className = `dot tone-${view.tone}`;
+  setText(capLabel, view.label);
+  capLabel.className = `state-label tone-${view.tone}`;
+  setText(capAsked, view.asked || "");
+  setText(capMeta, live.card && !view.quiet ? (live.card.ear ? (isMac ? "This Mac · " : "Mac · ") : "") + timeOf(live.card.at) : "");
+  setText(capSaid, view.said || "");
+  capSaid.classList.toggle("quiet", !!view.quiet);
+  capSaid.classList.toggle("tail", !!view.partial);
   const len = (view.said || "").length;
-  said.style.setProperty("--said-size", view.quiet ? "20px" : len <= 90 ? "34px" : len <= 180 ? "28px" : len <= 320 ? "23px" : "20px");
-  const wave = $("wave");
-  wave.className = `wave tone-${view.tone}${live.kind === "listening" || live.kind === "speaking" ? " on" : ""}`;
-  const chips = $("chips");
-  chips.replaceChildren();
+  capSaid.style.setProperty("--said-size", view.quiet ? "20px" : len <= 90 ? "28px" : len <= 180 ? "24px" : len <= 320 ? "21px" : "19px");
+  waveEl.className = `wave tone-${view.tone}${live.kind === "listening" || live.kind === "speaking" ? " on" : ""}`;
+  capChips.replaceChildren();
   (view.steps || []).forEach((step, i, all) => {
-    const chip = make(document, "span", `chip ${i === all.length - 1 ? "tone-amber" : "tone-mint"}`);
-    chip.append(make(document, "span", "dot"), make(document, "span", null, step));
-    chips.append(chip);
+    const chip = make(caption.d, "span", `chip ${i === all.length - 1 ? "tone-amber" : "tone-mint"}`);
+    chip.append(make(caption.d, "span", "dot"), make(caption.d, "span", null, step));
+    capChips.append(chip);
   });
 
   // The head: the same, in one line.
@@ -720,7 +819,13 @@ function renderLive() {
   setText(headLabel, view.label);
   headLabel.className = `label tone-${view.tone} t-${view.tone === "idle" ? "faint" : view.tone}`;
   const compactIdle = ui.mode === "deck" && live.kind === "idle" && current && current.reply;
-  if (compactIdle) {
+  const heard = ui.mode === "focus" && live.kind === "idle" ? lastHeard() : null;
+  if (heard) {
+    setText(headLabel, "You Said");
+    headLabel.className = "label t-cyan";
+    setText(headSaid, `\u201c${heard.you}\u201d`);
+    setText(headTime, timeOf(heard.at));
+  } else if (compactIdle) {
     setText(headLabel, current.label);
     headLabel.className = "label t-mint";
     setText(headSaid, current.reply);
@@ -729,9 +834,9 @@ function renderLive() {
     setText(headSaid, view.said || "");
     setText(headTime, live.card ? timeOf(live.card.at) : "");
   }
-  headSaid.classList.toggle("t-faint", !!view.quiet && !compactIdle);
+  headSaid.classList.toggle("t-faint", !!view.quiet && !compactIdle && !heard);
   headBack.hidden = ui.mode !== "focus";
-  head.d.body.classList.toggle("wide", ui.mode === "deck");
+  head.d.body.classList.toggle("wide", ui.mode === "deck" && overlayOn);
   animate();
 }
 
@@ -746,19 +851,9 @@ function renderStatus() {
   else mic = ["cyan", "Mic Live"];
   setItem(statusItems.mic, mic[0], mic[1]);
 
-  if (feed && Array.isArray(feed.sites)) {
-    const bad = feed.sites.filter((s) => s.status !== "operational");
-    const down = bad.some((s) => s.status !== "degraded");
-    setItem(statusItems.systems, bad.length ? (down ? "red" : "amber") : "mint",
-      bad.length ? `${plural(bad.length, "Site Needs", "Sites Need")} Attention` : "All Systems Normal");
-  } else statusItems.systems.item.hidden = true;
-
   const running = visibleTasks().filter((t) => !t.ended).length;
   if (running) setItem(statusItems.tasks, "amber", `${plural(running, "Task", "Tasks")} Running`);
   else statusItems.tasks.item.hidden = true;
-
-  statusPass.classList.toggle("on", ui.pass);
-  statusPass.title = ui.pass ? "Stop Passing Clicks" : "Pass Clicks";
 }
 
 function setItem(it, tone, text) {
@@ -785,22 +880,21 @@ function renderDock() {
   const p = dockButtons.pass;
   p.round.classList.toggle("on", ui.pass);
   p.b.classList.toggle("on", ui.pass);
+  p.b.title = ui.pass ? "Stop Passing Clicks" : "Pass Clicks";
 }
 
 function render() {
   renderLive();
   renderStatus();
   renderDock();
-  const n = cards.size;
-  setText(convMeta, n ? `Today · ${n}` : "Today");
-  convEmpty.hidden = n > 0;
-  cardsEl.hidden = n === 0;
+  renderDevices();
+  renderRecent();
   relayout();
 }
 
 // ---------------------------------------------------------------- work in progress
 
-const tasks = new Map();            // id -> { id, label, status, started, ended, el }
+const tasks = new Map();            // id -> { id, label, status, started, ended }
 
 function visibleTasks() {
   // A question's own lookup is already on its card, so it is not listed again here.
@@ -809,7 +903,7 @@ function visibleTasks() {
 
 function startTask(e) {
   if (tasks.has(e.id)) { updateTask(e); return; }
-  tasks.set(e.id, { id: e.id, label: e.label || e.kind || "Working", status: e.status || "", started: Date.now(), ended: 0, el: null });
+  tasks.set(e.id, { id: e.id, label: e.label || e.kind || "Working", status: e.status || "", started: Date.now(), ended: 0 });
   renderWork();
 }
 
@@ -824,164 +918,28 @@ function endTask(id) {
   t.ended = Date.now();
   renderWork();
   if (ui.mode === "focus" && !id.startsWith("q-")) toast({ tone: "mint", label: "Done", text: t.label, detail: t.status });
-  setTimeout(() => {
-    if (t.el) t.el.classList.add("leaving");
-    setTimeout(() => { t.el?.remove(); tasks.delete(id); renderWork(); }, 300);
-  }, TASK_DONE_MS);
+  setTimeout(() => { tasks.delete(id); renderWork(); }, TASK_DONE_MS);
 }
 
-const MAX_TASK_ROWS = 5;
+// The first few take the chips on the orbit; the status capsule counts them all.
 function renderWork() {
   const list = visibleTasks();
-  const shown = list.slice(0, MAX_TASK_ROWS);
-  for (const t of tasks.values()) if (t.el && !shown.includes(t)) { t.el.remove(); t.el = null; }
-  for (const t of shown) {
-    if (!t.el) {
-      const d = work.d;
-      t.el = make(d, "div", "task");
-      const top = make(d, "div", "head");
-      t.$ = { what: make(d, "span", "what"), state: make(d, "span", "label state"), elapsed: make(d, "span", "elapsed"), detail: make(d, "div", "detail") };
-      top.append(make(d, "span", "dot"), t.$.what, t.$.state, t.$.elapsed);
-      t.el.append(top, t.$.detail, make(d, "div", "track"));
-      tasksEl.append(t.el);
-    }
-    t.el.className = `task tone-${t.ended ? "mint" : "amber"}${t.ended ? " done" : ""}${t.el.classList.contains("leaving") ? " leaving" : ""}`;
-    setText(t.$.what, t.label);
-    t.$.what.title = t.label;
-    setText(t.$.state, t.ended ? "Done" : "Running");
-    setText(t.$.elapsed, lasted((t.ended || Date.now()) - t.started));
-    setText(t.$.detail, t.status && t.status !== t.label ? t.status : "");
-  }
-  const running = list.filter((t) => !t.ended).length;
-  setText(workMeta, running ? `${running} active` : "Idle");
-  workEmpty.hidden = list.length > 0;
-  setText(workFoot, list.length > MAX_TASK_ROWS ? `${list.length - MAX_TASK_ROWS} more running` : "");
-  workFoot.hidden = list.length <= MAX_TASK_ROWS;
+  chips.forEach((p, i) => {
+    const t = list[i] || null;
+    p.task = t;
+    if (!t) return;
+    p.root.className = `root tone-${t.ended ? "mint" : "amber"}${t.ended ? " done" : ""}`;
+    setText(p.$.what, t.label);
+    p.$.what.title = t.label;
+    setText(p.$.elapsed, t.ended ? "Done" : lasted(Date.now() - t.started));
+    setText(p.$.detail, t.status && t.status !== t.label ? t.status : "");
+  });
   render();
 }
 
 function tickTasks() {
-  for (const t of tasks.values()) if (t.el && !t.ended) setText(t.$.elapsed, lasted(Date.now() - t.started));
+  for (const p of chips) if (p.task && !p.task.ended) setText(p.$.elapsed, lasted(Date.now() - p.task.started));
 }
-
-// ---------------------------------------------------------------- systems and incidents
-
-let feed = null;
-let knownIncidents = null;
-
-const siteTone = (s) => (s.status === "operational" ? "mint" : s.status === "degraded" ? "amber" : "red");
-const siteWord = (s) => (s.status === "operational" ? "Online" : s.status === "degraded" ? "Degraded" : "Down");
-const siteName = (s) => String(s.domain || s.name || s.id || "").replace(/^www\./, "");
-const RANK = { red: 0, amber: 1, mint: 2 };
-
-function spark(doc, days, tone) {
-  // The last two weeks of uptime as a line, flat when every day was whole.
-  const pts = (days || []).filter((d) => d.measured !== false && Number.isFinite(d.uptime)).slice(-14);
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = doc.createElementNS(svgNS, "svg");
-  svg.setAttribute("width", "56");
-  svg.setAttribute("height", "14");
-  svg.setAttribute("viewBox", "0 0 56 14");
-  if (pts.length < 2) return svg;
-  const lo = Math.min(99, ...pts.map((d) => d.uptime));
-  const y = (u) => 12 - ((u - lo) / Math.max(0.01, 100 - lo)) * 10;
-  const line = doc.createElementNS(svgNS, "polyline");
-  line.setAttribute("points", pts.map((d, i) => `${((i / (pts.length - 1)) * 54 + 1).toFixed(1)},${y(d.uptime).toFixed(1)}`).join(" "));
-  line.setAttribute("fill", "none");
-  line.setAttribute("stroke", `var(--${tone})`);
-  line.setAttribute("stroke-width", "1.4");
-  line.setAttribute("stroke-linejoin", "round");
-  line.setAttribute("stroke-linecap", "round");
-  svg.append(line);
-  return svg;
-}
-
-function stat(doc, value, label, delta, deltaTone) {
-  const tile = make(doc, "div", "stat");
-  tile.append(make(doc, "div", "value", value), make(doc, "div", "label", label));
-  const dl = make(doc, "div", `delta t-${deltaTone}`, delta);
-  tile.append(dl);
-  return tile;
-}
-
-function renderSystems() {
-  const d = sys.d;
-  const sites = Array.isArray(feed?.sites) ? feed.sites : [];
-  sysEmpty.hidden = sites.length > 0;
-  statsEl.hidden = sitesEl.hidden = sysFoot.hidden = !sites.length;
-  if (!sites.length) { setText(sysMeta, ""); render(); return; }
-  const updated = Date.parse(feed.updated_at || "");
-  const stale = !Number.isFinite(updated) || Date.now() - updated > STALE_FEED_MS;
-  setText(sysMeta, stale ? "Stale" : "Live");
-  sysMeta.classList.toggle("warn", stale);
-
-  const online = sites.filter((s) => s.status === "operational").length;
-  const degraded = sites.filter((s) => s.status === "degraded").length;
-  const down = sites.length - online - degraded;
-  const issues = sites.reduce((n, s) => n + (Number(s.open_issues) || 0), 0);
-  const withIssues = sites.filter((s) => Number(s.open_issues) > 0).length;
-  const ups = sites.map((s) => Number(s.uptime_30d)).filter(Number.isFinite);
-  const uptime = ups.length ? Math.floor((ups.reduce((a, b) => a + b, 0) / ups.length) * 10) / 10 : null;
-  const outages = Number(feed.outages_30d) || 0;
-  statsEl.replaceChildren(
-    stat(d, pad2(issues), "Open Issues", issues ? `on ${plural(withIssues, "site", "sites")}` : "none open", issues ? "amber" : "mint"),
-    stat(d, `${online}/${sites.length}`, "Sites Online", down ? `${down} down` : degraded ? `${degraded} degraded` : "all online",
-      down ? "red" : degraded ? "amber" : "mint"),
-    stat(d, uptime == null ? "--" : `${uptime}%`, "30-Day Uptime", outages ? plural(outages, "outage", "outages") : "no outages",
-      outages ? "amber" : "mint"),
-  );
-
-  const rows = [...sites].sort((a, b) => RANK[siteTone(a)] - RANK[siteTone(b)] || siteName(a).localeCompare(siteName(b)));
-  const max = document.body.classList.contains("short") ? 4 : 6;
-  sitesEl.replaceChildren(...rows.slice(0, max).map((s) => {
-    const tone = siteTone(s);
-    const row = make(d, "div", `site tone-${tone}${tone === "amber" ? " slow" : tone === "red" ? " down" : ""}`);
-    row.append(make(d, "span", "dot"), make(d, "span", "name", siteName(s)), spark(d, s.days, tone), make(d, "span", "note", siteWord(s)));
-    row.title = s.name || siteName(s);
-    return row;
-  }));
-  const more = rows.length - max;
-  setText(sysFoot, `${more > 0 ? `${plural(more, "more site", "more sites")} · ` : ""}updated ${Number.isFinite(updated) ? ago(updated) : "a while ago"}`);
-  render();
-}
-
-function renderIncidents() {
-  const d = inc.d;
-  const all = Array.isArray(feed?.incidents) ? feed.incidents : [];
-  const open = all.filter((i) => i.status !== "resolved");
-  const ids = new Set(all.map((i) => i.id));
-  if (knownIncidents) {
-    for (const i of open) {
-      if (!knownIncidents.has(i.id) && ui.mode === "focus") toast({ tone: "amber", label: "Incident", text: i.title, detail: i.site });
-    }
-  }
-  knownIncidents = ids;
-  const latest = (i) => Date.parse(i.opened_at || "") || 0;
-  const pick = [...open.sort((a, b) => latest(b) - latest(a)), ...all.filter((i) => i.status === "resolved").sort((a, b) => latest(b) - latest(a))].slice(0, 3);
-  incEmpty.hidden = pick.length > 0;
-  setText(incMeta, open.length ? `${open.length} open` : all.length ? "All Clear" : "");
-  incMeta.classList.toggle("warn", open.length > 0);
-  incEl.replaceChildren(...pick.map((i) => {
-    const resolved = i.status === "resolved";
-    const row = make(d, "div", `incident tone-${resolved ? "mint" : "amber"}`);
-    const body = make(d, "div", "body");
-    const when = resolved
-      ? `Resolved ${ago(Date.parse(i.resolved_at || i.updated_at || "") || Date.now())}`
-      : `Opened ${ago(latest(i) || Date.now())}`;
-    body.append(make(d, "div", "title", i.title || "Incident"), make(d, "div", "where", `${i.site || ""} · ${when}`));
-    row.append(make(d, "span", `dot${resolved ? " quiet" : ""}`), body);
-    row.title = i.summary || "";
-    return row;
-  }));
-  render();
-}
-
-api.onStatusFeed((f) => {
-  if (!f || typeof f !== "object") return;
-  feed = f;
-  renderSystems();
-  renderIncidents();
-});
 
 // ---------------------------------------------------------------- toasts
 
@@ -1014,11 +972,8 @@ function renderToasts() {
 let canvasOpenId = null;            // the details up on screen
 let lastShownId = null;             // the last details shown, which Show Details brings back
 const detailsOpen = () => canvasOpenId != null;
-const canShowDetails = (card) => card.hasCanvas && card.id === lastShownId && canvasOpenId !== card.id;
 
 function onCanvas(e) {
-  const card = cards.get(e.id);
-  if (card) { card.hasCanvas = true; dirty(card); }
   api.canvas(e, null);
 }
 
@@ -1035,8 +990,7 @@ function toggleDetails() {
 api.onCanvasOpen(({ id, open }) => {
   if (open) { canvasOpenId = id; lastShownId = id; }
   else if (canvasOpenId === id) canvasOpenId = null;
-  for (const c of cards.values()) if (c.hasCanvas) dirty(c);
-  dirty(null);
+  dirty();
 });
 // Where the details landed, or why they were held back, and when he closed them here: the
 // brain takes them down on his other screens and stops listening for "close that".
@@ -1051,13 +1005,13 @@ let devices = null;                 // the devices the brain has connected, from
 
 function setMuted(on) {
   muted = !!on;
-  dirty(null);
+  dirty();
 }
 
 function setVoice(on) {
   elevenlabs = !!on;
   api.voice(elevenlabs);
-  dirty(null);
+  dirty();
 }
 
 function toggleVoice() {
@@ -1090,7 +1044,7 @@ function reconcile(e) {
       }
     }
   }
-  dirty(null);
+  dirty();
 }
 
 function letGoOfEverything() {
@@ -1221,12 +1175,31 @@ function send(msg) {
 function reportAudio() { send({ type: "audio", machine, playing: audioPlaying }); }
 function reportOverlay() { if (overlay) send({ type: "overlay", machine, ...overlay }); }
 api.onComputerAudio((playing) => { audioPlaying = playing; reportAudio(); });
-api.onOverlayState((state) => { overlay = state; reportOverlay(); });
+// The deck's part of opening and closing (main.js): the veil, and its own drawing rising or sinking.
+// The panels' contents rise and sink with it.
+api.onOverlayAnim((step) => {
+  const body = document.body;
+  if (step === "veil" || step === "sink") body.classList.add("away");
+  if (step === "veil") body.classList.add("veiled");
+  if (step === "rise") body.classList.remove("away", "veiled");
+  if (step === "lift") body.classList.remove("veiled");
+  for (const p of panels.values()) p.d.body.classList.toggle("away", body.classList.contains("away"));
+});
+
+api.onOverlayState((state) => {
+  overlay = state;
+  reportOverlay();
+  if (!!state.shown === overlayOn) return;
+  overlayOn = !!state.shown;
+  // The switch hides or shows every panel itself, so each one is placed afresh.
+  for (const p of panels.values()) p.placed = null;
+  render();
+});
 api.onNotice((text) => { if (ui.mode === "focus") toast({ tone: "cyan", label: "Sunday", text }); });
 
 function unreachable() {
   unreachableSaid = true;
-  dirty(null);
+  dirty();
 }
 
 function reachable() {
@@ -1251,7 +1224,7 @@ async function connect() {
       api.connection(true);
       reportAudio();
       reportOverlay();
-      dirty(null);
+      dirty();
     };
     ws.onmessage = (m) => { heardAt = Date.now(); try { handle(JSON.parse(m.data)); } catch (_) {} };
     ws.onclose = () => {
@@ -1264,7 +1237,7 @@ async function connect() {
         unreachableTimer = setTimeout(unreachable, everConnected ? UNREACHABLE_AFTER_MS : 20000);
       }
       if (!opened) i++;
-      dirty(null);
+      dirty();
       setTimeout(attempt, delay);
       delay = Math.min(delay * 2, 15000);
     };
@@ -1280,19 +1253,19 @@ async function connect() {
 // ---------------------------------------------------------------- start
 
 api.onToggleMode((to) => setMode(to || (ui.mode === "deck" ? "focus" : "deck")));
-reduced.addEventListener?.("change", () => dirty(null));
+reduced.addEventListener?.("change", () => dirty());
 
 (async () => {
   const saved = await api.uiState();
   ui = { mode: saved?.mode === "focus" ? "focus" : "deck", pass: !!saved?.pass };
-  hud.classList.toggle("focus", ui.mode === "focus");
+  // Only places kept for this layout; ones from an earlier layout no longer mean anything.
+  const kept = saved?.layouts && typeof saved.layouts === "object" ? saved.layouts : {};
+  layouts = Object.fromEntries(Object.entries(kept).filter(([k]) => k.startsWith("o:")));
+  document.body.classList.toggle("focus", ui.mode === "focus");
   api.pass(ui.pass);
   tickClock();
   setInterval(() => { tickClock(); tickTasks(); }, 1000);
-  setInterval(() => { if (feed) { renderSystems(); renderIncidents(); } }, 60000);
   renderWork();
-  renderSystems();
-  renderIncidents();
   render();
   connect();
 })();

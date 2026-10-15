@@ -60,10 +60,11 @@ order they came.
   is being answered (for up to three minutes, `VOICE_LATE_TURN_WAIT`). Then it needs 1.5 s of
   quiet (`VOICE_LATE_QUIET`) before it starts. One that comes in while he is asking something
   else is said after the answer to that.
-- **Where.** On the device he last spoke to, if that was in the last 15 minutes
-  (`VOICE_LATE_HERE`) and the device is connected, and a cube only while the Mac says he is
-  home. Otherwise it goes where an announcement goes: the cube, and the Mac only while he is
-  away.
+- **Where.** Where he was last: the device he last spoke to, if that was in the last 15
+  minutes (`VOICE_LATE_HERE`), or the Mac, if he typed or moved the pointer on it in the last
+  5 minutes (`VOICE_AT_COMPUTER`), whichever was later, as long as it is connected, and a cube
+  only while the Mac says he is home. Otherwise the cube, and the Mac only while he is away.
+  Announcements from `/say` go the same way.
 - **Said means heard.** It counts as said only once the last of it has played at full volume.
   If the device turns it down for him (a wake or the open ear hearing him over it, or him
   talking to another device), cuts it off, or loses its link while it plays, none of it
@@ -271,27 +272,27 @@ ssh voice-host 'cd ~/voice-assistant && venv/bin/python speaker_id.py mode shado
 
 `server/transcripts.py` indexes every Claude Code chat on this Mac and on sunday, keeping only what was said. `transcripts-sync.timer` refreshes the index every 5 minutes. The speaker searches it when you ask where some piece of work stands.
 
-When you ask it to pass something to a specific recent chat, `server/relay.py` resumes that chat headless on its own machine and speaks the chat's reply. It won't touch a chat that was active in the last two minutes.
+When you ask it to pass something to a specific recent chat, `server/relay.py` resumes that chat headless on its own machine and speaks the chat's reply. It won't touch a chat that was active in the last two minutes. A copy of every change of course also goes to the Sunday Desk chat, which passes it to any background agent of its own that the change touches.
 
 ## Popup
 
 `popup/` is a small always-on-top glass panel at the top center of the screen your cursor is on. It shows your words as you speak, what Sunday is doing, and its reply. It listens on `ws://sunday:8794/events`.
 
-- **Mac:** installed at `/Applications/Sunday.app`, opens at login, and reaches sunday through an SSH tunnel.
+- **Mac:** installed at `/Applications/Sunday.app`, opens at login, and reaches sunday through an SSH tunnel. While the whole deck is up, the menu bar and the Dock are hidden; they come back in focus mode, with the overlay off, when another app comes forward, and when Sunday quits or crashes, since they are Sunday's own presentation options (`popup/native/presentation.m`) and macOS drops those with the front. Closing the deck with Option+Space puts back the apps that were showing before it opened, with the one you were in at the front; on Windows it restores the windows it minimized.
 - **Windows:** installed at `%LOCALAPPDATA%\Programs\Sunday`, and started at logon by the `Sunday` scheduled task.
 
 While the cube's ring is lit (listening, thinking or speaking), a blue line runs around the edge of every screen. The cube reports its ring to the brain, which passes it to the popup as a `light` event. The line is click-through and sits above everything. A wake with no words never lights the ring (see Words, not sounds), so a cough never shows the line, not even for a moment.
 
 ### What the panel shows
 
-Each card has one label for where the exchange stands, your words as the recognizer heard them, one plain line of what Sunday is doing, and its answer.
+The deck keeps the reactor in the middle. The caption under it has one label for where the exchange stands, your words as the recognizer heard them, the steps Sunday is taking, and its answer; the last few answers fade out at the bottom left, and the controls run down a rail on the right edge.
 
 | Label | When |
 | :--- | :--- |
 | Listening | after the wake, with your words appearing as you say them |
 | Thinking | the question is in; the line under it says what Sunday is doing ("Searching the web", "Running a command") |
 | Answering | Sunday is speaking the answer |
-| Answered | the answer has been said; the card stays a little longer for a longer answer, and while the pointer is over it |
+| Answered | the answer has been said; it stays in the caption for 45 seconds, then joins the recent answers |
 | Announcement | something Sunday says without being asked (`/say`) |
 | Follow-Up | a late answer to an earlier question, with that question quoted above it |
 | Stopped, Closed, Skipped | "stop", "close that", or a question replaced by the next one |
@@ -299,7 +300,7 @@ Each card has one label for where the exchange stands, your words as the recogni
 | Couldn't Answer | the turn failed; ask again |
 | Can't Reach Sunday | the popup lost the brain and is reconnecting |
 
-When a Mac ear rather than the cube heard you, the card says "This Mac". The bar under the cards counts work still in progress, or warns when the speaker is offline or its microphone button is off. A question's own lookup is shown once, on its card, not again in the list.
+When a Mac ear rather than the cube heard you, the caption says "This Mac". Work in progress orbits the reactor as chips of glass, one for each of the first four tasks. The capsule under the name counts all of it, or warns when the speaker is offline or its microphone button is off. A question's own lookup is shown once, in the caption, not again as a chip.
 
 ### The canvas
 
@@ -308,7 +309,7 @@ Some answers hold more than a voice can carry. For those Sunday says the short a
 - **When:** a technical question gets one (how something works, how things compare, how to set up or fix something, what some code does, figures you asked for). The time, the weather, a yes or no, one fact, small talk and where some work stands never do. `server/system_prompt.md` holds the rule; `canvas.worth_showing()` drops one too slight to need a screen and says it instead.
 - **Never spoken:** the model writes the canvas after its spoken sentences as `<canvas title="...">markdown, with chart, stats and note fences</canvas>`. `server/canvas.py` cuts it out before the speech gate, the repeat guard or a voice sees a word of it, and checks and cleans every block. What is said is trimmed to two sentences once the detail is on screen.
 - **Closing it:** say "close that", "hide that", "take that down", "got it", "thanks", "thank you", "that's all" or "I'm done" (with or without "Sunday" first). These act like "stop": no model turn and no reply, and only while a canvas is up; with nothing on screen they go to Sunday as before. A bare "thanks" is what the recognizer writes for noise, so it closes the canvas only when every word of it was heard clearly. Esc, a click on the dimmed area, the close button and the next question close it too, and closing it on one screen closes it on every screen.
-- **Show Details** on an answered card brings a closed canvas back.
+- **Details** in the rail brings the last closed canvas back.
 - **Safety:** the canvas renders from data, never from model HTML. Markdown runs with HTML off, links and images off, and through DOMPurify; code is highlighted locally; charts are drawn from numbers. The page has a strict Content Security Policy and can't load anything from the network. markdown-it, DOMPurify, highlight.js, Chart.js and the code font are bundled in `popup/vendor/` (`npm run vendor` copies them from `node_modules`).
 - **Windows:** the canvas obeys the overlay switch and the game rule like the rest of the overlay. Held back over a game it is logged as `canvas held back for <game>: <title>` in `overlay.log`, the brain hears that it was held, and it opens if you turn the overlay on, or the game ends, within two minutes.
 
@@ -384,9 +385,9 @@ has gone quiet always gets through. A cube that does not report goes by the cloc
 drops it without a sound. If not, because the cube is too far, its mute button is on, or it's
 offline, the Mac sends what was said since the wake, chimes once his words are in (see Words,
 not sounds), then answers through its own speakers. A cube wake that arrives after the Mac was cleared stands down. Away from home
-(the Mac isn't on the home Wi-Fi router) the Mac answers at once. Announcements play on the
-cube, and on the Mac only while it's away. A late answer plays on whichever he last spoke to
-(see Late answers).
+(the Mac isn't on the home Wi-Fi router) the Mac answers at once. Announcements and late
+answers play where he was last: the Mac when he has used it in the last five minutes (the ear
+reports how long since his last keypress or pointer move), otherwise as Late answers says.
 
 - Turn it off with Listen on This Mac in the tray menu.
 - It runs from its own Python environment in `~/Library/Application Support/Sunday/ear-venv`,

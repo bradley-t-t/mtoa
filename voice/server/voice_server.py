@@ -227,6 +227,8 @@ OTHER_MIC_WAIT = float(os.environ.get("VOICE_OTHER_MIC_WAIT", "10"))
 LATE_QUIET = float(os.environ.get("VOICE_LATE_QUIET", "1.5"))
 LATE_TURN_WAIT = float(os.environ.get("VOICE_LATE_TURN_WAIT", "180"))   # his newer question is waited on this long
 LATE_HERE = float(os.environ.get("VOICE_LATE_HERE", "900"))
+# A computer whose ear reports him typing or pointing at it counts as where he is for this long.
+AT_COMPUTER = float(os.environ.get("VOICE_AT_COMPUTER", "300"))
 LATE_TRIES = int(os.environ.get("VOICE_LATE_TRIES", "3"))   # turned down or cut off this often, it is left unsaid
 LATE_LISTEN_GRACE = 2.0     # a reply asks for a follow-up window, which opens once its playback ends
 LATE_KEEP = 600             # a late answer is remembered this long, so a second copy of it is known
@@ -1380,6 +1382,7 @@ class CubeSession:
         self.play_until = 0.0          # when the cube should finish playing what it has been sent
         self.ear = False               # a secondary ear (the Mac): it defers to the cube
         self.away = False              # an ear away from home, out of the cube's hearing
+        self.used_at = 0.0             # an ear's computer: when he last typed or pointed at it
         self.hw_muted = False          # the cube's mute button: it hears nothing
         self.trigger_until = 0.0       # it is saying "Sunday" or "stop" itself until then
         self.light = False             # the cube's ring is lit
@@ -1443,6 +1446,19 @@ class CubeSession:
 
     def is_open(self) -> bool:
         return self.ws.state is State.OPEN
+
+    def used(self, idle):
+        """An ear's report of how long since he last typed or pointed at its computer."""
+        try:
+            idle = float(idle)
+        except (TypeError, ValueError):
+            return
+        at = time.time() - max(0.0, idle)
+        if at - self.used_at > 1:
+            was_here = time.time() - self.used_at < AT_COMPUTER
+            self.used_at = at
+            if not was_here and idle < AT_COMPUTER:
+                log.info("%s: he is at it", self.device)
 
     async def speech(self, data, seq=None):
         """Send one frame of speech through the outbox. It never waits on a lost link: the
@@ -1539,6 +1555,7 @@ class CubeSession:
                     self.device = data.get("device", self.device)
                     self.ear = data.get("role") == "ear"
                     self.away = bool(data.get("away"))
+                    self.used(data.get("idle"))
                     self.hw_muted = bool(data.get("hw_muted"))
                     log.info("%s connected: %s%s", "ear" if self.ear else "cube", self.device,
                              " (away)" if self.away else "")
@@ -1552,8 +1569,11 @@ class CubeSession:
                                     if c is not self and not c.ear and c.device == self.device and c.successor is None]:
                             self.adopt(old)
                 elif kind == "presence":
-                    self.away = bool(data.get("away"))
-                    log.info("%s is %s", self.device, "away from home" if self.away else "at home")
+                    away = bool(data.get("away"))
+                    if away != self.away:
+                        self.away = away
+                        log.info("%s is %s", self.device, "away from home" if away else "at home")
+                    self.used(data.get("idle"))
                 elif kind == "hw_mute":
                     self.hw_muted = bool(data.get("muted"))
                     log.info("%s mute button %s", self.device, "on" if self.hw_muted else "off")
@@ -4216,15 +4236,20 @@ def late_hold(since: float) -> str:
 
 
 def late_targets() -> list:
-    """Where a late answer is said: the connected device he last spoke to within LATE_HERE (a
-    cube only while he is at home), or else where an announcement goes - the cubes, and the
-    Mac only when he is away from home."""
+    """Where something that comes back on its own is said (a late answer, an announcement):
+    where he was last - the device he last spoke to within LATE_HERE (a cube only while he is
+    at home), or the computer he typed or pointed at within AT_COMPUTER, whichever was later -
+    or else the cubes, and the Mac only when he is away from home. 2026-10-14: at his Mac, with
+    the cube out of earshot and his last words a quarter of an hour old, an announcement played
+    on the cube alone and he only saw it on screen."""
     devs = [c for c in speakers() if c.is_open()]
     away = any(c.ear and c.away for c in devs)
     now = time.time()
-    for name, at in sorted(heard_on.items(), key=lambda x: -x[1]):
-        if now - at > LATE_HERE:
-            break
+    last = {name: at for name, at in heard_on.items() if now - at <= LATE_HERE}
+    for c in devs:
+        if c.ear and now - c.used_at <= AT_COMPUTER and c.used_at > last.get(c.device, 0):
+            last[c.device] = c.used_at
+    for name, at in sorted(last.items(), key=lambda x: -x[1]):
         here = [c for c in devs if c.device == name and (c.ear or not away)]
         if here:
             return here[:1]
@@ -4577,9 +4602,10 @@ async def health(connection, request):
         # Announcements from other services on this machine: GET /say?text=...
         from urllib.parse import parse_qs
         text = voice_rules(parse_qs(query).get("text", [""])[0].strip(), True)
-        # Announcements are for the cube; the Mac says them only when he is away from it. An
-        # answer (answer=1) is a late answer, said on the device he is using (late_targets).
-        targets = [c for c in speakers() if not c.ear or c.away]
+        # Announcements, and answers (answer=1, said as late answers), are said where he is
+        # (late_targets): the cubes, unless he is at a computer or away from home.
+        # A cube whose link has just dropped still gets it once it is back.
+        targets = late_targets() or [c for c in speakers() if not c.ear or c.away]
         # answer=1: it answers a question he has just asked. Him asking again is never a
         # reason to say less, so only what was said aloud since that question counts against
         # it: since his latest request, or since asked=<epoch seconds> when the caller knows.

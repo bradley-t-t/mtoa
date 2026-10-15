@@ -79,109 +79,55 @@ body.glass::before {
 .root { position: relative; padding: 18px 20px; }
 .hug .root { width: max-content; }
 
-/* the header every panel starts with */
-.ph { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.ph .idx { font: 500 9px var(--display); letter-spacing: 0.22em; color: var(--cyan); }
-.ph .title { font: 600 11px/1.2 var(--display); letter-spacing: 0.22em; text-transform: uppercase; }
-.ph .rule { flex: 1; height: 1px; background: var(--edge); opacity: 0.7; }
-.ph .meta { font: 400 11px var(--mono); color: var(--faint); white-space: nowrap; }
-.ph .meta.warn { color: var(--amber); }
+/* Moving: the capsule and the rail drag by their glass. */
+.handle { cursor: grab; }
+.handle:active { cursor: grabbing; }
 
-.empty { padding: 8px 0 4px; font-size: 15px; color: var(--faint); }
+/* ---- the caption: the live exchange, under the reactor */
 
-/* ---- conversation */
-
-.conversation .root { height: 100vh; display: flex; flex-direction: column; padding-bottom: 8px; }
-.cards { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -8px 0 -4px; padding: 0 8px 0 4px; }
-.cards::-webkit-scrollbar { width: 6px; }
-.cards::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
-.cards:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
-.card { position: relative; padding: 12px 6px 13px 16px; border-bottom: 1px solid var(--hair); }
-.card:last-child { border-bottom: 0; }
-.card::before { content: ""; position: absolute; left: 0; top: 14px; width: 3px; height: 16px; border-radius: 2px; background: var(--tone, var(--faint)); }
-.card.done::before { opacity: 0.5; }
-.card .head { display: flex; align-items: center; gap: 8px; height: 16px; }
-.card .head .label { color: var(--tone, var(--faint)); }
-.card .head .grow { flex: 1; }
-.card .time { font: 400 11px var(--mono); color: var(--faint); }
-.card .you { margin-top: 6px; font-size: 15px; line-height: 19px; color: var(--dim); }
-.card .you:not(:empty)::before { content: "\201c"; }
-.card .you:not(:empty)::after { content: "\201d"; }
-.card .you.partial { color: var(--faint); }
-.card .status { margin-top: 5px; font: 400 11px/1.35 var(--mono); color: var(--tone, var(--faint)); opacity: 0.9; }
-.card .status:not(:empty)::before { content: "\203a  "; }
-.card .reply { margin-top: 6px; font-size: 17px; line-height: 22px; color: var(--ink); }
-.card .reply.filler { color: var(--dim); }
-.card .note { margin-top: 5px; font-size: 14px; color: var(--faint); }
-.card .you:empty, .card .status:empty, .card .reply:empty, .card .note:empty { display: none; }
-.card .details { margin-top: 9px; }
-.card.has-details { cursor: pointer; }
-.card.enter { animation: enter 0.32s var(--ease); }
-@keyframes enter { from { opacity: 0; transform: translateY(-6px); } }
-
-.chip-button {
-  display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 10px; border-radius: 100px;
-  font: 600 9.5px/1 var(--display); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink);
-  background: rgba(53, 224, 255, 0.1); border: 1px solid rgba(53, 224, 255, 0.4);
-  transition: background 0.15s ease;
+.caption .root { display: flex; align-items: center; gap: 28px; padding: 20px 30px 22px; }
+.caption .text { flex: 1; min-width: 0; }
+.caption .line { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.caption .state-label { font-size: 10px; letter-spacing: 0.3em; }
+.caption .asked { flex: 1; min-width: 0; font-size: 16px; line-height: 20px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.caption .asked:not(:empty)::before { content: "\201c"; }
+.caption .asked:not(:empty)::after { content: "\201d"; }
+.caption .meta { flex: none; margin-left: auto; font: 400 11px var(--mono); color: var(--faint); }
+.caption .said {
+  margin-top: 8px; font: 600 var(--said-size, 28px)/1.2 var(--body); color: var(--ink); text-wrap: balance;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
 }
-.chip-button:hover { background: rgba(53, 224, 255, 0.2); }
+.caption .said:empty { display: none; }
+.caption .said.tail { color: var(--dim); }
+.caption .said.quiet { color: var(--faint); font-weight: 500; }
+.caption .chips { margin-top: 10px; justify-content: flex-start; }
+.caption .wave { gap: 2.5px; }
 
-/* ---- systems */
+/* ---- the chips of work on the orbit */
 
-.stats { display: flex; gap: 10px; margin: 2px 0 8px; }
-.stat {
-  flex: 1; min-width: 0; padding: 11px 12px 12px 13px; border-radius: 14px;
-  background: rgba(3, 20, 31, 0.28);
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+.taskchip .root { min-width: 230px; max-width: 290px; padding: 12px 16px 13px; }
+.taskchip .root::after {
+  content: ""; position: fixed; inset: 0; border-radius: var(--r); pointer-events: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 40%, transparent);
 }
-.stat .value { font: 700 22px/1.1 var(--display); letter-spacing: 0.02em; white-space: nowrap; }
-.stat .label { margin-top: 5px; color: var(--faint); font-size: 8.5px; }
-.narrow .stat .value { font-size: 19px; }
-.stat .delta { margin-top: 4px; font: 400 10.5px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.site { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-.site .name { flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.site svg { flex: none; }
-.site .note { width: 64px; text-align: right; font: 400 11px var(--mono); color: var(--dim); }
-.site.slow .note { color: var(--amber); }
-.site.down .note { color: var(--red); }
-.foot { margin-top: 6px; font: 400 11px var(--mono); color: var(--faint); }
-
-/* ---- work in progress */
-
-.task { padding: 10px 0 11px; border-bottom: 1px solid var(--hair); }
-.task:last-child { border-bottom: 0; }
-.task .head { display: flex; align-items: center; gap: 9px; }
-.task .what { flex: 1; min-width: 0; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.task .state { color: var(--tone); }
-.task .elapsed { font: 400 11px var(--mono); color: var(--faint); min-width: 38px; text-align: right; }
-.task .detail { margin-top: 4px; font-size: 15px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.task .detail:empty { display: none; }
-.track { position: relative; margin-top: 8px; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.taskchip .head { display: flex; align-items: center; gap: 10px; }
+.taskchip .what { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.taskchip .elapsed { font: 400 11px var(--mono); color: var(--tone); }
+.taskchip .detail { margin-top: 3px; font-size: 14px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.taskchip .detail:empty { display: none; }
+.track { position: relative; margin-top: 9px; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .track::after {
   content: ""; position: absolute; top: 0; bottom: 0; width: 38%; border-radius: 2px;
   background: var(--tone); box-shadow: 0 0 10px var(--tone);
   animation: sweep 1.8s var(--ease) infinite;
 }
-.task.done .track::after { width: 100%; animation: none; }
+.done .track::after { width: 100%; animation: none; }
 @keyframes sweep { from { left: -38%; } to { left: 100%; } }
-.task.leaving { opacity: 0; transition: opacity 0.3s ease; }
-
-/* ---- incidents */
-
-.incident { display: flex; gap: 10px; padding: 7px 0; }
-.incident .dot { margin-top: 6px; }
-.incident .body { flex: 1; min-width: 0; }
-.incident .title { font-size: 15px; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.incident .where { margin-top: 2px; font: 400 10.5px var(--mono); color: var(--faint); }
 
 /* ---- status capsule */
 
 .status-capsule .root { display: flex; align-items: center; gap: 18px; padding: 10px 12px 10px 18px; }
 .status-capsule .item { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-.status-capsule .buttons { display: flex; gap: 6px; margin-left: 2px; }
 .round {
   width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none;
   background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.28);
@@ -191,10 +137,10 @@ body.glass::before {
 .round.on { background: rgba(53, 224, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(53, 224, 255, 0.6), 0 0 14px rgba(53, 224, 255, 0.45); }
 .round svg { width: 18px; height: 18px; }
 
-/* ---- dock */
+/* ---- the rail of controls */
 
-.dock .root { display: flex; gap: 2px; padding: 12px 14px 10px; }
-.dock-button { width: 88px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dock .root { display: flex; flex-direction: column; gap: 10px; padding: 16px 6px 12px; }
+.dock-button { width: 76px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .dock-button .round { width: 50px; height: 50px; }
 .dock-button .round svg { width: 22px; height: 22px; }
 .dock-button .label { color: var(--dim); font-size: 8.5px; }
@@ -223,61 +169,108 @@ svg.icon { fill: none; stroke: var(--cyan); stroke-width: 1.6; stroke-linecap: r
 .toast .text { margin-top: 6px; font-size: 16px; line-height: 20px; }
 .toast .mono { margin-top: 3px; }
 
-/* ---- the deck itself: corners, top bar and the stage */
+/* ---- the deck itself: the frame, the top bar, the reactor and its orbit */
 
 body.deck { width: 100vw; height: 100vh; }
+/* The field the deck is drawn on: deep navy, lit from behind the reactor. Focus mode leaves the
+   screen to his work. */
+.field {
+  position: fixed; inset: 0; pointer-events: none; transition: opacity 0.42s var(--ease);
+  background: radial-gradient(42% 52% at var(--cx, 50%) var(--cy, 42%), rgba(15, 82, 117, 0.42), rgba(6, 34, 52, 0.18) 60%, transparent),
+    radial-gradient(40% 30% at 50% 100%, rgba(5, 31, 51, 0.5), transparent), #03080e;
+}
+body.focus .field { opacity: 0; }
 .hud { position: fixed; inset: 0; transition: opacity 0.3s ease; }
-.corners i { position: absolute; width: 16px; height: 16px; border: 0 solid rgba(53, 224, 255, 0.8); }
-.corners .tl { left: 14px; top: 14px; border-left-width: 1.5px; border-top-width: 1.5px; }
-.corners .tr { right: 14px; top: 14px; border-right-width: 1.5px; border-top-width: 1.5px; }
-.corners .bl { left: 14px; bottom: 14px; border-left-width: 1.5px; border-bottom-width: 1.5px; }
-.corners .br { right: 14px; bottom: 14px; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+.corners i { position: absolute; width: 46px; height: 46px; border: 0 solid rgba(53, 224, 255, 0.6); }
+.corners .tl { left: 18px; top: 18px; border-left-width: 1.5px; border-top-width: 1.5px; }
+.corners .tr { right: 18px; top: 18px; border-right-width: 1.5px; border-top-width: 1.5px; }
+.corners .bl { left: 18px; bottom: 18px; border-left-width: 1.5px; border-bottom-width: 1.5px; }
+.corners .br { right: 18px; bottom: 18px; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+/* A rule of ticks off the top-left and bottom-right corners. */
+.corners .tl::after, .corners .br::after {
+  content: ""; position: absolute; width: 97px; height: 10px; opacity: 0.5;
+  background: repeating-linear-gradient(90deg, var(--cyan) 0 1px, transparent 1px 12px) bottom / 100% 5px no-repeat,
+    repeating-linear-gradient(90deg, var(--cyan) 0 1px, transparent 1px 48px) bottom / 100% 10px no-repeat;
+}
+.corners .tl::after { left: 96px; top: -1.5px; transform: scaleY(-1); }
+.corners .br::after { right: 96px; bottom: -1.5px; }
 
 .topbar { position: absolute; left: var(--m, 40px); right: var(--m, 40px); top: 22px; height: 56px; }
 .brand { position: absolute; left: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 12px; }
 .brand svg { width: 30px; height: 30px; filter: drop-shadow(0 0 8px rgba(53, 224, 255, 0.6)); }
 .wordmark { font: 700 22px/1 var(--display); letter-spacing: 0.24em; text-transform: uppercase; text-shadow: 0 0 14px rgba(53, 224, 255, 0.6); }
-.clock { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
-.clock .time { font: 600 34px/1.1 var(--display); letter-spacing: 0.06em; }
-.clock .date { margin-top: 2px; color: var(--dim); font-size: 9px; }
+.clock { position: absolute; right: 0; top: 2px; display: flex; flex-direction: column; align-items: flex-end; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+.clock .time { display: flex; align-items: baseline; gap: 10px; font: 600 54px/1 var(--display); letter-spacing: 0.04em; }
+.clock .ampm { font: 500 16px/1 var(--display); letter-spacing: 0.1em; color: var(--cyan); }
+.clock .date { margin-top: 10px; color: var(--dim); font-size: 10px; }
+.devices { display: flex; gap: 16px; margin-top: 10px; }
+.devices:empty { display: none; }
+.device { display: flex; align-items: center; gap: 6px; font: 400 11px var(--mono); color: var(--dim); }
+.device .dot { width: 6px; height: 6px; }
 
-.stage { position: absolute; }
+.stage { position: absolute; inset: 0; pointer-events: none; }
 .stage.compact { display: none; }
 .scrim {
-  position: absolute; left: -12%; right: -12%; top: 2%; bottom: 6%; pointer-events: none;
+  position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--lens) * 2.8); height: calc(var(--lens) * 2.4);
+  transform: translate(-50%, -50%); pointer-events: none;
   background: radial-gradient(closest-side, rgba(2, 8, 15, 0.5), rgba(2, 8, 15, 0.3) 60%, transparent);
 }
+.orbit { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: var(--cyan); stroke-width: 1; }
+.o-range { stroke-opacity: 0.1; }
+.o-ring { stroke-opacity: 0.3; stroke-dasharray: 1 5; }
+.o-guides { stroke-opacity: 0.2; stroke-dasharray: 2 6; }
+.o-minor { stroke-opacity: 0.22; }
+.o-major { stroke-opacity: 0.55; }
+.o-spin { animation: spin 160s linear infinite; }
+.o-lead { stroke: var(--tone); filter: drop-shadow(0 0 4px var(--tone)); }
+.o-lead path { stroke-opacity: 0.55; }
+.o-lead circle { stroke-opacity: 0.45; }
+.o-lead .o-node { fill: var(--tone); stroke: none; }
 .lens {
-  position: absolute; left: 50%; top: var(--lens-top, 58px); width: var(--lens, 420px); height: var(--lens, 420px);
-  transform: translateX(-50%); border-radius: 50%;
+  position: absolute; left: var(--cx, 50%); top: var(--cy, 42%); width: var(--lens, 420px); height: var(--lens, 420px);
+  transform: translate(-50%, -50%); border-radius: 50%;
   background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.06), rgba(3, 14, 24, 0.22) 60%, rgba(3, 14, 24, 0.3));
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.16), inset 0 2px 1px rgba(255, 255, 255, 0.22), 0 20px 60px rgba(0, 4, 10, 0.35);
 }
 .lens::before {
   content: ""; position: absolute; inset: -16%; border-radius: 50%;
   border: 1px dashed rgba(53, 224, 255, 0.28); pointer-events: none;
+  animation: spin 90s linear infinite;
 }
+/* A glow behind the glass that rises and falls with the reactor's breath. */
+.lens::after {
+  content: ""; position: absolute; inset: -6%; border-radius: 50%; pointer-events: none; z-index: -1;
+  background: radial-gradient(closest-side, rgba(53, 224, 255, 0.16), transparent);
+  animation: glow 3.6s ease-in-out infinite;
+}
+@keyframes glow { 50% { opacity: 0.35; transform: scale(0.96); } }
 .lens > .reactor { position: absolute; inset: 7%; }
 
-/* The reactor, in the lens and in the head. It turns only while Sunday is listening, thinking
-   or speaking; at rest it holds still. */
+/* The reactor, in the lens and in the head. It is always turning: slowly at rest, with its core
+   breathing and a mark circling it, and faster while Sunday is listening, thinking or speaking. */
 .reactor { color: var(--cyan); transition: color 0.3s ease, opacity 0.3s ease; }
 .reactor svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 7px currentColor); }
 .reactor.thinking { color: var(--amber); }
 .reactor.speaking, .reactor.answered { color: var(--mint); }
 .reactor.offline { color: var(--red); }
-.reactor.answered { opacity: 0.85; }
-.reactor.idle, .reactor.muted { opacity: 0.6; }
-.reactor.idle svg, .reactor.muted svg { filter: none; }
-.r-core { fill: #fff; }
+.reactor.answered { opacity: 0.9; }
+.reactor.idle, .reactor.muted { opacity: 0.82; }
+.reactor.idle svg, .reactor.muted svg { filter: drop-shadow(0 0 4px currentColor); }
+.r-core { fill: #fff; transform-origin: 180px 180px; animation: core 3.6s ease-in-out infinite; }
 .reactor.idle .r-core, .reactor.muted .r-core, .reactor.offline .r-core { fill: currentColor; }
-.r-spin { transform-origin: 180px 180px; animation: spin 120s linear infinite; }
-.r-seg { transform-origin: 180px 180px; animation: spin 48s linear infinite; }
-.r-inner { transform-origin: 180px 180px; animation: spin 36s linear infinite reverse; }
-.r-orbit { transform-origin: 180px 180px; animation: spin 2.4s linear infinite; opacity: 0; transition: opacity 0.3s ease; }
-.reactor:not(.listening):not(.thinking):not(.speaking) g { animation-play-state: paused; }
-.thinking .r-seg { animation-duration: 7s; }
-.thinking .r-orbit { opacity: 1; }
+.r-spin { transform-origin: 180px 180px; animation: spin 70s linear infinite; }
+.r-seg { transform-origin: 180px 180px; animation: spin 26s linear infinite; }
+.r-inner { transform-origin: 180px 180px; animation: spin 19s linear infinite reverse; }
+.r-acc { transform-origin: 180px 180px; animation: spin 11s linear infinite; }
+.r-orbit { transform-origin: 180px 180px; animation: spin 9s linear infinite; opacity: 0.75; transition: opacity 0.3s ease; }
+.listening .r-seg, .speaking .r-seg { animation-duration: 12s; }
+.listening .r-inner, .speaking .r-inner { animation-duration: 9s; }
+.listening .r-orbit, .speaking .r-orbit { animation-duration: 4s; opacity: 1; }
+.thinking .r-seg { animation-duration: 6s; }
+.thinking .r-orbit { animation-duration: 2.4s; opacity: 1; }
+.thinking .r-core { animation-duration: 1.2s; }
+.muted .r-orbit, .offline .r-orbit { opacity: 0; }
+@keyframes core { 50% { transform: scale(1.32); opacity: 0.7; } }
 .r-acc { stroke: var(--amber); }
 .thinking .r-acc { stroke: var(--cyan); }
 .r-slash { opacity: 0; stroke: var(--red); }
@@ -285,20 +278,7 @@ body.deck { width: 100vw; height: 100vh; }
 .offline .r-seg path { stroke-dasharray: 3 6; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.live {
-  position: absolute; left: 50%; top: var(--live-top, 500px); bottom: var(--live-bottom, 120px); width: min(900px, 100%);
-  transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
-  overflow: hidden;
-}
 .state-label { font: 600 11px/1.2 var(--display); letter-spacing: 0.22em; text-transform: uppercase; color: var(--tone); text-shadow: 0 0 12px var(--tone); flex: none; }
-.asked { font-size: 18px; line-height: 23px; color: var(--dim); max-width: 760px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); flex: none; }
-.asked:empty { display: none; }
-.asked::before { content: "\201c"; }
-.asked::after { content: "\201d"; }
-.said { font: 600 var(--said-size, 34px)/1.2 var(--body); color: var(--ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); max-width: 900px; text-wrap: balance; min-height: 0; overflow: hidden; }
-.said:empty { display: none; }
-.said.tail { color: var(--dim); }
-.said.quiet { color: var(--faint); font-weight: 500; }
 .wave { display: flex; align-items: center; gap: 3px; height: 40px; flex: none; opacity: 0; transition: opacity 0.3s ease; }
 .wave.on { opacity: 1; }
 .wave i { width: 2px; height: 36px; border-radius: 1px; background: var(--tone); box-shadow: 0 0 6px var(--tone); transform: scaleY(0.06); }
@@ -311,7 +291,17 @@ body.deck { width: 100vw; height: 100vh; }
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 .chip .dot { width: 6px; height: 6px; }
-.hints { position: absolute; left: 0; right: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px 24px; color: var(--dim); font-size: 15px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+
+/* The last few answers at the bottom left, fading as they age, and the hotkeys at the bottom right. */
+.recent { position: absolute; left: var(--m, 40px); bottom: var(--m, 40px); width: var(--side, 300px); display: flex; flex-direction: column; gap: 12px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+.recent .label { color: var(--faint); }
+.recent .line { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.recent .line:nth-child(2) { opacity: 0.85; }
+.recent .line:nth-child(3) { opacity: 0.6; }
+.recent .line:nth-child(4) { opacity: 0.38; }
+.recent .mono { flex: none; color: var(--cyan); }
+.recent .text { min-width: 0; font-size: 16px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hints { position: absolute; right: var(--m, 40px); bottom: var(--m, 40px); display: flex; flex-direction: column; align-items: flex-end; gap: 10px; color: var(--dim); font-size: 15px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
 .hint { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
 .hint > span:last-child { margin-left: 4px; }
 .key {
@@ -325,11 +315,27 @@ body.deck { width: 100vw; height: 100vh; }
   opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
 }
 .focus-hint.on { opacity: 1; }
-.hud:not(.focus) .focus-hint { display: none; }
+body:not(.focus) .focus-hint { display: none; }
 
-.hud.focus .topbar, .hud.focus .stage { display: none; }
-.hud.focus .corners { opacity: 0.5; }
+.focus .topbar, .focus .stage, .focus .recent, .focus .hints { display: none; }
+.focus .corners { opacity: 0.5; }
+
+/* ---- opening and closing (main.js): the veil, and the deck rising and sinking */
+
+.veil {
+  position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.42s ease;
+  background: radial-gradient(circle at 50% 42%, rgba(7, 30, 46, 0.96), rgba(2, 8, 15, 0.99) 70%);
+}
+body.veiled .veil { opacity: 1; transition-duration: 0.2s; }
+.hud { transition: opacity 0.42s var(--ease), transform 0.42s var(--ease); }
+body.away .hud, body.away .field { opacity: 0; transition-duration: 0.2s; }
+body.away .hud { transform: scale(0.97); }
+.lens { transition: transform 0.6s var(--ease); }
+body.away .lens { transform: translate(-50%, -50%) scale(0.8) rotate(-40deg); transition-duration: 0.2s; }
+.glass .root { transition: transform 0.42s var(--ease); }
+.glass.away .root { transform: translateY(10px) scale(0.985); transition-duration: 0.2s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .r-spin, .r-seg, .r-inner, .r-orbit, .track::after { animation: none; }
+  .r-spin, .r-seg, .r-inner, .r-acc, .r-orbit, .r-core, .lens::before, .lens::after, .track::after, .o-spin { animation: none; }
+  .veil, .field, .hud, .lens, .glass .root { transition: none; }
 }
