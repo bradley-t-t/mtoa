@@ -2043,6 +2043,10 @@
   "intelligence",
   "tools/design-pass.py"
  ],
+ "claude/tools/desktop.py": [
+  "intelligence",
+  "tools/desktop.py"
+ ],
  "claude/tools/google-pass.py": [
   "intelligence",
   "tools/google-pass.py"
@@ -2130,6 +2134,10 @@
  "claude/tools/tests/design-pass-cases.py": [
   "intelligence",
   "tools/tests/design-pass-cases.py"
+ ],
+ "claude/tools/tests/desktop-cases.py": [
+  "intelligence",
+  "tools/tests/desktop-cases.py"
  ],
  "claude/tools/tests/google-pass-cases.py": [
   "intelligence",

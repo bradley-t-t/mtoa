@@ -174,6 +174,13 @@ real finding behind the acknowledgement passes.
   drives the real browser with its signed-in sessions; reach for it whenever
   that helps. The in-app browser (`mcp__Claude_Browser__*`) stays the lighter
   choice for a page that needs no session.
+- **Native apps are driven through `tools/desktop.py`, never computer use.**
+  Computer use asks for every app in every session and nothing pre-approves
+  one, so `mcp__computer-use` is denied in `settings.json`. `desktop.py` does
+  the same work over Bash on macOS grants Claude Code holds for good: `shot`
+  saves a screenshot whose pixels are click coordinates, read with Read, then
+  `click`, `type`, `key`, `scroll`, `drag`, `open`, `windows`. An app's own
+  AppleScript dictionary through `osascript` comes first where it has one.
 - **Do not stop at a roadblock.** A blocked path is a route to find, not a
   question to hand back. Try the other browser, the other tool, the other angle,
   and only surface it once those are actually spent - then say what was tried.

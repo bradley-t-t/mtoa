@@ -28,7 +28,9 @@
       "mcp__Claude_Browser",
       "mcp__ccd_session"
     ],
-    "deny": []
+    "deny": [
+      "mcp__computer-use"
+    ]
   },
   "hooks": {
     "PreToolUse": [
