@@ -14,7 +14,8 @@ and why it was cut off). This reads the last few hours of both and flags:
                for it again
   self-heard   a "heard" line the server kept that is Sunday's own recent speech picked
                up by the mic
-  double-heard the same words heard twice within a minute, with no answer in between
+  double-heard the same words heard twice within a minute with no answer in between,
+               both copies carrying words the server could have answered
   echo-leak    words dropped as Sunday's own voice, then heard again and answered
   stale        a reply that started playing after a newer question had been heard
   late-relay   a relayed reply spoken more than once
@@ -146,6 +147,27 @@ def ask_core(text: str) -> list:
 def was_echo(rec: dict) -> bool:
     """The server dropped this line because it recognised its own voice in it."""
     return str(rec.get("discarded", "")).startswith("its own voice")
+
+
+# What a drop reason says about whether there was anything to answer. "No words" in all its
+# forms, and a line too short to be an ask while the Mac is playing, mean the server found
+# nothing in the line to act on, so the quiet after it is the gate holding rather than him
+# going unanswered - and the same empty line twice is the room repeating itself: "Alex
+# Morgan." read at 5:52:26 PM and again at 5:52:46 PM on 2026-10-15 was his name off the Mac's
+# own audio, dropped once under three words and once for having no name in it, and went out as
+# a fault at the hour. Every other reason - "not said to Sunday", "heard while talking, not
+# addressed" - is the server holding words it did have, and that judgement landing the same way
+# twice inside a minute is the gate dropping him, which is half of what this rule is for:
+# "Shorten the wait to five days." at 8:40 PM on 2026-10-05 and "Where are we at on the
+# previews that you're working on?" at 7:26 AM on 2026-10-07 were both him, both dropped twice
+# while computer audio played. A reason missing from this list raises, because a rule that goes
+# quiet on a drop it has not seen before is worse than one that asks about it.
+NOTHING_TO_ANSWER = re.compile(r"^(?:no words\b|under \d+ words?\b|filler\b)")
+
+
+def had_no_words(rec: dict) -> bool:
+    """The server dropped this line for having nothing in it to answer."""
+    return bool(NOTHING_TO_ANSWER.match(str(rec.get("discarded") or "")))
 
 
 def spoken_text(rec: dict) -> str:
@@ -291,7 +313,9 @@ def audit(rows, window_start):
     # at 4:45:10 as "its own voice coming back through the mic" and answered nine seconds
     # later with "I didn't catch that". Raised as what it is, so the fix is looked for in the
     # echo guard rather than in the gate. Caught both times, the guard did its job and there
-    # is nothing to raise, the same reason the self-heard rule skips a discarded line.
+    # is nothing to raise, the same reason the self-heard rule skips a discarded line. A line
+    # the server dropped for holding no words at all is not him either, by `had_no_words`
+    # above, and neither is a second copy of one.
     for i, a in enumerate(heard):
         for b in heard[i + 1:]:
             if b["at"] - a["at"] > 60:
@@ -301,10 +325,16 @@ def audit(rows, window_start):
             if any(a["at"] <= s["at"] <= b["at"] for s in answered_back):
                 break
             if was_echo(a):
-                if not was_echo(b):
+                # Answered means the server kept it. Dropped a second time, for whatever
+                # reason of its own, is not it changing its mind about the words.
+                if not b.get("discarded"):
                     flag("echo-leak", b["at"], f'{when(b["at"])} answered words it had dropped as its own voice at '
                                                f'{when(a["at"])}: "{clip(b.get("text"))}"')
                 break
+            if had_no_words(a):
+                break
+            if had_no_words(b) or was_echo(b):
+                continue
             flag("double-heard", b["at"], f'{when(b["at"])} heard the same words twice in a minute with nothing '
                                           f'said back: "{clip(b.get("text"))}"')
             break

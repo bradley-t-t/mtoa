@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The speech audit's repeat rule, over the pairs it must raise and the pairs it must not.
+"""The speech audit's repeat and double-heard rules, over the pairs they must raise and the
+pairs they must not.
 
 The rule has been lost once already - the mirror copy of 2026-10-06 09:20 was overwritten
 by an older file from the Pi four hours later - and nothing noticed until the hourly run
@@ -91,6 +92,57 @@ CASES = [
 ]
 
 
+# What the mic hands over twice, and what only looks like it. The rule reads the quiet after the
+# first copy as the fault, so what the drop reason says about the line decides it: words the
+# server had and held back are still him going unanswered, while a line it found nothing in is
+# the room repeating itself and owed nothing. The 5:52 PM pair of 2026-10-15 was the second
+# kind and went out as a fault at the hour.
+HELP = "Sunday, put the overlay back up."
+EAR_CASES = [
+    ("heard twice with nothing said back", 1, [
+        heard(0, "q1", HELP), heard(20, "q2", HELP),
+    ]),
+    ("heard twice with an answer in between", 0, [
+        heard(0, "q1", HELP), said(1, "q1", LINE, source="command"), heard(20, "q2", HELP),
+    ]),
+    ("the room talking, dropped both times for having no words in it", 0, [
+        heard(0, "q1", "Alex Doe.", discarded="under 3 words while computer audio playing"),
+        heard(20, "q2", "Alex Doe.",
+              discarded="no words: woken by a sound: its name is not in what it heard"),
+    ]),
+    # The gate dropping him is the other half of the rule, and it is the half worth keeping:
+    # both of these are his words, held twice because the Mac was playing over him.
+    ("his words held twice as not said to Sunday", 1, [
+        heard(0, "q1", "Shorten the wait to five days.",
+              discarded="not said to Sunday while computer audio playing"),
+        heard(22, "q2", "Shorten the wait to five days.",
+              discarded="not said to Sunday while computer audio playing"),
+    ]),
+    ("kept once, then held as not said to Sunday", 1, [
+        heard(0, "q1", HELP),
+        heard(20, "q2", HELP, discarded="not said to Sunday: the words read as overheard "
+                                        "and the voice scored 0.18"),
+    ]),
+    ("an empty copy between two the server could have answered", 1, [
+        heard(0, "q1", HELP),
+        heard(10, "q2", HELP, discarded="no words: nothing heard"),
+        heard(20, "q3", HELP),
+    ]),
+    ("its own voice, then answered", 1, [
+        heard(0, "q1", NEWS, discarded="its own voice coming back through the mic"),
+        heard(9, "q2", NEWS),
+    ]),
+    ("its own voice, caught both times", 0, [
+        heard(0, "q1", NEWS, discarded="its own voice coming back through the mic"),
+        heard(9, "q2", NEWS, discarded="its own voice"),
+    ]),
+    ("its own voice, then dropped for having no name in it", 0, [
+        heard(0, "q1", NEWS, discarded="its own voice coming back through the mic"),
+        heard(9, "q2", NEWS, discarded="no words: no name in the first seconds"),
+    ]),
+]
+
+
 # The stand-in names that have reached the log, and the real ones that must not be
 # mistaken for them. A harness replaying one line twice is the double-heard rule's exact
 # shape, so a name slipping through the filter is a false problem mailed at the hour.
@@ -112,16 +164,22 @@ def check_devices(tmp):
     return bad
 
 
-def main():
+def check(cases, kinds):
     bad = 0
-    for name, want, rows in CASES:
+    for name, want, rows in cases:
         rows.sort(key=lambda r: r["at"])
-        got = [f for f in speech_audit.audit(rows, T - 1) if f[1] in ("repeat", "late-relay")]
+        got = [f for f in speech_audit.audit(rows, T - 1) if f[1] in kinds]
         ok = len(got) == want
         bad += not ok
         print(f"{'ok  ' if ok else 'FAIL'}  {name}: {len(got)} raised, wanted {want}")
         for _, kind, text in got:
             print(f"        [{kind}] {text}")
+    return bad
+
+
+def main():
+    bad = check(CASES, ("repeat", "late-relay"))
+    bad += check(EAR_CASES, ("double-heard", "echo-leak"))
     with tempfile.TemporaryDirectory() as d:
         bad += check_devices(Path(d) / "speech.jsonl")
     print("all good" if not bad else f"{bad} case(s) wrong")
