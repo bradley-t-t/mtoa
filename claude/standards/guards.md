@@ -145,7 +145,15 @@ before any text is drawn and keeps text that is out of shape off the screen -
 display only, the stored message and what the model reads are untouched. `Stop`
 then sends that reply back to be rewritten, and the rewrite is what appears. A
 Stop hook alone cannot do this: it runs after the text is drawn, so every held
-reply used to be seen twice. `UserPromptSubmit` (`hook.py prompt`) puts the
+reply used to be seen twice. Hiding it on the live screen is not enough on its
+own: the desktop app redraws a chat from the saved transcript whenever it loads
+it - opening it, switching back, a restart - and never applies the display hook's
+replacement there, so each held draft came back above its rewrite, the same
+report twice in a row. Every `Stop` hold now blanks the held rows in the
+transcript (`blank_held`): the text is overwritten in place, same byte length,
+with a zero-width space and spaces, never truncating a file the CLI is still
+appending to, and the original row is kept under `state/ratchet/held/`. A resumed
+session reads the blank row without complaint. `UserPromptSubmit` (`hook.py prompt`) puts the
 shape and the approved example at the top of every message typed, so the first
 draft is usually right and nothing is withheld; replayed over five closing-report
 scenarios three times each on Opus, first drafts went from 7 of 15 in shape to 14
@@ -195,7 +203,8 @@ progress line is still hidden for its rewrite.
 Three stages, cheapest first. The layout is a parse - the verdict, one sentence
 after it, labelled lines of at most two sentences - and a reply in the shape is
 then read for asides - "by the way", "you'll need to", "left for later", "let me
-know" - so every compliant stop clears in milliseconds. A reply out of shape is
+know", and telling me I'm right ("you're right", "fair catch", "as you
+suspected") - so every compliant stop clears in milliseconds. A reply out of shape is
 excused on sight when this turn's message was a slash command, since the skill
 sets its own output. A reply built on the shape itself - a bold verdict and
 nothing but labelled lines - took no other form, so it is held at once with no

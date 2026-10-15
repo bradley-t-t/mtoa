@@ -716,9 +716,14 @@ def blank_held(transcript):
     The CLI appends to this file while the turn runs, so it is never truncated
     or rewritten whole: only the bytes of the held text are overwritten in place,
     with the same number of bytes, and a row that does not match exactly is left
-    as it is.
+    as it is. The row as it was is kept in the state's held/ folder, so a blank
+    can be undone.
     """
-    wanted = set(held_rows(transcript))
+    return blank_rows(transcript, held_rows(transcript))
+
+
+def blank_rows(transcript, uuids):
+    wanted = set(uuids)
     if not wanted:
         return 0
     patches, offset = [], 0
@@ -751,12 +756,17 @@ def blank_held(transcript):
                 json.loads(new)
             except ValueError:
                 continue
-            patches.append((start, new))
+            patches.append((start, new, line))
     if not patches:
         return 0
+    kept = state_root() / "held" / Path(transcript).name
+    kept.parent.mkdir(parents=True, exist_ok=True)
+    with open(kept, "ab") as handle:
+        for start, _, line in patches:
+            handle.write(line if line.endswith(b"\n") else line + b"\n")
     fd = os.open(transcript, os.O_WRONLY)
     try:
-        for start, new in patches:
+        for start, new, _ in patches:
             os.pwrite(fd, new, start)
     finally:
         os.close(fd)
