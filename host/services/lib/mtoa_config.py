@@ -79,8 +79,9 @@ DEFAULTS = {
     # Where routine mail goes out from, and the credential name its key is kept
     # under. It only ever goes to user.email.
     # The owner's own computer as the host reaches it (an ssh alias), and its home
-    # directory, for the assistant's errands on it.
-    "desk": {"ssh": "", "home": ""},
+    # directory, for the assistant's errands on it; and the session id of the standing
+    # chat there that takes voice work, found by that id whatever it is titled.
+    "desk": {"ssh": "", "home": "", "session": ""},
     "notify": {"slack_channel": "", "mail_from": "", "mail_credential": "resend-api-key"},
     "secrets": {"backend": "env"},
     # The studio or agency the owner builds sites under, when there is one: its
