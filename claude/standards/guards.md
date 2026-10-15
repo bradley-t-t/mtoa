@@ -81,6 +81,19 @@ a pattern says exactly what needs rewriting and there is nothing to judge.
 `EAR_OFF=1` stands it down for one run; `ear.py selftest` runs its cases, and
 `ratchet.py selftest` runs them too.
 
+Usage means all usage. When I ask how the assistant behaves, I mean every
+session on every machine, not the chat in view, and a turn that opens one
+transcript has narrowed the question before writing a word. `hook.py guard`
+denies the first read of a session transcript in a turn - the projects tree on
+any machine, or the app's `search_session_transcripts` and `export_transcript`
+- until `tools/usage.py` has run. That reads every session on this machine and
+the host, names what it could not read (cloud sessions always), and reports stop
+holds by reason, day and session, or every line matching a search. A narrower
+read is free after it, and memory files under the projects tree are not
+transcripts. It acts on the tool call, so nothing is drafted narrow and held
+afterwards. `scope.py selftest` runs its cases, and `ratchet.py selftest` runs
+them too.
+
 Every hold is drawn in the conversation, so no check says the same thing twice
 on one user message. The first hold of a kind carries the full reason; a second
 from the same check on new text quotes only the new text; a hold on exactly what

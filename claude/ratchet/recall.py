@@ -4,8 +4,8 @@ transcripts before finishing or improvising.
 "We do this all the time, see transcripts." The method already exists; fumbling
 the filesystem to rediscover it is the waste this refuses. The trigger is a
 recurrence cue in the user's own latest message this turn; the required move is
-one transcript read this turn (search_session_transcripts, or export/get/list of
-a session). Cue present and no such read yet holds the stop.
+one transcript read this turn (search_session_transcripts, tools/usage.py, or
+export/get/list of a session). Cue present and no such read yet holds the stop.
 
 Deterministic on purpose, no judge. "Go look at how we did it" is not a thing to
 weigh, it is a thing to do, so there is nothing for a model to talk itself out
@@ -30,7 +30,7 @@ CUES = re.compile(r"""(?ix)
 """)
 
 # A transcript read this turn satisfies the cue.
-READ = re.compile(r"search_session_transcripts|export_transcript|get_session\b|list_events", re.I)
+READ = re.compile(r"search_session_transcripts|export_transcript|get_session\b|list_events|usage\.py\b", re.I)
 
 HOLD = """Ratchet: the user said this is work already done before, and this turn never looked it up.
 
@@ -62,7 +62,8 @@ def _scan(transcript):
         elif kind == "assistant":
             for p in parts:
                 if p.get("type") == "tool_use":
-                    names.append(p.get("name", ""))
+                    command = (p.get("input") or {}).get("command") if p.get("name") == "Bash" else ""
+                    names.append(" ".join(filter(None, [p.get("name", ""), str(command or "")])))
     return user_text, names
 
 

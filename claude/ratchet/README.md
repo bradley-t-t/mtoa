@@ -345,6 +345,25 @@ also runs. `REFUSAL_OFF=1` stands it down for one run.
 
 <br />
 
+## All usage, not the chat in view
+
+`scope.py` runs inside `hook.py guard`, before a tool call rather than after a
+reply. A question about how the assistant behaves is a question about every
+session on every machine, so the first read of a session transcript in a turn
+- the projects tree anywhere, or the app's transcript search and export - is
+denied until `~/.claude/tools/usage.py` has run. That reads this machine from
+disk and the host over ssh, names what it could not read, and a narrower read
+is free after it. No judge and no count: the deny lifts the moment the whole
+picture has been read.
+
+```
+~/.claude/tools/usage.py                    stop holds by reason, day and session
+~/.claude/tools/usage.py search <regex>     every typed message and reply that matches
+scope.py selftest
+```
+
+<br />
+
 ## Install
 
 `config-sync.py` carries `ratchet/` with the rest of the setup, so a machine

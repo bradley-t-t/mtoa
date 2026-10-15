@@ -264,6 +264,10 @@ real finding behind the acknowledgement passes.
   cube take priority"), never as done ("the cube now takes priority"). Present
   tense and "now" are reserved for what has been built and verified in this
   session. The same goes for anything spoken through Sunday.
+- **Usage means all usage.** When I talk about how the assistant behaves, I
+  mean every session on every machine, never only the chat or project in view,
+  unless I name less. `~/.claude/tools/usage.py` reads all of it, and ratchet
+  denies a turn's first read of one transcript until it has run.
 - **Never assert an absence you have not gone and checked.** "Nothing is working
   on this", "no routine covers that", "nothing else is running" are claims about
   every agent and every schedule on every machine. Enumerate before you say it:

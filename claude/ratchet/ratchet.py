@@ -1629,6 +1629,12 @@ def pre_guard():
     transcript = payload.get("transcript_path")
     if not transcript or not Path(transcript).is_file():
         return 0
+    import scope
+    tool, given = payload.get("tool_name") or "", payload.get("tool_input") or {}
+    if scope.reads_transcript(tool, given) and not scope.ran_usage(rows(transcript)):
+        emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                 "permissionDecisionReason": scope.DENY})
+        return 0
     prose = pending_prose(transcript)
     if len(prose.split()) < 3:
         return 0
@@ -1760,6 +1766,8 @@ def selftest():
     bad += refusal.selftest()
     import ear
     bad += ear.selftest()
+    import scope
+    bad += scope.selftest()
     print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))

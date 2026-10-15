@@ -1835,6 +1835,10 @@
   "intelligence",
   "ratchet/respond.py"
  ],
+ "claude/ratchet/scope.py": [
+  "intelligence",
+  "ratchet/scope.py"
+ ],
  "claude/ratchet/shape-corpus.json": [
   "intelligence",
   "ratchet/shape-corpus.json"
@@ -2198,6 +2202,10 @@
  "claude/tools/tests/writing-pass-cases.py": [
   "intelligence",
   "tools/tests/writing-pass-cases.py"
+ ],
+ "claude/tools/usage.py": [
+  "intelligence",
+  "tools/usage.py"
  ],
  "claude/tools/version-badge.py": [
   "intelligence",
