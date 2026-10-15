@@ -762,6 +762,11 @@ The hold earlier in this turn says what to do, and it still applies."""
 
 LAST = "\n\nThis is the last hold on this turn; the next stop goes through."
 
+RESPOND = """Respond: this reply passed the shape's own layout check but will not render through respond, so the screen would not carry it.
+
+%s
+Fix the reply so it renders: a clean verdict with no clause, the answer in the sentence after it, and the labelled lines as they should be. respond is what draws every reply now, and it only draws a valid one."""
+
 NARRATE = """Ratchet: this turn wrote prose before the work was finished, and the app drew it on the user's screen as narration.
 
 %s
@@ -852,6 +857,9 @@ def checks(verb, payload=None, reply=None):
     HERE.update(session=session, turn=turn)
 
     if not sidechain and shape_hold(cfg, payload, transcript, text, turn):
+        return 0
+
+    if not sidechain and respond_hold(cfg, payload, transcript, text, turn):
         return 0
 
     if not sidechain and recall_hold(cfg, payload, transcript, text, turn):
@@ -977,6 +985,38 @@ def shape_said(found):
     return ("shape:unfinished" if shape.unfinished(found) else "shape"), shape.quote(found)
 
 
+def respond_hold(cfg, payload, transcript, text, turn):
+    """Hold a reply that shape let through but respond will not render.
+
+    respond is the renderer every reply is drawn through now; the display hook
+    shows its output and nothing else. So a reply it cannot render must never end
+    a turn - today that is a clause verdict, the hole shape.py's word count
+    leaves open and the exact mistake that slipped past before. Walled off: any
+    failure here lets the reply through and leaves the other checks running.
+    """
+    try:
+        import respond
+        rendered, problems = respond.canonical(text)
+        if not problems:
+            return False
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        quoted = '  "%s"\n' % problems[0][1]
+        how = told(session, turn, "respond", quoted)
+        if not how:
+            return False
+        if not DRY:
+            tell(session, turn, "respond", quoted)
+    except Exception as problem:
+        NOTES.append(("respond: the check failed (%s) - let through unchecked"
+                      % type(problem).__name__, True))
+        return False
+    emit(again=how == "short",
+         reason=(RESPOND % quoted) if how == "full" else AGAIN % ("Respond", quoted),
+         decision="block",
+         systemMessage="respond: a reply shape passed would not render")
+    return True
+
+
 def would_hold(payload, text, skip_shape=False):
     """Whether the stop hook would send this reply back, asked before it is drawn.
 
@@ -1093,7 +1133,20 @@ def display():
             # rewrite it into DIFFERENT text, so hiding it never meets the
             # identical resend the app drops. A plain answer with nothing wrong
             # has would_hold False and is shown as written.
-            shown = hidden if would_hold(payload, text) else text
+            if would_hold(payload, text):
+                shown = hidden
+            else:
+                # The reply passed, so draw respond's own render of it, not the
+                # raw text. For a reply already in shape the render is identical
+                # and nothing changes; a parseable but slightly-off one is fixed
+                # here, deterministically, instead of being sent back. respond is
+                # what the screen carries.
+                try:
+                    import respond
+                    rendered, _ = respond.canonical(text)
+                    shown = rendered if rendered is not None else text
+                except Exception:
+                    shown = text
         except OutOfTime:
             shown = text
         finally:

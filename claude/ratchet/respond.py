@@ -83,6 +83,56 @@ def respond(fields, body=None):
     return render(fields), None
 
 
+HEAD = re.compile(r"^\*\*(?P<verdict>[^*]+?)\.\*\*(?:\s+(?P<answer>.*))?$")
+BULLET = re.compile(r"^-\s+\*\*(?P<label>Why|What|Touched|Proof):\*\*\s*(?P<value>.*)$", re.I)
+
+
+def parse(text):
+    """A reply's text back into fields, or None when it is not a reply we can
+    canonicalise - narration, or anything out of shape. Reads three forms: a
+    fenced ```respond block of `key: value` lines, the shaped reply (a bold
+    verdict line and labelled bullets), and a bare one- or two-sentence plain
+    answer. The parser is the one bridge from prose to fields, so the renderer
+    and the stop hook can meet on the same structure."""
+    text = (text or "").strip()
+    if not text:
+        return None
+    block = re.search(r"```respond\s*\n(.*?)```", text, re.S)
+    if block:
+        fields = {}
+        for line in block.group(1).splitlines():
+            m = re.match(r"\s*(verdict|answer|why|what|touched|proof|plain|form)\s*:\s*(.*)",
+                         line, re.I)
+            if m:
+                fields[m.group(1).lower()] = m.group(2).strip()
+        return fields or None
+    lines = text.split("\n")
+    head = HEAD.match(lines[0].strip())
+    if head:
+        fields = {"verdict": head.group("verdict").strip(),
+                  "answer": (head.group("answer") or "").strip()}
+        for line in lines[1:]:
+            b = BULLET.match(line.strip())
+            if b:
+                fields[b.group("label").lower()] = b.group("value").strip()
+        return fields
+    # No verdict line: a bare plain answer is the only other reply we render.
+    if "**" not in text and "```" not in text and not re.search(r"(?m)^\s*(?:[-*+#|>]|\d+[.)])\s", text):
+        return {"plain": text}
+    return None
+
+
+def canonical(text, body=None):
+    """(rendered, None) when this reply canonicalises to a valid shaped or plain
+    reply, else (None, problems). The live bridge: the display hook shows the
+    render, and the stop hook refuses to end a turn whose reply does not
+    canonicalise - so the screen only ever carries respond's own output."""
+    fields = parse(text)
+    if fields is None:
+        return None, [(shape.clip(text), "not a shaped or plain reply - nothing to render")]
+    return respond(fields, body)
+
+
 # --- selftest -------------------------------------------------------------------
 
 CASES = [
@@ -122,6 +172,31 @@ def selftest():
     text, _ = respond(CASES[0][1], body)
     if text and shape.problems(text, body):
         bad.append("round-trip: a rendered shape reply did not pass the stop checks")
+    # canonical() must be the identity on an already-valid reply, so a correctly
+    # shaped reply is never mangled when it passes through the live path.
+    for name, fields, should_pass in CASES:
+        if not should_pass or fields.get("form"):
+            # A requested form is authored as a field and handed over verbatim;
+            # raw form content is not parseable prose, so it does not round-trip
+            # - which is why an inline form belongs in a file, not the reply.
+            continue
+        rendered = render(fields)
+        back, probs = canonical(rendered, body)
+        if probs:
+            bad.append("canonical held a valid reply (%s): %s" % (name, probs[0][1]))
+        elif back != rendered:
+            bad.append("canonical changed a valid reply (%s):\n  %r\n  %r" % (name, rendered, back))
+    # a hand-written shaped reply parses and validates
+    hand = ("**Fixed.** It reads forwards again.\n\n"
+            "- **What:** I pinned speaker 0.\n"
+            "- **Proof:** The cube said four, forwards.")
+    if canonical(hand, body)[1]:
+        bad.append("canonical held a hand-written valid shaped reply")
+    # narration and out-of-shape prose must not canonicalise
+    for junk in ("Let me check the config and wire it in.",
+                 "Okay, now I'll run the tests, then sync, then report back to you."):
+        if canonical(junk, body)[0] is not None:
+            bad.append("canonical rendered narration as a reply: %r" % junk)
     if bad:
         print("\n".join(bad))
         print("\n%d failure(s)" % len(bad))
