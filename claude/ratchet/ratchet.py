@@ -1047,19 +1047,33 @@ def display():
         try:
             turn = closing_message(transcript, False)[1] if transcript else None
             outcome = shape.decide(text, transcript, session, turn, config(), body)
-            # Hide only what the turn will replace with DIFFERENT text: a
-            # genuine hold, or an in-shape reply the stop pipeline will send
-            # back. The model rewrites those and the rewrite renders. A plain
-            # answer is shown as written, because its only "rewrite" is an
-            # identical word-for-word resend, and this app build drops an
-            # identical resend as a duplicate - so hiding one loses it for good.
-            # A shape hold the turn has already been given on this very text
-            # is not given again, so the stop hook lets it through.
-            holding = outcome[0] == "hold" and told(session, turn, *shape_said(outcome[1]))
-            shown = hidden if holding else text
-            if (outcome[0] == "show" or (outcome[0] == "hold" and not holding)) \
-                    and would_hold(payload, text):
-                shown = hidden
+            # One decision, shared with the stop hook. The stop hook can send a
+            # reply back for any reason in the whole pipeline - out of shape, a
+            # refusal, work the reply named and did not do, a claim it never made
+            # good, a banned closing - and whatever it sends back the model
+            # rewrites, so the rewrite renders. Drawing the first draft of any
+            # reply the stop hook will hold is the double render. So every reply
+            # is run through that exact pipeline here and hidden the moment it
+            # would be held, whatever shape.decide called it - a genuine hold, an
+            # in-shape reply a judge will catch, an excused /command reply the
+            # refusal check or the scan will still stop, one past the hold cap.
+            # The display hook never decides on a thinner view than the stop hook
+            # does; that is what kept the two disagreeing, and a disagreement is
+            # either a reply shown then rewritten (the double) or one hidden then
+            # passed (the vanish).
+            #
+            # The one reply this cannot cover is a plain answer. When a hold is a
+            # false positive the model, told to rewrite, sends the same sentence
+            # again, and this app build drops an identical resend as a duplicate,
+            # so hiding a plain answer risks losing it outright - the vanish,
+            # which is worse than the double. So a plain answer is always shown
+            # as written, and the rare plain answer a judge would have held is
+            # drawn once and corrected rather than lost. Everything else is held
+            # off the screen the instant the pipeline would send it back.
+            if outcome[0] == "plain":
+                shown = text
+            else:
+                shown = hidden if would_hold(payload, text) else text
         except OutOfTime:
             shown = text
         finally:
