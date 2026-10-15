@@ -248,8 +248,9 @@ function raise(w) {
 
 // ---------------------------------------------------------------- the hotkeys and the overlay switch
 
-// OVERLAY_KEY shows or hides the whole overlay. DECK_KEY switches between the deck and focus,
-// and from another screen brings the deck to the screen the cursor is on.
+// OVERLAY_KEY shows or hides the whole overlay: Option+Space on the Mac, Alt+Space on Windows,
+// two keys under one hand. DECK_KEY switches between the deck and focus, and from another
+// screen brings the deck to the screen the cursor is on.
 //
 // On Windows the overlay stays off while a game is running, unless he turns it on: by voice
 // ("Sunday, overlay on"), with OVERLAY_KEY, or from the tray. Turned on during a game, it stays on
@@ -257,7 +258,7 @@ function raise(w) {
 // game running, it stays off, across restarts, until he turns it on. Sunday still hears and
 // answers him the whole time; only what is drawn on this screen waits. game-watch.ps1 says
 // which game.
-const OVERLAY_KEY = "Control+Alt+Shift+O";
+const OVERLAY_KEY = "Alt+Space";
 const DECK_KEY = "Control+Alt+Shift+D";
 let gaming = null;          // { game, pid, why } while a game is running
 let gameOn = false;         // turned on during the game now running

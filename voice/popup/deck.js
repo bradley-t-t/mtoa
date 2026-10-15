@@ -15,8 +15,8 @@ const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 if (!isMac) document.body.classList.add("win");
 
 const KEYS = isMac
-  ? { show: ["Control", "Option", "Shift", "O"], mode: ["Control", "Option", "Shift", "D"] }
-  : { show: ["Ctrl", "Alt", "Shift", "O"], mode: ["Ctrl", "Alt", "Shift", "D"] };
+  ? { show: ["Option", "Space"], mode: ["Control", "Option", "Shift", "D"] }
+  : { show: ["Alt", "Space"], mode: ["Ctrl", "Alt", "Shift", "D"] };
 
 const MAX_CARDS = 40;
 const STATUS_MIN_MS = 700;          // a status line stays this long before the next replaces it

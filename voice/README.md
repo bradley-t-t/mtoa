@@ -319,7 +319,7 @@ The schema is at the top of `server/canvas.py`: `{"title", "subtitle", "blocks":
 On Windows the panel and the blue line together are the overlay, and it stays off while a game is running. Sunday still hears you and answers through its speakers; only the Windows screen holds back.
 
 - **By voice:** "Sunday, turn the overlay off" and "Sunday, turn the overlay on" (also "overlay off", "overlay on", "hide the overlay", "show the overlay"). Sunday confirms in a few words.
-- **Hotkey:** Ctrl+Alt+Shift+O flips it, from anywhere, games included. Turning it on shows "Overlay on" for two seconds.
+- **Hotkey:** Alt+Space flips it, from anywhere, games included (Option+Space on the Mac, where it shows and hides the overlay the same way). Turning it on shows "Overlay on" for two seconds.
 - **Tray:** Show Overlay in the Sunday tray menu. While a game is running the menu also names it.
 
 The game rule. `popup/native/game-watch.ps1` checks every two seconds, and a game is any of these for as long as its process runs:
