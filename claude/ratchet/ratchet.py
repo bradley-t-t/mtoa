@@ -1045,8 +1045,6 @@ def display():
         signal.signal(signal.SIGALRM, out_of_time)
         signal.setitimer(signal.ITIMER_REAL, max(0.5, DISPLAY_BUDGET - (time.time() - START)))
         try:
-            turn = closing_message(transcript, False)[1] if transcript else None
-            outcome = shape.decide(text, transcript, session, turn, config(), body)
             # One decision, shared with the stop hook. The stop hook can send a
             # reply back for any reason in the whole pipeline - out of shape, a
             # refusal, work the reply named and did not do, a claim it never made
@@ -1062,18 +1060,13 @@ def display():
             # either a reply shown then rewritten (the double) or one hidden then
             # passed (the vanish).
             #
-            # The one reply this cannot cover is a plain answer. When a hold is a
-            # false positive the model, told to rewrite, sends the same sentence
-            # again, and this app build drops an identical resend as a duplicate,
-            # so hiding a plain answer risks losing it outright - the vanish,
-            # which is worse than the double. So a plain answer is always shown
-            # as written, and the rare plain answer a judge would have held is
-            # drawn once and corrected rather than lost. Everything else is held
-            # off the screen the instant the pipeline would send it back.
-            if outcome[0] == "plain":
-                shown = text
-            else:
-                shown = hidden if would_hold(payload, text) else text
+            # A plain answer is held off the screen the same way, now that the
+            # work-judges stand down on it (shape.is_plain): the only holds left
+            # that can reach a plain answer - a refusal, a banned-phrase scan -
+            # rewrite it into DIFFERENT text, so hiding it never meets the
+            # identical resend the app drops. A plain answer with nothing wrong
+            # has would_hold False and is shown as written.
+            shown = hidden if would_hold(payload, text) else text
         except OutOfTime:
             shown = text
         finally:
@@ -1117,7 +1110,7 @@ def premature_hold(cfg, payload, transcript, text, turn):
     """Hold a stop whose closing text states as done what is still running."""
     import premature
     import shape
-    if shape.command(transcript, turn):
+    if shape.command(transcript, turn) or shape.is_plain(text, transcript, turn):
         return False
     flight = premature.in_flight(transcript)
     binary = claude_binary()
@@ -1146,7 +1139,7 @@ def recall_hold(cfg, payload, transcript, text, turn):
     """Hold a stop when the user flagged recurring work and the turn never read the transcripts."""
     import recall
     import shape
-    if shape.command(transcript, turn):
+    if shape.command(transcript, turn) or shape.is_plain(text, transcript, turn):
         return False
     if not recall.should_hold(transcript):
         return False
@@ -1171,7 +1164,7 @@ def unchecked_hold(cfg, payload, transcript, text, turn):
     """Hold a stop that hands back an inability the turn never checked for a route to."""
     import unchecked
     import shape
-    if shape.command(transcript, turn):
+    if shape.command(transcript, turn) or shape.is_plain(text, transcript, turn):
         return False
     binary = claude_binary()
     if not binary or not cfg["judge"] or not unchecked.flags(text):

@@ -439,6 +439,20 @@ def plain(text, body, changed=False):
     return out + asides(text, body) + waiting(text, body)
 
 
+def is_plain(text, transcript, turn, body=None):
+    """Whether this reply is a valid plain answer in a turn that changed nothing.
+
+    The work-judges (recall, premature, unchecked) stand down on it the way they
+    stand down on a slash command. A plain answer claims no work and changed no
+    file, so there is nothing for them to hold; leaving them armed only lets a
+    judge misfire on a one-line answer. With them down, the only holds that can
+    reach a plain answer are a refusal and a banned-phrase scan, and both rewrite
+    it into DIFFERENT text - so the display hook can hide it with no risk of the
+    identical resend the app drops, which is what the vanish was."""
+    body = body or rules()
+    return not plain(text, body, changed_this_turn(transcript, turn))
+
+
 def same(a, b):
     import difflib
     a, b = squash(a), squash(b)
