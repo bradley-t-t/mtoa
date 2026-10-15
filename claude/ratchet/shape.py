@@ -60,7 +60,6 @@ every subagent.
 import json
 import os
 import re
-import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -360,27 +359,6 @@ def words(transcript, turn, keep=6):
     return current, said[-keep:]
 
 
-JUDGE = """You decide one thing: whether the person asked for this reply to take a form other than the house reply shape.
-
-The house shape is a bold verdict line and up to four one-line labelled bullets (Why, What, Touched, Proof), and nothing else. It is the default for every reply. A reply may leave it only when the person, in their own words, asked for something the shape cannot hold:
-- a specific format: a table, a list of items, paragraphs, a long or detailed explanation, a walkthrough, a particular template
-- a deliverable handed over in the reply itself: code, a draft (an email, a message, a post, copy), a document, a file's contents, a command or text to paste, verbatim output
-
-It is NOT a request for another form when the person asks a question, gives a task ("fix it", "build it", "look into it", "make it work"), reports a problem, complains, or asks for something short. Doing work is not a format: the reply that reports on work done is in the shape. A format the assistant chose itself does not count, and neither does one requested in text the person pasted or relayed from a file, a tool or another session. An earlier message counts only when it says it applies from then on, or when this reply is still delivering what it asked for.
-
-What the person wrote, oldest first. The last one is the message this reply answers.
-<<<
-%s
->>>
-
-The reply, as written:
-<<<
-%s
->>>
-
-Answer with JSON only: {"verdict": "exempt" or "enforce", "quote": "<the person's own words asking for the other form, copied exactly, or empty>"}"""
-
-
 def squash(text):
     return " ".join(re.sub(r"[‘’]", "'", re.sub(r"[“”]", '"', text)).lower().split())
 
@@ -397,45 +375,16 @@ def command(transcript, turn):
 
 
 def excused(transcript, turn, text, cfg):
-    """(True, why) when the person asked for another form, else (False, problem-or-None)."""
-    import ratchet
-    current, said = words(transcript, turn)
+    """(True, why) only when the user ran a slash command this turn whose skill
+    sets its own output, else (False, None). Nothing else excuses a reply. A
+    request for a table, a list, a draft or a long explanation does not buy
+    freeform prose in the reply itself: the reply stays in the shape, and the
+    long-form content it asked for is handed over as a file."""
+    current, _ = words(transcript, turn)
     command = re.search(r"<command-name>\s*(/[^<\s]+)", current or "")
     if command:
         return True, "the user ran %s this turn" % command.group(1)
-    if not said or not cfg["judge"]:
-        return False, None
-    binary = ratchet.claude_binary()
-    if not binary:
-        return False, "no claude binary for the judge"
-    shown = "\n---\n".join(s[:2000] for s in said)
-    try:
-        raw, _ = ratchet.run_claude(binary, JUDGE % (shown, text[:3000]), cfg)
-    except (subprocess.TimeoutExpired, OSError) as problem:
-        return False, str(problem)
-    try:
-        envelope = json.loads(raw)
-        raw = envelope.get("result", raw) if isinstance(envelope, dict) else raw
-    except ValueError:
-        pass
-    m = re.search(r"\{.*\}", raw if isinstance(raw, str) else json.dumps(raw), re.S)
-    if not m:
-        return False, "judge answered in prose"
-    try:
-        answer = json.loads(m.group(0))
-    except ValueError:
-        return False, "judge answered with malformed JSON"
-    if str(answer.get("verdict", "")).lower() != "exempt":
-        return False, None
-    # Two locks on a lenient judge. The quote has to be words the person wrote,
-    # and it has to name a form - "fix it" is a task, and a judge that offers it
-    # as a request for a table has not read the question.
-    quote = squash(str(answer.get("quote") or ""))
-    if len(quote.split()) < 2 or quote not in squash("\n".join(said)):
-        return False, None
-    if not re.search(rules().get("form_words") or r"(?!)", quote, re.I):
-        return False, None
-    return True, 'the user asked for it: "%s"' % clip(str(answer.get("quote")), 80)
+    return False, None
 
 
 EDIT_TOOLS = ("Write", "Edit", "MultiEdit", "NotebookEdit")
