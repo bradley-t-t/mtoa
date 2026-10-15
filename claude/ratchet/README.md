@@ -345,6 +345,28 @@ also runs. `REFUSAL_OFF=1` stands it down for one run.
 
 <br />
 
+## A check, not a word
+
+`gate.py` runs in the same Stop pass, right after the layout checks, and in the
+display hook through `would_hold`. A finished verdict - any past tense that
+reports a change, and a Yes in a turn that edited files - stands only on the
+record `~/.claude/tools/proof.py` keeps: one check, run where the problem was
+seen, that failed before the change and passed after it in this turn, with the
+evidence line it printed carried in Proof word for word. "Not fixed." and "Not
+verified." always pass. A false claim is held with no said-once pass-through,
+its count in its own `<session>.proof.json` so no other hold resets it, and at
+ratchet's cap it is withdrawn rather than released: the first line becomes
+"Not verified." on screen and in the saved chat, patched in place at the same
+length. `hook.py guard` denies every write to `state/proof/` but the tool's.
+
+```
+~/.claude/tools/proof.py before --where site --says "<what it shows>" --problem "<the user's words>" -- '<check>'
+~/.claude/tools/proof.py after <id>
+gate.py selftest
+```
+
+<br />
+
 ## All usage, not the chat in view
 
 `scope.py` runs inside `hook.py guard`, before a tool call rather than after a

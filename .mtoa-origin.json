@@ -1803,6 +1803,10 @@
   "intelligence",
   "ratchet/ear.py"
  ],
+ "claude/ratchet/gate.py": [
+  "intelligence",
+  "ratchet/gate.py"
+ ],
  "claude/ratchet/hook.py": [
   "intelligence",
   "ratchet/hook.py"
@@ -2086,6 +2090,10 @@
  "claude/tools/perf-pass.py": [
   "intelligence",
   "tools/perf-pass.py"
+ ],
+ "claude/tools/proof.py": [
+  "intelligence",
+  "tools/proof.py"
  ],
  "claude/tools/recent-folders-prune.py": [
   "intelligence",

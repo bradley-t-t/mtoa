@@ -100,5 +100,10 @@
       "pattern": "\\byou(?:'re|\\u2019re| are| were|'ve been|\\u2019ve been| have been)\\s+(?:absolutely\\s+|completely\\s+|totally\\s+|entirely\\s+|exactly\\s+|quite\\s+|100%\\s+)?(?:right|correct)\\b|\\byou(?:'re|\\u2019re| are| were) not wrong\\b|\\b(?:fair|good|great|nice|sharp)\\s+(?:catch|point|call|question)\\b|\\byou called it\\b|\\byou (?:caught|spotted|nailed) (?:it|that|this)\\b|\\bright to (?:call|flag|push|question|be|point|ask)\\b|\\bas you (?:said|suspected|thought|guessed|pointed out)\\b|\\b(?:you|that)(?:'re|\\u2019re|'s|\\u2019s| are| is) spot on\\b"
     }
   ],
-  "waiting_claims": "\\b(?:needs?|requires?|waiting (?:on|for)|wait(?:ing)? for) (?:your|you)\\b|\\byour (?:yes|go-ahead|approval|sign-?off|ok(?:ay)?|decision|call|confirmation|say-?so|permission)\\b|\\b(?:once|when|after|as soon as) you (?:approve|say|confirm|decide|sign in|log in|restore|request|reply|answer|choose|pick|tell me|give)\\b|\\bif you (?:want|approve|say|confirm|agree|prefer)\\b|\\bup to you\\b|\\bon hold\\b|\\bpending your\\b"
+  "waiting_claims": "\\b(?:needs?|requires?|waiting (?:on|for)|wait(?:ing)? for) (?:your|you)\\b|\\byour (?:yes|go-ahead|approval|sign-?off|ok(?:ay)?|decision|call|confirmation|say-?so|permission)\\b|\\b(?:once|when|after|as soon as) you (?:approve|say|confirm|decide|sign in|log in|restore|request|reply|answer|choose|pick|tell me|give)\\b|\\bif you (?:want|approve|say|confirm|agree|prefer)\\b|\\bup to you\\b|\\bon hold\\b|\\bpending your\\b",
+  "honest_verdicts": [
+    "Not fixed",
+    "Not verified",
+    "Not done"
+  ]
 }

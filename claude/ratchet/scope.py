@@ -13,6 +13,9 @@ nothing is drafted narrow and then held.
 import re
 
 USAGE = re.compile(r"(?:^|[/\s])usage\.py\b")
+# A proof.py check of a chat reads that one chat on purpose: it is where the
+# problem was seen.
+PROOF = re.compile(r"(?:^|[/\s])proof\.py\b")
 
 # A read of a session transcript: the projects tree on any machine, or the app's
 # own transcript tools.
@@ -31,7 +34,7 @@ def reads_transcript(tool, given):
     if tool not in READERS or not isinstance(given, dict):
         return False
     text = " ".join(str(given.get(k) or "") for k in ("file_path", "path", "pattern", "glob", "command"))
-    return bool(TRANSCRIPT_PATH.search(text)) and not USAGE.search(text)
+    return bool(TRANSCRIPT_PATH.search(text)) and not USAGE.search(text) and not PROOF.search(text)
 
 
 def ran_usage(rows):
@@ -71,6 +74,7 @@ CASES = [
     ("Bash", {"command": "cd ~/.claude/projects && ~/.claude/tools/usage.py"}, [], False),
     ("Read", {"file_path": "/Users/x/.claude/ratchet/shape.py"}, [], False),
     ("Bash", {"command": "ls ~/Development"}, [], False),
+    ("Bash", {"command": "~/.claude/tools/proof.py before --where chat --says x --problem y -- 'grep -c z ~/.claude/projects/a/b.jsonl'"}, [], False),
     ("Read", {"file_path": "/Users/x/.claude/projects/-Users-x/memory/MEMORY.md"}, [], False),
     ("Read", {"file_path": "/Users/x/.claude/projects/-Users-x/abc.jsonl"}, [
         {"type": "user", "message": {"content": "why does this keep happening"}},

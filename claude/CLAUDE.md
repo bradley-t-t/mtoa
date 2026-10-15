@@ -117,8 +117,12 @@ The verdict is the past tense of what I asked for in bold - **Shipped.**,
 **Fixed.**, **Cleaned.**, **Done.** - or **Yes.**, **No.**, the answer itself,
 or **Started.** for work handed to a background agent. The plain sentence after
 it is the answer; a "but" or "except" goes in that sentence, never in the bold.
-Nothing partial is a reply: no "partly", "mostly", "likely", "not fixed" or "not
-yet verified". The work is finished and proven before anything is written. A
+A finished verdict stands only on proof from `tools/proof.py`: a check run where
+I saw the problem, recorded failing before the change and passing after it, and
+its evidence line in Proof word for word. A test of your own code is not that
+check. When the work cannot be finished or proven, the verdict is **Not
+verified.** or **Not fixed.** with what was done - an allowed answer, where a
+Fixed no check backs never is - and no "partly", "mostly" or "likely". A
 turn never ends waiting on me: what needs my approval, a decision, a credential
 or my hands is asked with AskUserQuestion inside the turn, and the reply reports
 what was done. The labelled lines run in that order, one line of at most two

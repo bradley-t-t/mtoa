@@ -16,7 +16,9 @@
     "**Fixed.** Sunday reads forwards again after 9 p.m.\n\n- **Why:** Piper loads a second speaker at 21:00 that reads right to left.\n- **What:** I pinned Piper to speaker 0 and restarted the voice server once.\n- **Touched:** `/data/sunday/config.json` on the cube, and the voice server on the Pi.\n- **Proof:** At 9:14 p.m. the cube said \"four\" forwards.",
     "**Kokoro af_heart.** It is the best free voice that runs on the Pi.\n\n- **Why:** Kokoro reads more naturally than Piper's medium voices.\n- **Proof:** I timed it at 0.3s per sentence on the Pi.",
     "**Fixed.** The checkout page loads again.\n\n- **What:** I reverted the CSP header in [vercel.json](vercel.json:12) and redeployed.\n- **Proof:** The checkout page returned 200 and rendered with no console errors.",
-    "**Fixed.** The right-hand rail no longer overlaps the clock.\n\n- **What:** I moved the rail below the clock in `deck.css`.\n- **Proof:** The installed deck shows the rail and the clock side by side."
+    "**Fixed.** The right-hand rail no longer overlaps the clock.\n\n- **What:** I moved the rail below the clock in `deck.css`.\n- **Proof:** The installed deck shows the rail and the clock side by side.",
+    "**Not fixed.** The cube still misses about one wake in five while Sunday is speaking.\n\n- **Why:** Echo cancellation drops out when the speaker volume is above 80.\n- **Proof:** Twenty wakes during speech, sixteen reached the brain.",
+    "**Not verified.** I changed the bar's width, and no check of the app could be run.\n\n- **What:** I fixed the bar to one width so its circle sits inside it.\n- **Touched:** `overlay/bar.css`."
   ],
   "hold": [
     "The grindlewump won't florp because its snazzle is in backwards.",
@@ -48,7 +50,6 @@
     "**Mostly done, with one problem.** On the Mac, files older than 30 days are in the Trash, but the one old Windows file, a 6.6 GB game zip in Downloads, was permanently deleted.\n\n- **Why:** I deleted the zip over a remote connection, and Windows skipped the Recycle Bin. The game unpacked from it is still on your Desktop.\n- **What:** 33 Mac items from Downloads went to the Trash. `Headshot.jpg` and the August 27 screen recording went to iCloud's Recently Deleted. Newer files and the Windows shortcuts were kept.\n- **Proof:** Every Mac file is in the Trash or Recently Deleted, and the Windows drive's free space went up by exactly the zip's size.",
     "**Working.** Checking the other two tabs now.",
     "**Checking.** The switch works, now the Attention tab.",
-    "**Not fixed.** The cube still misses about one wake in five while Sunday is speaking.\n\n- **Why:** Echo cancellation drops out when the speaker volume is above 80.\n- **Proof:** Twenty wakes during speech, sixteen reached the brain.",
     "**Partly done.** The Mac now wakes on quieter “Sunday”s, but your own voice hasn’t come through yet.\n\n- **Why:** Every Mac wake since 9:50 PM was trivia-game audio with no “Sunday” in it, and was dropped.\n- **What:** I put the Mac wake cutoff back to 0.6 and restarted the ear.\n- **Proof:** The ear reconnected to the brain at 10:04 PM with cutoff 0.6.",
     "**Mostly done.** On the Mac, files older than 30 days are in the Trash.",
     "**Likely fixed.** Sunday should answer its name again.",
@@ -71,7 +72,8 @@
     "**You're right.** Since my last fix, 13 drafts in 5 sessions were written out, wiped and rewritten.\n\n- **What:** The hook hid each draft only on the live screen.\n- **Proof:** Replaying the hook hid all 11 drafts.",
     "**Fixed.** Fair catch - the bar no longer cuts off the circle on the Mac or the PC.\n\n- **What:** I gave the bar one fixed width.\n- **Proof:** The installed bar showed in full after the overlay closed.",
     "**Done.** You were right that the list had field jobs in it, so I took them out.\n\n- **What:** I searched every description for field work.\n- **Proof:** The republished list has none of the four roles.",
-    "**Yes.** As you suspected, the hook only hides the draft on the live screen.\n\n- **Proof:** The CLI documents the replacement as display-only."
+    "**Yes.** As you suspected, the hook only hides the draft on the live screen.\n\n- **Proof:** The CLI documents the replacement as display-only.",
+    "**Partly fixed.** The bar is fixed on the Mac.\n\n- **Proof:** Screenshot on the Mac."
   ],
   "plain_pass": [
     "Google is bouncing everything sent from you@example.com with a 550 5.7.26 error, because the domain's DMARC record fails alignment for that mailbox.",

@@ -722,7 +722,9 @@ def blank_held(transcript):
     return blank_rows(transcript, held_rows(transcript))
 
 
-def blank_rows(transcript, uuids):
+def blank_rows(transcript, uuids, transform=None):
+    """Blank these rows' text in place - or, given a transform, replace it with
+    what the transform returns, which has to encode to exactly the same length."""
     wanted = set(uuids)
     if not wanted:
         return 0
@@ -747,7 +749,16 @@ def blank_rows(transcript, uuids):
                     continue
                 key = b'"text":' + json.dumps(text, ensure_ascii=False).encode("utf-8")
                 width = len(key) - len(b'"text":""')
-                if new.count(key) != 1 or width < len(BLANK):
+                if new.count(key) != 1:
+                    continue
+                if transform is not None:
+                    replaced = transform(text)
+                    swap = b'"text":' + json.dumps(replaced, ensure_ascii=False).encode("utf-8")
+                    if replaced is None or len(swap) != len(key):
+                        continue
+                    new = new.replace(key, swap)
+                    continue
+                if width < len(BLANK):
                     continue
                 new = new.replace(key, b'"text":"' + BLANK + b" " * (width - len(BLANK)) + b'"')
             if new == line or len(new) != len(line):
@@ -970,6 +981,11 @@ def checks(verb, payload=None, reply=None):
         # saved transcript so a reloaded chat does not show it above the rewrite.
         HERE["blank"] = transcript
 
+    if not sidechain and not DRY and reply is None and proof_withdraw(cfg, payload, transcript, text, turn):
+        # A finished claim no check backs, held to the cap: withdrawn in the
+        # saved chat by code, never let through as written.
+        return 0
+
     if not sidechain and not DRY and was_shown(session, turn, text):
         # The display hook already drew this reply. Holding it now would leave it
         # on the screen and draw the rewrite under it - the double render that has
@@ -992,6 +1008,9 @@ def checks(verb, payload=None, reply=None):
         return 0
 
     if not sidechain and respond_hold(cfg, payload, transcript, text, turn):
+        return 0
+
+    if not sidechain and proof_hold(cfg, payload, transcript, text, turn):
         return 0
 
     if not sidechain and recall_hold(cfg, payload, transcript, text, turn):
@@ -1179,6 +1198,102 @@ def respond_hold(cfg, payload, transcript, text, turn):
     return True
 
 
+def proof_view(text):
+    """The reply as it will be drawn: a respond block's render, else the text."""
+    try:
+        import respond
+        rendered = respond.block(text)
+    except Exception:
+        rendered = None
+    return rendered if rendered is not None else text
+
+
+def proof_count(session, turn, add=False):
+    """How many times this turn's finished claim has been held. Its own file, so
+    another check's hold cannot reset it and let the claim through."""
+    path = state_root() / ("%s.proof.json" % re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"))
+    try:
+        body = json.loads(path.read_text())
+        count = int(body.get("count") or 0) if body.get("turn") == (turn or "unknown") else 0
+    except (OSError, ValueError, TypeError):
+        count = 0
+    if add and not DRY:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"turn": turn or "unknown", "count": count + 1,
+                                        "at": int(time.time())}) + "\n")
+        except OSError:
+            pass
+    return count
+
+
+def proof_problem(payload, transcript, text, turn):
+    """gate.problem for this reply, or None - None too for a skipped session."""
+    import gate
+    import shape
+    if BOOL_ENV.get((os.environ.get("PROOF_OFF") or "0").strip().lower(), False):
+        return None
+    if shape.skipped(transcript, shape.rules()):
+        return None
+    session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    return gate.problem(proof_view(text), session, turn, shape.changed_this_turn(transcript, turn))
+
+
+def proof_hold(cfg, payload, transcript, text, turn):
+    """Hold a finished verdict that no recorded check backs (gate.py).
+
+    No told() pass-through: the same false claim sent again is held again, up to
+    the cap, and past it proof_withdraw takes the claim off rather than let it
+    through. Walled off: a failure here lets the reply through and leaves every
+    other check running."""
+    try:
+        import gate
+        found = proof_problem(payload, transcript, text, turn)
+        if not found:
+            return False
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if proof_count(session, turn) >= int(cfg["holds_per_turn"]):
+            return False
+        kind, detail = found
+        reason = gate.HOLD % detail if kind == "none" else gate.EVIDENCE % detail
+        proof_count(session, turn, add=True)
+    except Exception as problem:
+        NOTES.append(("proof: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
+        return False
+    emit(decision="block", reason=reason, systemMessage="proof: held a finished claim no check backs")
+    return True
+
+
+def proof_withdrawn(payload, transcript, text, turn):
+    """The withdrawn reply when this finished claim has used up its holds, else None."""
+    try:
+        import gate
+        if not proof_problem(payload, transcript, text, turn):
+            return None
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if proof_count(session, turn) < int(config()["holds_per_turn"]):
+            return None
+        return gate.withdraw(proof_view(text))
+    except Exception:
+        return None
+
+
+def proof_withdraw(cfg, payload, transcript, text, turn):
+    """At the cap, withdraw the claim in the saved chat - first line replaced, same
+    length - and let the stop end. The display hook draws the same withdrawal."""
+    if proof_withdrawn(payload, transcript, text, turn) is None:
+        return False
+    import gate
+    held = held_rows(transcript)
+    try:
+        changed = blank_rows(transcript, held[-1:], transform=gate.withdraw) if held else 0
+    except Exception:
+        changed = 0
+    emit(systemMessage="proof: withdrew a finished claim no check backs (%d row%s)"
+         % (changed, "" if changed == 1 else "s"))
+    return True
+
+
 def would_hold(payload, text, skip_shape=False):
     """Whether the stop hook would send this reply back, asked before it is drawn.
 
@@ -1324,7 +1439,10 @@ def display():
             # rewrite it into DIFFERENT text, so hiding it never meets the
             # identical resend the app drops. A plain answer with nothing wrong
             # has would_hold False and is shown as written.
-            if would_hold(payload, text):
+            withdrawn = proof_withdrawn(payload, transcript, text, turn)
+            if withdrawn is not None:
+                shown = withdrawn
+            elif would_hold(payload, text):
                 shown = hidden
             else:
                 # The reply passed, so draw respond's own render of it, not the
@@ -1635,6 +1753,11 @@ def pre_guard():
         emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                  "permissionDecisionReason": scope.DENY})
         return 0
+    import gate
+    if gate.tampers(tool, given):
+        emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                 "permissionDecisionReason": gate.DENY})
+        return 0
     prose = pending_prose(transcript)
     if len(prose.split()) < 3:
         return 0
@@ -1768,6 +1891,8 @@ def selftest():
     bad += ear.selftest()
     import scope
     bad += scope.selftest()
+    import gate
+    bad += gate.selftest()
     print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))

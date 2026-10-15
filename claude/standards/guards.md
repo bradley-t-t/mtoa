@@ -81,6 +81,23 @@ a pattern says exactly what needs rewriting and there is nothing to judge.
 `EAR_OFF=1` stands it down for one run; `ear.py selftest` runs its cases, and
 `ratchet.py selftest` runs them too.
 
+A finished verdict needs a check, not a word. `ratchet/gate.py` reads the
+record `tools/proof.py` keeps and not the reply: Fixed, Done, Shipped, Built -
+any past tense that reports a change, and a Yes in a turn that edited files -
+stands only when one check, run where the problem was seen (the live site, the
+app's screen, Sunday on the host, the chat, a file, a named command), failed
+before the change and passed after it in this turn, and the Proof line carries
+the evidence line the tool printed, word for word. A check that already passes
+before the change never saw the problem and is refused; where only my eyes can
+tell, my report is the before and my answer to a Gone / Still there card the
+after. "Not fixed." and "Not verified." are allowed verdicts and are never sent
+back. A false claim is held up to ratchet's cap and then withdrawn by code - its
+first line becomes "Not verified." on screen and, in place at the same length,
+in the saved chat - so it is never let through. The records under
+`state/proof/` are the tool's alone; the guard denies any other write there.
+`PROOF_OFF=1` stands it down for one run, and `gate.py selftest` runs its cases,
+as does `ratchet.py selftest`.
+
 Usage means all usage. When I ask how the assistant behaves, I mean every
 session on every machine, not the chat in view, and a turn that opens one
 transcript has narrowed the question before writing a word. `hook.py guard`

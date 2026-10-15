@@ -221,6 +221,11 @@ def partial(text, body):
         return []
     verdict = head.group("verdict").rstrip(".?!").strip()
     out = []
+    if verdict.lower() in [h.lower() for h in body.get("honest_verdicts") or []]:
+        # "Not fixed." and "Not verified." say what is true when the work could
+        # not be finished or proven, and the reply that tells the truth is never
+        # the one sent back - a false "Fixed." is what gate.py stops.
+        return out
     if body.get("partial_verdicts") and re.search(body["partial_verdicts"], verdict, re.I):
         out.append((text.strip().split("\n")[0], "\"%s\" is a partial verdict - %s" % (verdict, PARTIAL)))
         return out
@@ -609,7 +614,8 @@ And when nothing was wrong, Why is left out:
 
 Rules:
 - The bold verdict is the past tense of what was asked - **Shipped.** **Fixed.** **Cleaned.** **Built.** **Done.** - or **Yes.** **No.**, the answer itself like **Kokoro af_heart.**, or **Started.** for work handed to a background agent. Never a clause: the "but", "with" or "except" goes in the plain sentence after it.
-- Nothing partial is a reply. No "partly", "mostly", "likely", "not fixed", "not yet verified": finish the work and prove it yourself before writing anything.
+- A finished verdict - Fixed, Done, Shipped, Built - needs proof from ~/.claude/tools/proof.py. Before changing anything, record a check where the problem was seen that fails now (proof.py before), rerun it after the change (proof.py after <id>), and copy the evidence line it prints into Proof word for word. A test of your own code is not proof.
+- When it cannot be proven or finished, the verdict is **Not verified.** or **Not fixed.**, with what was done. That is an allowed answer; a Fixed no check backs never is. No "partly", "mostly" or "likely".
 - A turn never ends waiting on the user. When the work needs their approval, a decision, a credential or their own hands, ask with the AskUserQuestion tool inside the turn, get the answer, and finish - the reply reports what was done, never what they should approve or do.
 - After the verdict, one plain sentence under %(sentence)d words that answers what was asked.
 - Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. No other label exists.
@@ -619,9 +625,17 @@ Rules:
 - Write no text until the work is finished. There are no progress notes: anything written mid-turn is kept off the screen, and so is any reply the stop checks would send back. A reminder to say what you are doing is answered by finishing the work."""
 
 
+# The rule the proof lines replaced, which is what PROOF_OFF=1 puts back.
+UNPROVEN = """- Nothing partial is a reply. No "partly", "mostly", "likely", "not fixed", "not yet verified": finish the work and prove it yourself before writing anything."""
+
+
 def reminder(body=None):
     body = body or rules()
-    return REMINDER % {"plain": int(body.get("plain_max_words") or 45),
+    text = REMINDER
+    if (os.environ.get("PROOF_OFF") or "").strip().lower() in ("1", "true", "yes", "on"):
+        text = re.sub(r"- A finished verdict - Fixed.*?No \"partly\", \"mostly\" or \"likely\".",
+                      lambda _: UNPROVEN, text, flags=re.S)
+    return text % {"plain": int(body.get("plain_max_words") or 45),
                        "sentence": int(body.get("sentence_max_words") or 30),
                        "line": int(body.get("line_max_words") or 40)}
 
