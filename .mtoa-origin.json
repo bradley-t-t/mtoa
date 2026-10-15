@@ -1827,6 +1827,10 @@
   "intelligence",
   "ratchet/refusal.py"
  ],
+ "claude/ratchet/respond.py": [
+  "intelligence",
+  "ratchet/respond.py"
+ ],
  "claude/ratchet/shape-corpus.json": [
   "intelligence",
   "ratchet/shape-corpus.json"
