@@ -549,6 +549,17 @@ def fingerprint(trigger):
     return hashlib.sha1(flat.encode("utf-8")).hexdigest()[:16]
 
 
+def was_shown(session, turn, text):
+    """Whether the display hook has already drawn this exact reply this turn.
+
+    The stop hook never holds what is on the screen: holding it leaves the draft
+    up and draws the rewrite beneath it, which is the double render. All the
+    enforcement runs in the display hook, before the draw - a reply that reaches
+    the screen has already passed, and the turn ends on it.
+    """
+    return fingerprint(text) in (heard(session, turn).get("shown") or [])
+
+
 def told(session, turn, kind, trigger):
     """How much of a hold the turn still needs to hear.
 
@@ -856,6 +867,12 @@ def checks(verb, payload=None, reply=None):
     session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
     HERE.update(session=session, turn=turn)
 
+    if not sidechain and not DRY and was_shown(session, turn, text):
+        # The display hook already drew this reply. Holding it now would leave it
+        # on the screen and draw the rewrite under it - the double render that has
+        # been recurring. The checks all ran at display time, before the draw.
+        return 0
+
     if not sidechain and shape_hold(cfg, payload, transcript, text, turn):
         return 0
 
@@ -1151,6 +1168,14 @@ def display():
             shown = text
         finally:
             signal.setitimer(signal.ITIMER_REAL, 0)
+        if shown != hidden:
+            # Drawn to the user - as written, or as respond's render of it. Record
+            # it so the stop hook never holds what is already on the screen, which
+            # is the one way a reply ends up drawn twice.
+            try:
+                tell(session, turn, "shown", text)
+            except Exception:
+                pass
         if whole and shown == text:
             return 0
         emit(hookSpecificOutput={"hookEventName": "MessageDisplay", "displayContent": shown})
