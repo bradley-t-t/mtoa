@@ -133,11 +133,9 @@ reply. A reply leaves the shape only when I ask for another form in my own words
 skill sets its own output. There are no progress notes, and a reminder to say
 what you are doing is answered by finishing the work.
 
-A question with a short answer, in a turn that changed nothing, gets the answer
-in as few words as it takes instead of the shape: a yes or no is "Yes." or
-"No." alone, or the word and one short clause, and anything else is one plain
-sentence, two at most, under thirty words, with no formatting and nothing beside
-it. The shape check holds a longer one. Plain prose is drawn before anything
+A question that one or two sentences answer, in a turn that changed nothing, gets
+exactly that instead of the shape: one or two plain sentences, no formatting,
+the answer itself and nothing beside it. Plain prose is drawn before anything
 says whether a tool call follows it, so it looks exactly like narration; the
 answer is written inside a ```respond block and shown as plain sentences, and
 prose outside a block or the shape never reaches my screen.

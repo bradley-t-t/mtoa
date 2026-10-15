@@ -1225,6 +1225,25 @@ def out_of_time(*_):
     raise OutOfTime()
 
 
+def render(text):
+    """respond's render of a reply: a respond block drawn as its render, anything
+    else in its canonical form, or the text as written when neither parses.
+
+    The trailing zero-width space on a drawn block keeps it from ever being
+    byte-identical to bare prose held earlier in the turn, which the app would
+    drop as a duplicate.
+    """
+    try:
+        import respond
+        drawn = respond.block(text)
+        if drawn is not None:
+            return drawn + HIDDEN
+        canonical, _ = respond.canonical(text)
+        return canonical if canonical is not None else text
+    except Exception:
+        return text
+
+
 def display():
     """MessageDisplay: keep text that is out of shape off the screen.
 
@@ -1277,6 +1296,9 @@ def display():
         if not text.strip():
             return 0
         hidden = HIDDEN if whole else ""
+        # Worked out before the budget starts, so it is ready whichever way the
+        # checks end; it costs microseconds.
+        rendered = render(text)
         import signal
         signal.signal(signal.SIGALRM, out_of_time)
         signal.setitimer(signal.ITIMER_REAL, max(0.5, DISPLAY_BUDGET - (time.time() - START)))
@@ -1310,22 +1332,13 @@ def display():
                 # and nothing changes; a parseable but slightly-off one is fixed
                 # here, deterministically, instead of being sent back. respond is
                 # what the screen carries.
-                try:
-                    import respond
-                    drawn = respond.block(text)
-                    if drawn is not None:
-                        # A respond block is drawn as its render. The trailing
-                        # zero-width space keeps the drawn text from ever being
-                        # byte-identical to bare prose held earlier in the turn,
-                        # which the app would drop as a duplicate.
-                        shown = drawn + HIDDEN
-                    else:
-                        rendered, _ = respond.canonical(text)
-                        shown = rendered if rendered is not None else text
-                except Exception:
-                    shown = text
+                shown = rendered
         except OutOfTime:
-            shown = text
+            # The checks ran past the budget - the refusal judge alone can take
+            # longer than it - and the app is about to draw something. It draws
+            # the render, never the raw block: a respond block shown as written
+            # put "plain: No." on screen in place of "No.".
+            shown = rendered
         finally:
             signal.setitimer(signal.ITIMER_REAL, 0)
         if shown != hidden:

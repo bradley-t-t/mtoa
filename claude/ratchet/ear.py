@@ -68,11 +68,15 @@ RULES = [
 MOST_WORDS = 90
 MOST_SENTENCES = 6
 
+# A yes or no is the word and a few words at most, as sunday-voice's spoken.brief cuts it.
+YES_NO = re.compile(r"\s*(?:yes|no|yeah|yep|nope|not yet)(?=[.,;:!\u2014\u2013-]|\s*$)", re.I)
+BRIEF_WORDS = 10
+
 HOW = """{assistant} says this out loud, once, at speaking speed, and the voice reads every character it is given: "Oct 2" comes out as "oct two", "CDT" as three letters and "$792.30" digit by digit. Rewrite it the way you would say it to {him} across the room, then send it again:
 - Dates, times and amounts in words, the way people say them: "October second", "just after ten thirty", "about two hundred forty dollars". No year when it is this year, and no time zone.
 - No abbreviations, symbols, brackets, IDs, file names, links, labels or lists. Name the thing instead.
 - Sound like a person talking: contractions, short sentences, a comma where you would take a breath, and the word that matters last, where the voice lands on it.
-- Two or three sentences: the verdict, and the one detail that matters."""
+- Two or three sentences: the verdict, and the one detail that matters. A yes or no is the word and a few words at most."""
 
 HOLD = """Ratchet: this announcement is written to be read, not heard, so it was not spoken.
 
@@ -105,6 +109,10 @@ def findings(text):
     if words > MOST_WORDS or sentences > MOST_SENTENCES:
         found.append(("length", "%d words in %d sentences" % (words, sentences),
                       "too long to follow by ear; say the verdict and the one detail that matters in two or three sentences"))
+    if YES_NO.match(text) and words > BRIEF_WORDS:
+        found.append(("yes or no", "%d words" % words,
+                      'a yes or no is the word and a few words at most: "Yes, every two hours." Leave the rest unsaid; '
+                      "he asks if he wants it"))
     return found
 
 
@@ -123,6 +131,8 @@ def reason(found, short=False):
 
 # What must be held, and what must pass, with this year being any year.
 HELD = [
+    "Yes, the overlay is running on both machines and the small bar now matches the caption design.",
+    "No. The deploy stopped before the restart, so the old server kept running.",
     "Re-checked. The $792.30 is correct as gross charges, but $543.32 of it was passed straight back out.",
     "The window is Oct 1 2026 00:00 CDT to Oct 15 10:52 CDT.",
     "It's due Oct 2.",
@@ -153,6 +163,9 @@ HELD = [
      "the end of the day."),
 ]
 CLEAR = [
+    "Yes, every two hours.",
+    "No, Tuesday's release carried it.",
+    "No one has replied yet, so the second letters go out on Monday morning.",
     "Done. Both resumes are in Documents now.",
     "It's ten thirty-four at night.",
     "Your payout of about a hundred and fifty dollars came in on Thursday.",

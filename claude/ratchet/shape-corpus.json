@@ -78,10 +78,7 @@
     "It means Gmail rejects the outreach mailbox's messages before they reach an inbox. The domain's SPF record doesn't list the server that sends them.",
     "The relay retries three times and then drops the message.",
     "Yes, the Pi runs the error monitor every fifteen minutes.",
-    "Right-click the session in the sidebar and choose Open in Split View.",
-    "Yes, every two hours.",
-    "No, the release on Tuesday carried it.",
-    "No. The release on Tuesday carried that commit."
+    "Right-click the session in the sidebar and choose Open in Split View."
   ],
   "plain_hold": [
     "Google is bouncing everything from the outreach mailbox. The DMARC record fails alignment. Every outreach message has bounced since Tuesday.",
@@ -96,13 +93,6 @@
     "The outreach mailbox sends again once you restore the account.",
     "It is up to you whether the roster keeps the column.",
     "You're absolutely right, the cron runs every fifteen minutes.",
-    "Good point, the roster keeps the column.",
-    "Yes, the overlay is running on both machines and the small bar now matches the caption design from the deck.",
-    "The Pi runs the error monitor every ten minutes, and it only starts a turn when a ticket labelled auto-report or maintenance is open and nobody has claimed it yet this morning or any time since then."
-  ],
-  "terse_hold": [
-    "**Yes.** The bar matches the caption.\n\n- **Proof:** The installed bar showed in full.",
-    "**No.** It did not reach the Pi, because the deploy script stopped before the restart and the old server kept running.",
-    "Yes, the overlay is running on both machines and the small bar now matches the caption design from the deck."
+    "Good point, the roster keeps the column."
   ]
 }

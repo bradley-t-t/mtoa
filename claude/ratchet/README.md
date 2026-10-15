@@ -213,8 +213,9 @@ without one. `SHOW_CASES` and `SPEECH_CASES` in `premature.py` are what
 
 Before the judge, `ear.py` reads the announcement for anything written for the
 eye: "Oct 2", "CDT", "00:00", "$792.30", brackets, symbols, shorthand, units,
-links, file names, versions, IDs, a chat reply's labels or list, or more than
-ninety words. The voice reads every character, so any of them is denied with
+links, file names, versions, IDs, a chat reply's labels or list, more than
+ninety words, or a yes or no said in more than ten ("Yes, every two hours." is
+the whole answer). The voice reads every character, so any of them is denied with
 each piece named and how a person would say it, every time it is sent that
 way. `RULES` is the table, and `HELD` and `CLEAR` are what it must catch and
 must not.
