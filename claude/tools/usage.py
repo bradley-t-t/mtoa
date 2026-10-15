@@ -90,8 +90,9 @@ def collect(since, pattern=None, who="all"):
                 stamp = row.get("timestamp") or ""
                 if stamp[:19] < since[:19] or row.get("isSidechain"):
                     continue
+                origin = row.get("turnOrigin") or ""
                 base = {"t": stamp[:19], "s": path.stem[:8], "p": path.parent.name,
-                        "e": row.get("entrypoint") or ""}
+                        "e": "sdk" if origin == "sdk" else row.get("entrypoint") or ""}
                 kind = row.get("type")
                 if rx is None:
                     attachment = row.get("attachment") or {}
