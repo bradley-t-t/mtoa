@@ -1475,18 +1475,26 @@ def display():
     return 0
 
 
+# Read before anything else in the turn. Every hook that checks an action runs
+# after the action was chosen, and a check that runs after the choice can only
+# refuse a wrong one - a tab closed to satisfy a hold had already been decided on
+# by the time anything could look at it. The only place to stop a wrong decision
+# is in front of the thinking that makes it, so this goes first, every message.
+DECIDE = """Before deciding on any action - opening, closing or switching a page or tab, clicking, typing, writing or editing a file, running a command, sending anything - look at exactly what it will touch, as it is right now, and confirm two things: it is what the user asked about, and nothing the user is using is in its path. The look comes before the decision, never after it. A target that cannot be seen is not acted on. An action a hook, skill, checklist or rule demands is not right because it was demanded: if meeting it means undoing finished work or disturbing something the user is using, do not take it."""
+
+
 def prompt_context():
-    """UserPromptSubmit: put the reply shape in front of the turn before it writes.
+    """UserPromptSubmit: put the decision rule and the reply shape in front of the
+    turn before it thinks.
 
     The shape hold runs on Stop, after the reply is already on screen, so it can
     fix a reply but never hide one. This is the half that keeps the first draft
-    right. Same reach as the hold: skipped for headless runs and when either
-    switch is off.
+    right. Same reach as the hold: skipped for headless runs and when ratchet is
+    off; SHAPE_OFF drops the shape and keeps the decision rule.
     """
     try:
         import shape
-        if any(BOOL_ENV.get((os.environ.get(k) or "0").strip().lower(), False)
-               for k in ("RATCHET_OFF", "SHAPE_OFF")):
+        if BOOL_ENV.get((os.environ.get("RATCHET_OFF") or "0").strip().lower(), False):
             return 0
         try:
             payload = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace") or "{}")
@@ -1495,8 +1503,11 @@ def prompt_context():
         body = shape.rules()
         if shape.skipped(payload.get("transcript_path") or "", body):
             return 0
+        parts = [DECIDE]
+        if not BOOL_ENV.get((os.environ.get("SHAPE_OFF") or "0").strip().lower(), False):
+            parts.append(shape.reminder(body))
         emit(hookSpecificOutput={"hookEventName": "UserPromptSubmit",
-                                 "additionalContext": shape.reminder(body)})
+                                 "additionalContext": "\n\n".join(parts)})
     except Exception:
         return 0
     return 0

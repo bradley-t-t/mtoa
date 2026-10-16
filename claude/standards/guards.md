@@ -182,7 +182,10 @@ transcript (`blank_held`): the text is overwritten in place, same byte length,
 with a zero-width space and spaces, never truncating a file the CLI is still
 appending to, and the original row is kept under `state/ratchet/held/`. A resumed
 session reads the blank row without complaint. `UserPromptSubmit` (`hook.py prompt`) puts the
-shape and the approved example at the top of every message typed, so the first
+decision rule (`DECIDE` in `ratchet.py`: look at exactly what an action will
+touch, and confirm it is what was asked and nothing in use is in its path, before
+the action is chosen) and then the shape and the approved example at the top of
+every message typed, so the first
 draft is usually right and nothing is withheld; replayed over five closing-report
 scenarios three times each on Opus, first drafts went from 7 of 15 in shape to 14
 of 15. There are no progress notes: plain prose of three sentences or fewer out of

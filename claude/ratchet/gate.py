@@ -47,7 +47,9 @@ HOLD = """Proof: that reply says "%s" with no recorded check behind it, so it wa
 
 A reply may say Fixed, Done, Shipped, Built or any other finished verdict only when ~/.claude/tools/proof.py recorded, this turn, a check that failed while the problem was there and passed after the change, run where the problem was seen. A test of your own code is not that check.
 
-Prove it: proof.py before --where <site|app|voice|chat|file|command> --says "<what the check shows while the problem is there>" --problem "<the user's own words>" -- '<check>' - it has to fail now - then make the change, run proof.py after <id>, and put the evidence line it prints into Proof word for word. Where only the user can see it, --ask, then a question card with the options Gone and Still there, then proof.py after <id> --asked.
+Prove it: proof.py before --where <site|app|voice|chat|file|command> --says "<what the check shows while the problem is there>" --problem "<the user's own words>" -- '<check>' - recorded before the change, while the problem is there, so it fails - then make the change, run proof.py after <id>, and put the evidence line it prints into Proof word for word. Where only the user can see it, --ask, then a question card with the options Gone and Still there, then proof.py after <id> --asked.
+
+When the change is already made, never undo it, and never close, reload or disturb anything the user is using, to get a check that fails: --ask, or say it as it is.
 
 Or say it as it is: make the verdict "Not verified." or "Not fixed." and say what was done. That is an allowed answer. Held again, the claim is withdrawn on screen."""
 
