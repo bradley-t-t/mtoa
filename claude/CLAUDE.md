@@ -280,6 +280,10 @@ real finding behind the acknowledgement passes.
   mean every session on every machine, never only the chat or project in view,
   unless I name less. `~/.claude/tools/usage.py` reads all of it, and ratchet
   denies a turn's first read of one transcript until it has run.
+- **My transcripts means every chat I have had with Claude.** That is the
+  Claude Code sessions `usage.py` reads and my claude.ai chats, which the
+  Claude app caches in `~/Library/Application Support/Claude/IndexedDB`.
+  Search all of them; never ask me which ones I mean.
 - **Never assert an absence you have not gone and checked.** "Nothing is working
   on this", "no routine covers that", "nothing else is running" are claims about
   every agent and every schedule on every machine. Enumerate before you say it:
