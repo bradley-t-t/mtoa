@@ -94,14 +94,20 @@ the next turn. Every miss is kept in `notes/misses/<machine>.jsonl`, one file
 per machine, which config-sync carries everywhere, so the history a turn sees is
 every machine's. At most hourly the prompt hook also starts a sweep of my
 claude.ai chats (the desktop app's cache) and Sunday's spoken conversation on
-the host, judged the same two ways into the same ledger. The turn answers me,
-finds what in the reply system caused the miss, and asks with AskUserQuestion
-under the header "Adapt" when a change would help. A misread, unasked,
-left-out, re-asked or held miss that already has an open one of its kind,
-anywhere, makes the question required: `adapt_hold` holds the reply until an
-Adapt question is answered or the turn has edited the reply system
-(`ratchet/`, `standards/`, `CLAUDE.md`, `settings.json`), and then a settlement
-written beside the misses closes every open miss of that kind, so the count
+the host, judged the same two ways into the same ledger. The turn answers me
+and finds what in the reply system caused the miss; when a change would help,
+the reply ends with "**Should I ask how to improve my reply?**" (`offer: yes`
+in the respond block, the one line allowed after a reply's last line) rather
+than asking. My next message is read for a yes the same two ways - the `yes`
+cue at once, anything else in context - and only after a yes does the turn ask
+with AskUserQuestion under the header "Adapt": `hook.py ask` refuses an Adapt
+question without one, and `adapt_hold` holds a reply on a yes turn until the
+question is asked. A misread, unasked, left-out, re-asked or held miss that
+already has an open one of its kind, anywhere, makes the offer required:
+`adapt_hold` holds the reply until it ends with the offer or the turn has
+edited the reply system (`ratchet/`, `standards/`, `CLAUDE.md`,
+`settings.json`). An answered Adapt question or an edit writes a settlement
+beside the misses that closes every open miss of that kind, so the count
 starts again. `REACTION_OFF=1` stands it down for one run; `reaction.py
 selftest` runs its cases, as does `ratchet.py selftest`.
 

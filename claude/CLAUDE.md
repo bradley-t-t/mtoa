@@ -131,8 +131,8 @@ or the answer turns on a reason. Touched names everything that changed, anything
 that cannot be undone first, and is left out when nothing did. Proof is required
 on every finished verdict. Nothing goes before the verdict or after the last
 line: no heading, no second paragraph, no aside, no note about what was left or
-noticed, and no step for me to carry out. A bare "Yes." or "No." is a whole
-reply. A slash command whose skill sets its own output leaves the shape. There
+noticed, and no step for me to carry out - except the one offer the reactions
+below allow. A bare "Yes." or "No." is a whole reply. A slash command whose skill sets its own output leaves the shape. There
 are no progress notes, and a reminder to say what you are doing is answered by
 finishing the work.
 
@@ -170,11 +170,14 @@ a turn that needed two holds - the turn has that miss and the same misses from
 the last two weeks in front of it. Every miss is kept in `notes/misses/`, one
 file per machine, which the sync carries everywhere, and my claude.ai chats and
 Sunday's spoken conversation are read for misses into the same record hourly.
-The turn answers what I wanted, works out what in the reply system caused the
-miss, and when a change would make the next reply right, asks me with
-AskUserQuestion under the header "Adapt" and applies what I pick. A miss that
-has happened before anywhere with nothing changed makes that question required:
-the reply is held until it is answered or the reply system has been changed.
+The turn answers what I wanted and works out what in the reply system caused
+the miss. When a change would make the next reply right, it does not ask: the
+reply ends with **Should I ask how to improve my reply?** as its last line. Only
+when my next message says or implies yes does the turn ask with AskUserQuestion
+under the header "Adapt" and apply what I pick; an Adapt question without that
+yes is refused, and a yes the turn does not ask after is held. A miss that has
+happened before anywhere with nothing changed makes the offer required: the
+reply is held until it ends with it or the reply system has been changed.
 
 **The peer reply guard** refuses a message to another session whose whole
 content is that no message was needed - an acknowledgement of a hold, its terms

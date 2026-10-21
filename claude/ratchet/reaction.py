@@ -26,11 +26,17 @@ again every time.
   from the prompt hook reads both, judges each new exchange the same two ways,
   and keeps what missed in the same ledger.
 
-  A miss of a kind in `ask` that has happened before - anywhere - and was never
-  followed by a change makes the question required: the stop hook holds a reply
-  on that turn until an Adapt question has been answered, or the turn has
-  changed the reply system itself. A settlement is then written beside the
-  misses, and every open miss of that kind counts as adapted.
+  The reply never asks first. When a change would make the next reply right,
+  it ends with "**Should I ask how to improve my reply?**" (`offer: yes` in the
+  respond block). The next message is read for a yes the same two ways - the
+  `yes` cue at once, anything else in context - and only after one does the
+  turn ask with AskUserQuestion under the header "Adapt": the question guard
+  refuses an Adapt card without it, and the stop hook holds a yes turn that
+  never asks. A miss of a kind in `ask` that has happened before - anywhere -
+  and was never followed by a change makes the offer required. An answered
+  Adapt question, or a turn that changed the reply system itself, writes a
+  settlement beside the misses, and every open miss of that kind counts as
+  adapted.
 """
 import hashlib
 import json

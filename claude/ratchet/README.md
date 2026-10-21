@@ -364,10 +364,20 @@ everywhere; a write sends it on in the background. At most hourly
 claude.ai chats the desktop app caches and the voice assistant's spoken log on
 the host (`elsewhere.py`, no dependencies: LevelDB, snappy and enough of the V8
 format), judges each new exchange the same two ways in batches, and keeps what
-missed in the same ledger. A kind listed in `ask` that already has an open miss
-anywhere makes `adapt_hold` hold the reply until an AskUserQuestion under the
-header "Adapt" is answered or the reply system is edited; then a settlement
-written beside the misses closes every open miss of that kind.
+missed in the same ledger.
+
+The reply never asks first. When a change would help, it ends with the offer -
+`offer: yes` in the respond block, which `respond.py` draws as
+"**Should I ask how to improve my reply?**" after the last line, and which
+`shape.footer` takes off before every other check reads the reply. The next
+message is read for a yes: the `yes` cue at once, anything else in context
+beside the miss reading. `hook.py ask` refuses an AskUserQuestion under the
+header "Adapt" on a turn without that yes, and `adapt_hold` holds a reply on a
+yes turn until the question is asked. A kind listed in `ask` that already has an
+open miss anywhere makes the offer required: `adapt_hold` holds the reply until
+it ends with it or the reply system is edited. An answered Adapt question or an
+edit writes a settlement beside the misses that closes every open miss of that
+kind.
 
 ```
 reaction.py selftest

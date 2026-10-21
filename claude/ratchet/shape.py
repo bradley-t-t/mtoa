@@ -698,7 +698,7 @@ Rules:
 - After the verdict, one plain sentence under %(sentence)d words that answers what was asked.
 - Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. No other label exists.
 - Why only when something was wrong, or the answer turns on a reason. What is what was done, or what the answer rests on. Touched names every file, branch, URL, setting or deletion that changed, with anything that cannot be undone first, and is left out when nothing changed. Proof is required on every finished verdict, and is what you ran, measured or saw - not what should be true.
-- Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer.
+- Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer. The one exception is "**Should I ask how to improve my reply?**", drawn by `offer: yes` in the respond block on a turn whose message said the last reply missed.
 - Leave out nothing the user asked for. A bare "Yes." or "No." is a whole reply.
 - Write no text until the work is finished. There are no progress notes: anything written mid-turn is kept off the screen, and so is any reply the stop checks would send back. A reminder to say what you are doing is answered by finishing the work."""
 

@@ -1003,6 +1003,14 @@ def checks(verb, payload=None, reply=None):
             rendered = None
         if rendered is not None:
             text, blocked = rendered, True
+        # The offer to ask how to improve the reply is drawn after its last line
+        # and is reaction.py's to judge; every other check reads the reply without it.
+        try:
+            import shape
+            text, offered = shape.footer(text)
+        except Exception:
+            offered = False
+        OFFERED[:] = [offered]
 
     if not sidechain and shape_hold(cfg, payload, transcript, text, turn, blocked):
         return 0
@@ -1230,17 +1238,22 @@ def doc_hold(cfg, payload, transcript, text, turn):
     return True
 
 
+OFFERED = []
+
+
 def adapt_hold(cfg, payload, transcript, text, turn):
     """Hold a reply on a turn whose user reacted to a miss (reaction.py): once,
-    to put a miss read in context in front of the turn, and until an Adapt
-    question has been answered when the same kind of miss has happened before."""
+    to put a miss read in context in front of the turn; until it ends with the
+    offer to ask how to improve it when the same kind of miss has happened
+    before; and until the Adapt question is asked when the user said yes."""
     try:
         import reaction
         import shape
         if shape.command(transcript, turn):
             return False
         session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
-        found = reaction.check(transcript, turn, dry=bool(DRY), session=session)
+        found = reaction.check(transcript, turn, dry=bool(DRY), session=session,
+                               offered=bool(OFFERED and OFFERED[0]))
         if not found:
             return False
         how, reason = found
@@ -1252,7 +1265,9 @@ def adapt_hold(cfg, payload, transcript, text, turn):
         NOTES.append(("reaction: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
         return False
     emit(decision="block", reason=reason,
-         systemMessage="reaction: a miss read in context" if how == "context" else "reaction: a repeated miss with no Adapt question")
+         systemMessage={"context": "reaction: a miss read in context",
+                        "ask": "reaction: a yes to the offer with no Adapt question"}.get(
+                            how, "reaction: a repeated miss with no offer to ask"))
     return True
 
 
@@ -1775,8 +1790,7 @@ def pre_ask():
     backups?" - with nothing for a word list to find. Shares the refusal check's
     count, so a turn is sent back three times per user message at most."""
     import refusal
-    if any(BOOL_ENV.get((os.environ.get(k) or "0").strip().lower(), False)
-           for k in ("RATCHET_OFF", "REFUSAL_OFF")):
+    if BOOL_ENV.get((os.environ.get("RATCHET_OFF") or "0").strip().lower(), False):
         return 0
     try:
         payload = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace") or "{}")
@@ -1786,6 +1800,10 @@ def pre_ask():
         return 0
     transcript = payload.get("transcript_path")
     if not transcript or not Path(transcript).is_file():
+        return 0
+    if adapt_card(payload, transcript):
+        return 0
+    if BOOL_ENV.get((os.environ.get("REFUSAL_OFF") or "0").strip().lower(), False):
         return 0
     cfg = config()
     binary = claude_binary()
@@ -1811,6 +1829,28 @@ def pre_ask():
                                              "permissionDecision": "deny",
                                              "permissionDecisionReason": reason}}))
     return 0
+
+
+def adapt_card(payload, transcript):
+    """Refuse an Adapt question the user has not said yes to (reaction.py): the
+    reply offers to ask how to improve it, and asks only after a yes. True when
+    the card was refused."""
+    questions = (payload.get("tool_input") or {}).get("questions") or []
+    if not any(str(q.get("header") or "").strip().lower() == "adapt" for q in questions if isinstance(q, dict)):
+        return False
+    try:
+        import reaction
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        turn = closing_message(transcript, False)[1]
+        if reaction.ask_allowed(transcript, turn, session):
+            return False
+        reason = reaction.NOT_YET
+    except Exception:
+        return False
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                                             "permissionDecision": "deny",
+                                             "permissionDecisionReason": reason}}))
+    return True
 
 
 def pre_say():
