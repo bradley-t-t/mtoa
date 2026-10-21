@@ -184,7 +184,8 @@ CASES = [
                          "proof": "Ran it once."}, False),
     ("verdict is a clause", {"verdict": "Fixed, but the parser still lags",
                              "answer": "It mostly works.", "proof": "Ran it."}, False),
-    ("plain, three sentences", {"plain": "One thing is true. A second thing is also true. And a third thing."}, False),
+    ("plain, three sentences", {"plain": "One thing is true. A second thing is also true. And a third thing."}, True),
+    ("plain, a report verdict", {"plain": "**Yes.** One thing is true."}, False),
     ("empty", {}, False),
 ]
 

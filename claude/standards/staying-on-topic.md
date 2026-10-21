@@ -16,11 +16,11 @@ These rules cover how to reply to a request without drifting away from it.
 
 ## 3. The reply shape, nothing more
 
-- Every reply is a bold verdict line and at most four labelled lines - Why, What, Touched, Proof - one line each, in that order, with Proof on every finished verdict. The shape is in `CLAUDE.md`, and ratchet refuses a reply that leaves it.
-- A question that one or two sentences answer, in a turn that changed nothing, gets one or two plain sentences instead, with no formatting and nothing beside the answer.
-- No headings, extra paragraphs, other labels or sign-offs around it.
-- If it doesn't fit the shape, cut what was never asked for. What was asked and still doesn't fit goes whole into a Markdown file sent beside the reply, never cut.
-- A form the user asks for in their own words, such as a summary, a plan, a table, a draft or a long explanation, goes whole into that Markdown file, and the reply points to it.
+- The form follows the scenario, never the size. A report of work done is a bold verdict line and at most four labelled lines - Why, What, Touched, Proof - one line each, in that order, with Proof on every finished verdict. The shape is in `CLAUDE.md`, and ratchet refuses a report that leaves it.
+- A conversation - a question, a remark, an idea, a turn that did no work - is answered in normal paragraphs, the way a person would, with no verdict and no labels.
+- A document the user asks for - a summary, a plan, a proposal, a table, a list, an explanation - is written whole in a Markdown file sent beside the reply, and the reply points to it. A request that sets its own length is answered in chat.
+- No headings, other labels or sign-offs around a report.
+- Cut what was never asked for. Never cut what was asked for to make a reply fit.
 
 ## 4. Scope is what was asked, nothing more
 
@@ -63,7 +63,7 @@ Leave it out. If it matters, the user will ask for it, and a short follow-up cos
 ## Quick checklist
 
 - [ ] The first sentence answers the question
-- [ ] The reply is in the shape: a verdict line, then Why / What / Touched / Proof lines at most
+- [ ] The reply's form fits the scenario: paragraphs for conversation, a Markdown file for a document, the shape for work done
 - [ ] Nothing was changed or discussed that wasn't requested
 - [ ] No recap, no reasoning narrative, no rejected options
 - [ ] No side issue, aside or note about what was left

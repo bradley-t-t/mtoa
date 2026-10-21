@@ -68,11 +68,26 @@ def tool():
     return proof
 
 
+# A first word that is not bold is a finished claim only when it can be nothing
+# else. "Agreed." or "Noted." opening a conversational answer ends in -ed like
+# Fixed does, and is talk, not a report of work.
+BARE_CLAIMS = {
+    "fixed", "done", "shipped", "built", "deployed", "merged", "released", "installed",
+    "restarted", "updated", "changed", "removed", "deleted", "cleaned", "implemented",
+    "enforced", "added", "created", "landed", "published", "rebuilt", "reverted",
+}
+
+
 def verdict(text):
     for line in (text or "").strip().splitlines():
         if line.strip():
             m = HEAD.match(line)
-            return m.group("verdict").strip() if m else None
+            if not m:
+                return None
+            word = m.group("verdict").strip()
+            if not line.lstrip().startswith("**") and word.lower() not in BARE_CLAIMS:
+                return None
+            return word
     return None
 
 
@@ -201,6 +216,8 @@ def selftest():
             ("yes after edits", "**Yes.** It is finished.", "x", "t1", True, "none"),
             ("bare verdict", "Shipped. Acme is live.", "x", "t1", False, "none"),
             ("question", "**Kokoro af_heart.** That voice is the one in use.", "x", "t1", False, None),
+            ("talk opening Agreed", "Agreed. The realistic version is a one-click button.", "x", "t1", False, None),
+            ("talk opening Noted", "Noted. I will keep it short.", "x", "t1", False, None),
         ]
         for name, text, session, turn, changed, want in table:
             cases += 1

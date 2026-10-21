@@ -81,16 +81,18 @@ a pattern says exactly what needs rewriting and there is nothing to judge.
 `EAR_OFF=1` stands it down for one run; `ear.py selftest` runs its cases, and
 `ratchet.py selftest` runs them too.
 
-An answer bigger than the shape goes in a file, never cut to fit. When I ask
-for a summary, a plan, a list or an explanation, or the answer holds more than
-the shape, the whole of it goes in a Markdown file sent with SendUserFile, and
-the reply is the shape pointing to it; the summary, answer and explanation
-verdicts need no Proof line. A long draft held only for its layout - not for an
-aside, unfinished work or a step handed to me - is kept as Markdown under
-`state/ratchet/replies/<session>/`, and the hold names the file. A reply later
-in the same turn that carries less than 60 percent of that draft's words, with
-no Markdown file sent, is held (`cut_hold`, its own count up to ratchet's cap); a
-bare Yes or No is let through. `ratchet.py selftest` replays it.
+The form follows the scenario, never the size. The shape is for reporting work
+done. A turn that called no tool is conversation: answered in normal paragraphs
+in a respond block, and a verdict report on it is held (`talk_hold`). A message
+of mine that asks for a document - `document_cues` in `shape.json`: a summary, a
+plan, a proposal, a table, a list, an explanation, unless `bounded_cues` finds
+I set its length - owes a Markdown file sent with SendUserFile this turn, and a
+reply without one is held (`doc_hold`); the pointer that goes with it is a plain
+answer, and writing the file it sends is not counted as changing anything. A
+conversational answer has no length limit, but no report verdict, labelled
+lines, headings, tables or code. Each check keeps its own count, up to ratchet's
+cap, and `ratchet.py selftest` replays seven scenarios through the real stop
+hook.
 
 A finished verdict needs a check, not a word. `ratchet/gate.py` reads the
 record `tools/proof.py` keeps and not the reply: Fixed, Done, Shipped, Built -

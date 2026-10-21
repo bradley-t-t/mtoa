@@ -132,20 +132,22 @@ that cannot be undone first, and is left out when nothing did. Proof is required
 on every finished verdict. Nothing goes before the verdict or after the last
 line: no heading, no second paragraph, no aside, no note about what was left or
 noticed, and no step for me to carry out. A bare "Yes." or "No." is a whole
-reply. When I ask for another form in my own words - a summary, a plan, a table,
-a draft, a long explanation - or the answer holds more than the shape, the whole
-answer goes in a Markdown file sent with SendUserFile, and the reply is the
-shape pointing to it. Nothing I asked for is ever cut to make a reply fit. A
-slash command whose skill sets its own output leaves the shape. There are no
-progress notes, and a reminder to say what you are doing is answered by
+reply. A slash command whose skill sets its own output leaves the shape. There
+are no progress notes, and a reminder to say what you are doing is answered by
 finishing the work.
 
-A question that one or two sentences answer, in a turn that changed nothing, gets
-exactly that instead of the shape: one or two plain sentences, no formatting,
-the answer itself and nothing beside it. Plain prose is drawn before anything
-says whether a tool call follows it, so it looks exactly like narration; the
-answer is written inside a ```respond block and shown as plain sentences, and
-prose outside a block or the shape never reaches my screen.
+The shape is for reporting work done, and the form a reply takes follows the
+scenario, never its size. A conversation - a question, a remark, an idea, a turn
+that did no work - is answered in normal paragraphs in chat, the way a person
+would, with no verdict and no labels; a turn that called no tool and answers
+with a verdict report is sent back. A document I ask for - a summary, a plan, a
+proposal, a table, a list, an explanation - is written whole in a Markdown file
+sent with SendUserFile, with one sentence in chat pointing to it, unless I set
+its length myself ("in two sentences"). Nothing I asked for is ever cut to make
+a reply fit. Prose is drawn before anything says whether a tool call follows
+it, so it looks exactly like narration; a conversational answer is written
+inside a ```respond block and shown as written, and prose outside a block or
+the shape never reaches my screen.
 
 **Ratchet** refuses a stop whose closing prose names work the turn could have
 done itself. One user message buys three holds at most. A hold is answered by

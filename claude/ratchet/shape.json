@@ -38,8 +38,6 @@
   "narration_sentences": 3,
   "partial_verdicts": "\\b(?:partly|partially|partial|mostly|almost|nearly|largely|mainly|half|likely|probably|maybe|somewhat|semi|not (?:fixed|done|finished|complete|working|resolved|yet)|incomplete|unfinished|in progress|underway|pending|blocked|stuck|waiting|on hold|paused|over to you|needs? (?:you|your \\w+)|your (?:call|yes|move|turn|approval|decision)|unverified|unconfirmed|untested|some)\\b",
   "partial_claims": "\\b(?:partly|partially|mostly|almost|nearly|largely) (?:done|fixed|working|complete|finished|there|resolved)\\b|\\b(?:has|have|is|are|was|were|did|does|do)(?:n't|n\\u2019t| not) (?:\\w+ ){0,4}?yet\\b|\\bnot (?:yet )?(?:been )?(?:verified|confirmed|tested|heard|seen|checked|proven|measured)\\b|\\b(?:should|ought to) (?:now )?(?:work|be fixed|be working|be resolved|wake|answer|load|pass|hear)\\b|\\b(?:likely|probably|presumably) (?:fixed|works|working|done|resolved|fine)\\b|\\b(?:still|yet) to (?:be )?(?:verify|verified|confirm|confirmed|test|tested|check|checked)\\b",
-  "plain_sentences": 2,
-  "plain_max_chars": 320,
   "plain_claims": "\\bI(?:'ve|\\u2019ve| have)? (?:just )?(?:fixed|changed|updated|deleted|removed|added|deployed|shipped|merged|pushed|restarted|installed|created|moved|renamed|rewrote|wrote|built|released|sent|set up|turned (?:on|off)|enabled|disabled|cleaned|replaced|reverted|committed|patched)\\b|(?:^|[.!?]\\s+)(?:Fixed|Done|Shipped|Deployed|Merged|Cleaned|Built|Released|Installed|Restarted|Updated|Changed|Removed|Deleted)\\b",
   "work_cue": "^\\s*(?:(?:okay|ok|alright|right|sure|now|first|next|then|so),?\\s+)*(?:let me\\b|let['\\u2019]?s\\b|i['\\u2019]?ll\\b|i will\\b|i['\\u2019]?m going to\\b|i am going to\\b|i['\\u2019]?m about to\\b|going to\\b|time to\\b)|^\\s*(?:checking|looking|reading|running|searching|verifying|digging|investigating|inspecting|starting|testing|scanning|grepping|tracing|pulling|fetching|opening|loading)\\b|\\blet me (?:check|look|see|run|read|verify|dig|investigate|pull|grep|fetch|open|inspect|start|test|confirm|trace|find|search|scan|load|diagnose|reproduce|gather)\\b",
   "progress_verdicts": [
@@ -115,5 +113,7 @@
     "Not fixed",
     "Not verified",
     "Not done"
-  ]
+  ],
+  "document_cues": "\\bsummar(?:y|ies|i[sz]e|i[sz]ing)\\b|\\bpropos(?:e|al)\\b|\\bexplain (?:\\w+ ){0,3}?(?:in (?:detail|full|depth)|fully|everything|step[- ]by[- ]step)\\b|\\bwalk me through\\b|\\b(?:in|as|into) a table\\b|\\bmake a table\\b|\\bexplanation\\b|\\boutline\\b|\\bwrite[- ]?up\\b|\\bbreak(?:down| it down)\\b|\\boverview\\b|\\bcompar(?:e|ison)\\b|\\bpros and cons\\b|\\broadmap\\b|\\b(?:itemi[sz]ed|bullet(?:ed)?) list\\b|\\blist (?:out|them|all|every)\\b|\\b(?:give|show|write|draft|make|lay out|outline|summari[sz]e|propose)(?: me)?(?: (?:a|an|the|your|english|full|whole))* plan\\b|\\bwhat(?:'s|’s| is) the plan\\b",
+  "bounded_cues": "\\bin (?:one|two|three|four|five|a few|a couple of|[1-5](?:\\s*-\\s*[1-5])?) (?:sentences?|words?|lines?|bullets?)\\b|\\b(?:one|two|three|[1-5]) sentences?\\b|\\bbriefly\\b|\\bshort(?:ly)?\\b|\\bone[- ]liner?\\b|\\byes or no\\b|\\bin (?:plain )?english\\b"
 }

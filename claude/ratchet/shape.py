@@ -123,7 +123,7 @@ def layout(text, body):
         rest = head.group("rest") or ""
         if rest and sentences(rest) > int(body.get("verdict_sentences") or 1):
             out.append((lines[0], "%d sentences after the verdict - it takes one, and the "
-                                  "detail goes in the labelled lines, or whole in a Markdown file" % sentences(rest)))
+                                  "detail goes in the labelled lines" % sentences(rest)))
         elif len(lines[0]) > int(body["verdict_line_max_chars"]):
             out.append((lines[0], "the verdict line runs past %d characters"
                                   % body["verdict_line_max_chars"]))
@@ -395,37 +395,93 @@ def excused(transcript, turn, text, cfg):
 EDIT_TOOLS = ("Write", "Edit", "MultiEdit", "NotebookEdit")
 
 
-def changed_this_turn(transcript, turn):
-    """Whether this turn edited a file. A plain answer is for a question; a turn
-    that changed something owes the shape, with what it touched and the proof."""
+def turn_tools(transcript, turn):
+    """The tool calls this turn made on the main chain, in order."""
     import ratchet
-    seen = turn is None
+    seen, out = turn is None, []
     for row in ratchet.rows(transcript):
         if not seen:
             seen = row.get("uuid") == turn
             continue
         if row.get("type") == "assistant" and not row.get("isSidechain"):
-            if any(part.get("name") in EDIT_TOOLS for part in ratchet.parts(row, "tool_use")):
+            out.extend(ratchet.parts(row, "tool_use"))
+    return out
+
+
+def sent_files(transcript, turn):
+    """Every path this turn sent the user with SendUserFile."""
+    out = set()
+    for part in turn_tools(transcript, turn):
+        if part.get("name") == "SendUserFile":
+            out.update(str(f) for f in (part.get("input") or {}).get("files") or [])
+    return out
+
+
+def sent_markdown(transcript, turn):
+    """Whether this turn sent the user a Markdown file."""
+    return any(f.lower().endswith((".md", ".markdown")) for f in sent_files(transcript, turn))
+
+
+def changed_this_turn(transcript, turn):
+    """Whether this turn edited a file. A plain answer is for a question; a turn
+    that changed something owes the shape, with what it touched and the proof.
+    A file written only to be sent to the user - the Markdown a document request
+    is answered with - is the answer itself, not a change to anything."""
+    tools = turn_tools(transcript, turn)
+    sent = {str(Path(os.path.expanduser(f)).resolve()) for f in sent_files(transcript, turn)}
+    for part in tools:
+        if part.get("name") in EDIT_TOOLS:
+            given = part.get("input") or {}
+            path = str(given.get("file_path") or given.get("notebook_path") or "")
+            if not path or str(Path(os.path.expanduser(path)).resolve()) not in sent:
                 return True
     return False
 
 
-def plain(text, body, changed=False):
-    """[] when the text is a valid plain answer, else why it is not.
+def talked(transcript, turn):
+    """Whether this turn called no tool at all: conversation, not work. A verdict
+    report has nothing to report on it."""
+    return not turn_tools(transcript, turn)
 
-    One or two sentences of unformatted prose, answering a question in a turn
-    that changed nothing: no bold, list, heading, table or code block, no claim
-    of work done, and nothing off the point."""
+
+def document(transcript, turn, body=None):
+    """The words in the user's own message this turn that ask for a document -
+    a summary, a plan, a proposal, an explanation - or None. A request that
+    bounds its own length ("in 1-3 sentences", "briefly") is answered in chat."""
+    import ratchet
+    body = body or rules()
+    if not body.get("document_cues"):
+        return None
+    current = ""
+    for row in ratchet.rows(transcript):
+        if row.get("uuid") == turn:
+            current = own_words(row) or ""
+            break
+    current = re.sub(r"<pasted_content[^>]*>.*?</pasted_content[^>]*>", " ", current, flags=re.S)
+    hit = re.search(body["document_cues"], current, re.I)
+    if not hit or (body.get("bounded_cues") and re.search(body["bounded_cues"], current, re.I)):
+        return None
+    return clip(ratchet.sentence_around(current, hit.start(), hit.end()), 80)
+
+
+def plain(text, body, changed=False):
+    """[] when the text is a valid conversational answer, else why it is not.
+
+    Normal paragraphs, the way a person talks, in a turn that changed nothing:
+    lists and emphasis are fine, but no report verdict, labelled lines,
+    headings, tables or code blocks - a document goes in a Markdown file - no
+    claim of work done, and nothing off the point. No length limit: the form
+    follows the scenario, never the size."""
     text = text.strip()
     out = []
-    if "\n" in text or "**" in text or "```" in text or re.search(r"(?m)^\s*(?:[-*+#|>]|\d+[.)])\s", text):
-        return [(clip(text), "formatted")]
-    count = sentences(text)
-    if count > int(body.get("plain_sentences") or 2):
-        out.append((clip(text), "%d sentences - a plain answer is %d at most"
-                                % (count, int(body.get("plain_sentences") or 2))))
-    if len(text) > int(body.get("plain_max_chars") or 320):
-        out.append((clip(text), "runs past %d characters" % int(body.get("plain_max_chars") or 320)))
+    first = text.split("\n")[0].strip()
+    if "```" in text or re.search(r"(?m)^\s*(?:#{1,6}\s|\|)", text):
+        out.append((clip(text), "formatted like a document - a heading, table or code block "
+                                "goes in a Markdown file, and the answer points to it"))
+    if VERDICT.match(first) and first not in (body.get("bare") or []):
+        out.append((clip(first), "a report verdict - conversation is answered in normal paragraphs"))
+    if any(BULLET.match(line.rstrip()) for line in text.split("\n")):
+        out.append((clip(text), "labelled lines belong to a report of work done, not a conversation"))
     if changed:
         out.append((clip(text), "this turn changed files, so the reply owes the shape - what it "
                                 "touched and the proof - not a plain answer"))
@@ -578,24 +634,26 @@ def count_hold(session, turn):
 HOLD = """Shape: that reply was out of shape, so it was kept off the screen and the user has not seen it. Write the reply again, in the shape at the top of this turn's message, short enough to read at a glance.
 
 %s
-Cut nothing that answers the request. When it does not fit the shape - a summary, a plan, a list, an explanation - the whole answer goes in a Markdown file sent with SendUserFile, and the reply is the shape: the verdict, one sentence pointing to the file, and the file under Touched. Leave out only what was never asked for. Where a sentence named work you can still do, do it before you send the reply rather than mentioning it."""
+The shape is for reporting work done. If this turn was conversation, answer in normal paragraphs in a respond block instead; if the user asked for a document - a summary, a plan, an explanation - write it whole in a Markdown file, send it, and point to it. Leave out nothing the user asked for. Where a sentence named work you can still do, do it before you send the reply rather than mentioning it."""
 
 
 # Read at the top of every message the person types, so the first draft is in
 # the shape. The hold runs after a reply is already on screen - a Stop hook
 # cannot take back text that has been shown - so a draft out of shape is seen
 # twice, once wrong and once fixed, and the only real cure is the first draft.
-REMINDER = """Every closing reply takes one of two forms. When this message asks for another form - a summary, a plan, a table, a list, a draft, a long explanation - or the answer holds more than the shape, the whole answer goes in a Markdown file sent with SendUserFile, and the reply is the shape pointing to it: **Summarized.** The whole plan is in the attached file. Nothing that answers the question is ever cut to fit.
+REMINDER = """Every closing reply takes the form its scenario calls for, never its size.
 
-1. A question that one or two sentences answer, in a turn that changes nothing: exactly that. One or two plain sentences, under %(plain)d words, no bold, no list - the answer itself and nothing beside it - written inside a respond block, which is what puts it on the screen as plain sentences:
+1. Conversation - a question, a remark, an idea, anything that is talk rather than work done: answer the way a person would, in normal paragraphs, with no bold verdict and no labels, inside a respond block, which is what puts it on the screen. A yes-or-no question still gets "Yes." or "No.".
 
 ```respond
 plain: Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain and example.com's DMARC policy rejects that.
 ```
 
-Prose outside a respond block or the shape below is never shown. A line of prose is drawn before anything says whether a tool call follows it, so narration and a short answer are the same until the block marks which is which.
+Prose outside a respond block or the shape below is never shown. A line of prose is drawn before anything says whether a tool call follows it, so narration and an answer are the same until the block marks which is which.
 
-2. Work that was done, or an answer that needs more: the shape. It looks exactly like this:
+2. A document asked for - a summary, a plan, a proposal, an explanation, an outline, a comparison: write it whole in a Markdown file, nothing cut, send it with SendUserFile, and answer in a respond block with one sentence pointing to it. A request that sets its own length ("in two sentences") is answered in chat.
+
+3. Work that was done: the shape. It looks exactly like this:
 
 **Fixed.** Sunday reads forwards again after 9 p.m.
 
@@ -621,7 +679,7 @@ Rules:
 - Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. No other label exists.
 - Why only when something was wrong, or the answer turns on a reason. What is what was done, or what the answer rests on. Touched names every file, branch, URL, setting or deletion that changed, with anything that cannot be undone first, and is left out when nothing changed. Proof is required on every finished verdict, and is what you ran, measured or saw - not what should be true.
 - Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer.
-- When the facts do not fit, they go whole into a Markdown file sent with SendUserFile, never cut. A bare "Yes." or "No." is a whole reply.
+- Leave out nothing the user asked for. A bare "Yes." or "No." is a whole reply.
 - Write no text until the work is finished. There are no progress notes: anything written mid-turn is kept off the screen, and so is any reply the stop checks would send back. A reminder to say what you are doing is answered by finishing the work."""
 
 
@@ -646,10 +704,10 @@ PROSE = """Shape: that reply was kept off the screen and the user has not seen i
 Send the answer again as a respond block, with nothing before or after it:
 
 ```respond
-plain: <the answer, one or two sentences>
+plain: <the answer, in normal paragraphs>
 ```
 
-If the turn changed anything, or the answer needs more than two sentences, write it in the shape instead. Output a slash command's skill sets out for itself goes in the block as `form:`."""
+If the turn changed anything, write it in the shape instead. Output a slash command's skill sets out for itself goes in the block as `form:`."""
 
 
 RESEND = """Shape: that reply is a plain answer, and it is confirmed as the turn's final reply. Plain text is kept off the screen until this check has seen it end the turn, because a sentence or two of prose is exactly what narration looks like - so the user has not seen it yet.

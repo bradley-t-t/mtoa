@@ -1010,7 +1010,10 @@ def checks(verb, payload=None, reply=None):
     if not sidechain and respond_hold(cfg, payload, transcript, text, turn):
         return 0
 
-    if not sidechain and cut_hold(cfg, payload, transcript, text, turn):
+    if not sidechain and talk_hold(cfg, payload, transcript, text, turn):
+        return 0
+
+    if not sidechain and doc_hold(cfg, payload, transcript, text, turn):
         return 0
 
     if not sidechain and proof_hold(cfg, payload, transcript, text, turn):
@@ -1142,127 +1145,105 @@ def shape_hold(cfg, payload, transcript, text, turn, blocked=False):
         how = told(session, turn, kind, quoted)
         if not how:
             return False
-        saved = None
         if not DRY:
             shape.count_hold(session, turn)
             tell(session, turn, kind, quoted)
-            saved = keep_draft(session, turn, text, found)
     except Exception as problem:
         NOTES.append(("shape: the check failed (%s: %s) - let through unchecked"
                       % (type(problem).__name__, str(problem)[:80]), True))
         return False
-    reason = shape.reason(found) if how == "full" else AGAIN % ("Shape", quoted)
-    if saved:
-        reason += DRAFT_KEPT % saved
-    emit(again=how == "short", reason=reason, decision="block",
+    emit(again=how == "short",
+         reason=shape.reason(found) if how == "full" else AGAIN % ("Shape", quoted),
+         decision="block",
          systemMessage="shape: held a reply out of shape" + (" (judge: %s)" % why if why else ""))
     return True
 
 
-# A draft held only for its layout is kept as Markdown when it is long enough to
-# be an answer rather than a note - so the rewrite can hand all of it over as a
-# file instead of cutting it down to fit the shape. A summary asked for in full
-# was held for being a numbered list, and the rewrite that got through had lost
-# most of the plan.
-DRAFT_WORDS = 60
-CUT_RATIO = 0.6
+# The reply takes the form its scenario calls for, never its size. A turn that
+# did no work at all is conversation, and a verdict report on it - "**Yes.**",
+# "**Agreed.**", "**No.** The plan is..." - answers talk with a status line. A
+# turn whose user asked for a document - a summary, a plan, an explanation - owes
+# that document whole, as a Markdown file, not two lines squeezed into the shape.
+TALK = """Shape: this turn did no work - no tool was called - so it is conversation, and that reply answers it with a report, so it was kept off the screen and the user has not seen it.
 
-DRAFT_KEPT = """
+  "%s"
 
-The whole draft is saved as %s. Make it the answer - a heading and the content, no verdict line - send it with SendUserFile, and reply in the shape with one sentence pointing to it. Do not cut it down to fit."""
+Answer the way a person would, in normal paragraphs, inside a respond block, with no bold verdict and no labels:
 
-CUT_DRAFT = """Shape: this reply carries %d words of the %d in the draft held earlier this turn, and no Markdown file went to the user, so it was kept off the screen and the user has not seen it.
+```respond
+plain: <the answer, in normal paragraphs>
+```
 
-Cutting an answer down to fit the shape leaves out what the user asked for, and they have to ask again. The whole draft is saved as %s: make it the answer, send it with SendUserFile, and reply in the shape with one sentence pointing to it. Leave out only what was never asked for."""
+A yes-or-no question still gets "Yes." or "No."."""
 
+DOCUMENT = """Shape: the user asked for a document - "%s" - and no Markdown file went to them this turn, so the reply was kept off the screen and the user has not seen it.
 
-def words(text):
-    return len(re.findall(r"[A-Za-z0-9][A-Za-z0-9'\u2019-]*", text or ""))
+Write the whole of it in a Markdown file, nothing cut, send it with SendUserFile, and reply in a respond block with one sentence pointing to it:
 
-
-def draft_path(session):
-    return state_root() / ("%s.draft.json" % re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"))
-
-
-def keep_draft(session, turn, text, found):
-    """Save a draft held only for its layout as Markdown; its path, or None.
-
-    Not for a hold that is about what the draft says - an aside, unfinished work,
-    a step handed to the user, a progress note - because that content is meant
-    to go, and a file is no place to keep it."""
-    import shape
-    body = shape.rules()
-    if words(text) < DRAFT_WORDS or shape.unfinished(found) or shape.asides(text, body) \
-            or shape.progress(text, body) or shape.narration(text, body):
-        return None
-    folder = state_root() / "replies" / re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon")
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / ("%s.md" % time.strftime("%Y-%m-%d-%H%M%S"))
-    path.write_text(text.strip() + "\n")
-    best = {}
-    try:
-        best = json.loads(draft_path(session).read_text())
-    except (OSError, ValueError):
-        pass
-    if best.get("turn") != (turn or "unknown") or words(text) >= int(best.get("words") or 0):
-        best = {"turn": turn or "unknown", "path": str(path), "words": words(text)}
-    draft_path(session).write_text(json.dumps(best) + "\n")
-    return str(path)
+```respond
+plain: The whole plan is in the attached file.
+```"""
 
 
-def sent_markdown(transcript, turn):
-    """Whether this turn sent the user a Markdown file."""
-    seen = turn is None
-    for row in rows(transcript):
-        if not seen:
-            seen = row.get("uuid") == turn
-            continue
-        if row.get("type") != "assistant" or row.get("isSidechain"):
-            continue
-        for part in parts(row, "tool_use"):
-            if part.get("name") == "SendUserFile":
-                given = (part.get("input") or {}).get("files") or []
-                if any(str(f).lower().endswith((".md", ".markdown")) for f in given):
-                    return True
-    return False
-
-
-def cut_hold(cfg, payload, transcript, text, turn):
-    """Hold a reply that cut down a draft held earlier this turn without sending
-    it as a file. Its own count, up to ratchet's cap. Walled off: a failure here
-    lets the reply through."""
+def talk_hold(cfg, payload, transcript, text, turn):
+    """Hold a verdict report on a turn that called no tool (shape.talked)."""
     try:
         import shape
+        shown = proof_view(text).strip()
+        if shape.command(transcript, turn) or shown in (shape.rules().get("bare") or []):
+            return False
+        if not shape.VERDICT.match(shown.split("\n")[0].strip()) or not shape.talked(transcript, turn):
+            return False
         session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if scenario_count(session, turn, "talk") >= int(cfg["holds_per_turn"]):
+            return False
+        scenario_count(session, turn, "talk", add=True)
+    except Exception as problem:
+        NOTES.append(("talk: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
+        return False
+    emit(decision="block", reason=TALK % shape.clip(shown.split("\n")[0]),
+         systemMessage="shape: held a report on a turn that was conversation")
+    return True
+
+
+def doc_hold(cfg, payload, transcript, text, turn):
+    """Hold a reply to a document request that sent no Markdown file (shape.document)."""
+    try:
+        import shape
+        if shape.command(transcript, turn):
+            return False
+        asked = shape.document(transcript, turn)
+        if not asked or shape.sent_markdown(transcript, turn):
+            return False
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if scenario_count(session, turn, "document") >= int(cfg["holds_per_turn"]):
+            return False
+        scenario_count(session, turn, "document", add=True)
+    except Exception as problem:
+        NOTES.append(("document: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
+        return False
+    emit(decision="block", reason=DOCUMENT % asked,
+         systemMessage="shape: held a document request answered without the document")
+    return True
+
+
+def scenario_count(session, turn, kind, add=False):
+    """How often this turn has been held for its scenario. Its own file, so no
+    other hold resets it; a dry run only reads."""
+    path = state_root() / ("%s.%s.json" % (re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"), kind))
+    try:
+        body = json.loads(path.read_text())
+        count = int(body.get("count") or 0) if body.get("turn") == (turn or "unknown") else 0
+    except (OSError, ValueError, TypeError):
+        count = 0
+    if add and not DRY:
         try:
-            best = json.loads(draft_path(session).read_text())
-        except (OSError, ValueError):
-            return False
-        if best.get("turn") != (turn or "unknown") or not Path(best.get("path") or "").is_file():
-            return False
-        shown = proof_view(text)
-        if shown.strip() in (shape.rules().get("bare") or []):
-            return False
-        have, had = words(shown), int(best.get("words") or 0)
-        if have >= CUT_RATIO * had or sent_markdown(transcript, turn):
-            return False
-        path = state_root() / ("%s.cut.json" % re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"))
-        try:
-            mark = json.loads(path.read_text())
-            count = int(mark.get("count") or 0) if mark.get("turn") == (turn or "unknown") else 0
-        except (OSError, ValueError, TypeError):
-            count = 0
-        if count >= int(cfg["holds_per_turn"]):
-            return False
-        if not DRY:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps({"turn": turn or "unknown", "count": count + 1,
                                         "at": int(time.time())}) + "\n")
-    except Exception as problem:
-        NOTES.append(("cut: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
-        return False
-    emit(decision="block", reason=CUT_DRAFT % (have, had, best["path"]),
-         systemMessage="shape: held a reply that cut the held draft without a file")
-    return True
+        except OSError:
+            pass
+    return count
 
 
 def shape_said(found):
@@ -1944,56 +1925,59 @@ def transcript_test():
     return bad
 
 
-def cut_test():
-    """A draft held for its layout is kept as Markdown, and the reply that cuts
-    it down is held until the whole answer has gone to the user as a file.
+def scenario_test():
+    """The form follows the scenario. A remark answered in paragraphs passes; a
+    verdict report on a turn that called no tool is held; a summary asked for
+    and answered without a Markdown file is held, and passes once one is sent.
 
     Runs the real stop hook in a child, with its state in a temporary folder."""
     import tempfile
     bad = 0
-    draft = "**No.** Here's the full plan:\n\n" + "\n".join(
-        "%d. Step %d covers the part of the plan that handles signups, scoring, "
-        "the public pages and the extension badge in full." % (i, i) for i in range(1, 9))
-    short = "**Summarized.** The plan is a free tracker that scores employers.\n\n- **What:** Sign-ups, scores and badges."
+    talk = ("```respond\nplain: Agreed. The realistic version is a one-click button, with nothing to set up.\n\n"
+            "Google caps an unreviewed app at 100 users, and Microsoft has no cap.\n```")
+    report = "**Yes.** The realistic version is a one-click button.\n\n- **What:** Google caps it at 100 users."
+    pointer = "```respond\nplain: The whole plan is in the attached file.\n```"
     with tempfile.TemporaryDirectory() as tmp:
-        t = Path(tmp) / "t.jsonl"
-        env = dict(os.environ, RATCHET_STATE=str(Path(tmp) / "state"), CLAUDE_CODE_ENTRYPOINT="claude-desktop",
-                   CLAUDE_CODE_SESSION_ID="cuttest", RATCHET_OFF="0", SHAPE_OFF="0", PROOF_OFF="0")
+        plan = Path(tmp) / "plan.md"
+        plan.write_text("# Plan\n")
 
-        def add(*found):
-            with open(t, "a", encoding="utf-8") as handle:
-                for row in found:
-                    handle.write(json.dumps(row, separators=(",", ":")) + "\n")
-
-        def stop():
+        def stop(said, steps):
+            t = Path(tmp) / ("t%d.jsonl" % len(list(Path(tmp).glob("t*.jsonl"))))
+            found = [{"type": "user", "uuid": "u1", "message": {"content": said}}]
+            for i, step in enumerate(steps):
+                found.append({"type": "assistant", "uuid": "a%d" % i, "message": {"content": [step]}})
+                if step.get("type") == "tool_use":
+                    found.append({"type": "user", "uuid": "r%d" % i, "message": {"content": [
+                        {"type": "tool_result", "tool_use_id": step["id"], "content": "ok"}]}})
+            t.write_text("".join(json.dumps(r) + "\n" for r in found))
+            env = dict(os.environ, RATCHET_STATE=str(Path(tmp) / "state"), CLAUDE_CODE_ENTRYPOINT="claude-desktop",
+                       CLAUDE_CODE_SESSION_ID=t.stem, RATCHET_OFF="0", SHAPE_OFF="0", PROOF_OFF="0")
             out = subprocess.run([sys.executable, str(ROOT / "hook.py"), "stop"], env=env, text=True,
                                  capture_output=True, input=json.dumps(
-                                     {"session_id": "cuttest", "transcript_path": str(t)})).stdout
-            return json.loads(out) if out.strip() else {}
+                                     {"session_id": t.stem, "transcript_path": str(t)})).stdout
+            return "held" if out.strip() and json.loads(out).get("decision") == "block" else "passed"
 
-        add({"type": "user", "uuid": "u1", "message": {"content": "Summarize plan"}},
-            {"type": "assistant", "uuid": "a1", "message": {"content": [{"type": "text", "text": draft}]}})
-        first = stop()
-        kept = re.search(r"saved as (\S+\.md)", first.get("reason") or "")
-        if first.get("decision") != "block" or not kept or not Path(kept.group(1)).is_file():
-            bad += 1
-            print("CUT:    a long draft held for its layout was not kept as Markdown")
-        if "drop" in (first.get("reason") or "").lower():
-            bad += 1
-            print("CUT:    the layout hold still says to drop facts")
-        add({"type": "user", "uuid": "f1", "isMeta": True, "message": {"content": "Stop hook feedback:\n..."}},
-            {"type": "assistant", "uuid": "a2", "message": {"content": [{"type": "text", "text": short}]}})
-        if stop().get("decision") != "block":
-            bad += 1
-            print("CUT:    a reply that cut the held draft passed with no file sent")
-        add({"type": "user", "uuid": "f2", "isMeta": True, "message": {"content": "Stop hook feedback:\n..."}},
-            {"type": "assistant", "uuid": "a3", "message": {"content": [{"type": "tool_use", "id": "s1",
-             "name": "SendUserFile", "input": {"files": [kept.group(1) if kept else "x.md"]}}]}},
-            {"type": "user", "uuid": "r3", "message": {"content": [{"type": "tool_result", "tool_use_id": "s1", "content": "ok"}]}},
-            {"type": "assistant", "uuid": "a4", "message": {"content": [{"type": "text", "text": short}]}})
-        if stop().get("decision") == "block":
-            bad += 1
-            print("CUT:    the reply was held even after the file was sent")
+        text = lambda s: {"type": "text", "text": s}
+        cases = [
+            ("a remark in paragraphs", "Seems like a lot of work for people", [text(talk)], "passed"),
+            ("a report on a turn with no tools", "Seems like a lot of work for people", [text(report)], "held"),
+            ("a bare Yes", "Is it live, yes or no?", [text("Yes.")], "passed"),
+            ("a summary with no file", "Summarize plan", [text(pointer)], "held"),
+            ("a summary sent as a file", "Summarize plan", [
+                {"type": "tool_use", "id": "w1", "name": "Write", "input": {"file_path": str(plan)}},
+                {"type": "tool_use", "id": "s1", "name": "SendUserFile", "input": {"files": [str(plan)]}},
+                text(pointer)], "passed"),
+            ("a summary bounded to sentences", "In English, summarize the difference in 1-3 sentences.",
+             [text("```respond\nplain: One runs on code and the other on a model.\n```")], "passed"),
+            ("implementing a plan is work", "Implement the plan", [
+                {"type": "tool_use", "id": "e1", "name": "Edit", "input": {"file_path": "/tmp/x"}},
+                text("**Not verified.** The plan is in, and nothing ran to check it.\n\n- **Touched:** x.")], "passed"),
+        ]
+        for name, said, steps, want in cases:
+            got = stop(said, steps)
+            if got != want:
+                bad += 1
+                print("SCENARIO: %s was %s, wanted %s" % (name, got, want))
     return bad
 
 
@@ -2059,7 +2043,7 @@ def selftest():
                                          (found or banned)[0][0]))
     bad += transcript_test()
     bad += said_test()
-    bad += cut_test()
+    bad += scenario_test()
     import shape
     bad += shape.selftest()
     import refusal
@@ -2070,7 +2054,7 @@ def selftest():
     bad += scope.selftest()
     import gate
     bad += gate.selftest()
-    print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, 1 cut, %d wrong"
+    print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, 7 scenarios, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))
     return 1 if bad else 0

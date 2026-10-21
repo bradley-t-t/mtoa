@@ -345,16 +345,17 @@ also runs. `REFUSAL_OFF=1` stands it down for one run.
 
 <br />
 
-## Bigger than the shape goes in a file
+## The form follows the scenario
 
-A summary, a plan, a list or an explanation that holds more than the shape is
-sent whole as a Markdown file, and the reply is the shape pointing to it. When
-`shape_hold` holds a draft of 60 words or more for its layout alone, `keep_draft`
-saves it under `state/ratchet/replies/<session>/` and the hold names the file.
-`cut_hold` then holds a reply in the same turn that carries less than 60 percent
-of the draft's words when no Markdown file went out through SendUserFile, up to
-ratchet's cap; a bare Yes or No is let through. `cut_test` in `ratchet.py
-selftest` runs the whole path through the real stop hook.
+The shape is for reporting work done. `talk_hold` holds a verdict report on a
+turn that called no tool - conversation is answered in normal paragraphs in a
+respond block, with no limit on length. `doc_hold` holds a reply to a message
+that asks for a document (`document_cues` in `shape.json`, less anything
+`bounded_cues` finds) when no Markdown file went out through SendUserFile that
+turn; the one-sentence pointer is a plain answer, and the file written to be
+sent does not count as a change. Each has its own count up to ratchet's cap,
+and `scenario_test` in `ratchet.py selftest` runs seven turns through the real
+stop hook.
 
 <br />
 
