@@ -48,9 +48,11 @@ SYSTEM = [HOME / ".claude" / p for p in ("ratchet", "standards", "CLAUDE.md", "s
 PASTED = re.compile(r"<pasted_content[^>]*>.*?</pasted_content[^>]*>", re.S)
 REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
 
+OFFERING = """End the reply with the offer, never the question: put `offer: yes` in the respond block, which draws "**Should I ask how to improve my reply?**" as its last line. Do not ask with AskUserQuestion now - an Adapt question is asked only on a later turn, after the user says or implies yes to that offer."""
+
 CONTEXT = """Your last reply may have missed. %s: "%s"%s
 
-Before anything else, work out what the user actually wanted and answer that. Then find what in the reply system made the last reply miss - a rule in the reply forms below, a hold that pushed the rewrite, a check that let it through. When a change would make the next reply right, ask with AskUserQuestion, header "Adapt", with the concrete change as the options, and apply what is picked."""
+Before anything else, work out what the user actually wanted and answer that. Then find what in the reply system made the last reply miss - a rule in the reply forms below, a hold that pushed the rewrite, a check that let it through. When a change would make the next reply right, offer to ask about it. """ + OFFERING
 
 HISTORY = """
 
@@ -59,19 +61,29 @@ The same kind of miss, earlier, with nothing changed since:
 
 MUST = """
 
-It has happened before, so this turn asks that Adapt question before it ends: the stop hook holds a reply on this turn until one has been answered, or the reply system itself has been changed."""
+It has happened before, so this reply has to end with that offer: the stop hook holds a reply on this turn that does not, unless the reply system itself has been changed."""
 
 HOLD = """Reaction: the user's message said the last reply missed - %s - and the same kind of miss has happened before with nothing changed, so this reply was kept off the screen and the user has not seen it.
 
   "%s"%s
 
-Find what in the reply system made it miss, then ask with AskUserQuestion, header "Adapt", with the concrete change as the options - and apply what is picked. Answer the user's message as well."""
+Answer the user's message, and end the reply with the offer to ask how to improve it. """ + OFFERING
 
 SEEN = """Reaction: read in context, the user's message says your last reply missed - %s - so this reply was kept off the screen and the user has not seen it.
 
   "%s"%s
 
-Answer what the user actually wanted. If this reply already does, send it again as it is. Then find what in the reply system made the last reply miss; when a change would make the next reply right, ask with AskUserQuestion, header "Adapt", with the concrete change as the options, and apply what is picked."""
+Answer what the user actually wanted. If this reply already does, send it again as it is. Then find what in the reply system made the last reply miss; when a change would make the next reply right, offer to ask about it. """ + OFFERING
+
+YES = """Your last reply ended by offering to ask how to improve it, and the user's message says yes: "%s"
+
+Ask now, with AskUserQuestion, header "Adapt": what in the reply system made the reply miss, with the concrete change as the options. Apply what is picked, and answer the rest of the message."""
+
+ASK = """Reaction: your last reply offered to ask how to improve it, and the user's message says or implies yes - "%s" - so this reply was kept off the screen and the user has not seen it.
+
+Ask now, with AskUserQuestion, header "Adapt": what in the reply system made the reply miss, with the concrete change as the options. Apply what is picked."""
+
+NOT_YET = """Reaction: an Adapt question is asked only after the user says or implies yes to "Should I ask how to improve my reply?" at the bottom of a reply, and this turn's message has not. End the reply with that offer instead: `offer: yes` in the respond block."""
 
 WANTED = """
   What they wanted: %s"""
@@ -80,6 +92,18 @@ LATE = """Read in context after that reply was already on screen, an earlier mes
 Take it into account in this reply.
 
 """
+
+OFFER_JUDGE = """An AI assistant's reply ended by asking the user: "Should I ask how to improve my reply?"
+
+The reply:
+  %s
+
+The user's next message:
+  %s
+
+Does the user's message say or imply that the assistant should ask how to improve its reply? A plain yes, "go ahead", "ask", or asking what it would change count. Ignoring the offer, moving on to something else, or no does not.
+
+Answer with JSON only, on one line: {"ask": true} or {"ask": false}."""
 
 JUDGE = """You read exchanges between a user and an AI assistant, to find each place where the user's message says the assistant's previous reply missed what they wanted.
 
@@ -340,10 +364,22 @@ def job_path(session, fp):
     return jobs() / ("%s.%s.json" % (re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"), fp))
 
 
+def offered_in(reply):
+    """Whether a reply ended with the offer to ask how to improve it."""
+    sys.path.insert(0, str(ROOT))
+    import respond
+    import shape
+    fields = respond.block_fields(reply or "")
+    if fields is not None:
+        return bool(fields.get("offer"))
+    return shape.footer(reply or "")[1]
+
+
 def note(session, transcript, prompt):
     """For the prompt hook: the context to put in front of the turn, or None.
     A cue records the miss now; anything else is read in context alongside the
-    turn. Either way the hourly sweep of the other places is started when due."""
+    turn. A message answering the offer is read for a yes the same two ways.
+    Either way the hourly sweep of the other places is started when due."""
     if off():
         return None
     body = rules()
@@ -352,12 +388,14 @@ def note(session, transcript, prompt):
     if not said or clean(prompt).startswith("/"):
         return None
     kinds = signals(prompt, said, holds, body)
-    now = time.time()
+    now, fp = time.time(), fingerprint(prompt)
     late = "".join(LATE % (", ".join(j.get("kinds") or []), clip(j.get("said") or "", 240),
                            WANTED % j["wanted"] if j.get("wanted") else "")
-                   for j in unseen(session, fingerprint(prompt)))
-    if not kinds:
-        path = job_path(session, fingerprint(prompt))
+                   for j in unseen(session, fp))
+    offered = offered_in(reply)
+    yes = offered and bool(re.search(body.get("yes") or r"$^", clean(prompt), re.I))
+    if not kinds or offered:
+        path = job_path(session, fp)
         path.parent.mkdir(parents=True, exist_ok=True)
         for stale in path.parent.glob("*.json"):
             try:
@@ -365,21 +403,30 @@ def note(session, transcript, prompt):
                     stale.unlink()
             except OSError:
                 pass
-        path.write_text(json.dumps({"state": "pending", "at": now, "session": session, "fp": fingerprint(prompt),
-                                    "said": prompt, "reply": reply, "earlier": said[-3:]}))
-        detach([sys.executable, str(ROOT / "reaction.py"), "judge", str(path)])
-        return late.strip() or None
-    asked = [k for k in kinds if k in (body.get("ask") or [])]
-    history = open_misses(asked or kinds, body, before=now)
-    must = bool(asked and open_misses(asked, body, before=now))
-    append({"at": now, "session": session, "fp": fingerprint(prompt), "kinds": kinds, "source": "claude-code",
-            "said": clip(prompt, 240), "reply": clip(reply, 240), "must": must}, body)
-    text = CONTEXT % (", ".join(kinds), clip(prompt, 240), "")
-    if history:
-        text += history_text(history)
-    if must:
-        text += MUST
-    return (late + "\n\n" + text).strip() if late else text
+        reading = not kinds or (offered and not yes)
+        path.write_text(json.dumps({"state": "pending" if reading else "done", "at": now, "session": session,
+                                    "fp": fp, "said": prompt, "reply": reply, "earlier": said[-3:],
+                                    "read_miss": not kinds, "offered": offered,
+                                    "offered_for": fingerprint(said[-1]) if offered else None,
+                                    "ask": True if yes else (None if offered else False)}))
+        if reading:
+            detach([sys.executable, str(ROOT / "reaction.py"), "judge", str(path)])
+    parts = [late.strip()] if late else []
+    if yes:
+        parts.append(YES % clip(prompt, 240))
+    if kinds:
+        asked = [k for k in kinds if k in (body.get("ask") or [])]
+        history = open_misses(asked or kinds, body, before=now)
+        must = bool(asked and open_misses(asked, body, before=now))
+        append({"at": now, "session": session, "fp": fp, "kinds": kinds, "source": "claude-code",
+                "said": clip(prompt, 240), "reply": clip(reply, 240), "must": must}, body)
+        text = CONTEXT % (", ".join(kinds), clip(prompt, 240), "")
+        if history:
+            text += history_text(history)
+        if must:
+            text += MUST
+        parts.append(text)
+    return "\n\n".join(parts) or None
 
 
 # --- reading in context ---------------------------------------------------------
@@ -433,24 +480,53 @@ def verdict_kinds(answer, body):
     return [kind if kind in known else "misread"]
 
 
+def ask_offer(job):
+    """Whether the user's message says or implies yes to the offer, read in context; None when unread."""
+    sys.path.insert(0, str(ROOT))
+    import ratchet
+    binary = ratchet.claude_binary()
+    if not binary:
+        return None
+    try:
+        raw, code = ratchet.ask_claude(binary, OFFER_JUDGE % (clip(job.get("reply") or "", 1500),
+                                                              clip(job.get("said") or "", 800)), ratchet.config())
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    try:
+        text = json.loads(raw).get("result") or ""
+    except ValueError:
+        text = raw
+    found = re.search(r"\{.*?\}", text, re.S)
+    try:
+        return bool(json.loads(found.group(0)).get("ask")) if found else None
+    except ValueError:
+        return None
+
+
 def judge(job_file):
-    """The background half of note(): read one message in context and keep it if it missed."""
+    """The background half of note(): read one message in context - for a miss,
+    and for a yes when the last reply ended with the offer - and keep a miss."""
     path = Path(job_file)
     try:
         job = json.loads(path.read_text())
     except (OSError, ValueError):
         return 1
     body = rules()
-    answers = ask_model([job]) or [None]
-    kinds = verdict_kinds(answers[0], body)
-    result = dict(job, state="done", missed=bool(kinds), kinds=kinds,
-                  wanted=str((answers[0] or {}).get("wanted") or ""), reached=answers[0] is not None)
-    if kinds:
-        asked = [k for k in kinds if k in (body.get("ask") or [])]
-        must = bool(asked and open_misses(asked, body, before=float(job.get("at") or time.time())))
-        append({"at": float(job.get("at") or time.time()), "session": job.get("session"), "fp": job.get("fp"),
-                "kinds": kinds, "source": "claude-code", "read": "context", "said": clip(job.get("said") or "", 240),
-                "reply": clip(job.get("reply") or "", 240), "wanted": clip(result["wanted"], 240), "must": must}, body)
+    result = dict(job, state="done", missed=False, kinds=[], wanted="")
+    if job.get("read_miss", True):
+        answers = ask_model([job]) or [None]
+        kinds = verdict_kinds(answers[0], body)
+        result.update(missed=bool(kinds), kinds=kinds, wanted=str((answers[0] or {}).get("wanted") or ""),
+                      reached=answers[0] is not None)
+        if kinds:
+            asked = [k for k in kinds if k in (body.get("ask") or [])]
+            must = bool(asked and open_misses(asked, body, before=float(job.get("at") or time.time())))
+            append({"at": float(job.get("at") or time.time()), "session": job.get("session"), "fp": job.get("fp"),
+                    "kinds": kinds, "source": "claude-code", "read": "context",
+                    "said": clip(job.get("said") or "", 240), "reply": clip(job.get("reply") or "", 240),
+                    "wanted": clip(result["wanted"], 240), "must": must}, body)
+    if job.get("offered") and job.get("ask") is None:
+        result["ask"] = bool(ask_offer(job))
     result.pop("reply", None)
     result.pop("earlier", None)
     spare = path.with_suffix(".tmp%d" % os.getpid())
@@ -630,10 +706,40 @@ def settle(record, how):
             "how": clip(how, 240)}, body)
 
 
-def check(transcript, turn, dry=False, session=None):
+def read_job(session, fp):
+    try:
+        return json.loads(job_path(session, fp).read_text())
+    except (OSError, ValueError):
+        return None
+
+
+def said_yes(session, fp, dry):
+    """This turn's job when its message answered the offer, waited for while the reading runs."""
+    job = read_job(session, fp)
+    if not job or not job.get("offered"):
+        return None
+    if job.get("ask") is None:
+        job = wait_for(session, fp, dry) or job
+    return job if job.get("ask") else None
+
+
+def ask_allowed(transcript, turn, session=None):
+    """For the question guard: whether this turn may ask an Adapt question - only
+    after the user said or implied yes to the offer."""
+    if off():
+        return True
+    current, _, _, _ = this_turn(transcript, turn)
+    if not current:
+        return False
+    session = session or Path(transcript).stem
+    return said_yes(session, fingerprint(current), False) is not None
+
+
+def check(transcript, turn, dry=False, session=None, offered=False):
     """For the stop hook: None to let the reply through, or (how, reason) -
+    "ask" when the user said yes to the offer and no Adapt question was asked,
     "context" for a miss read in context that the turn has not seen yet, "adapt"
-    for a repeat that needs the Adapt question."""
+    for a repeat whose reply does not end with the offer."""
     if off():
         return None
     current, at, answers, edited = this_turn(transcript, turn)
@@ -641,6 +747,15 @@ def check(transcript, turn, dry=False, session=None):
         return None
     session = session or Path(transcript).stem
     fp = fingerprint(current)
+    yes = said_yes(session, fp, dry)
+    if yes:
+        if answers or edited:
+            if not dry:
+                for target in (record_for(session, yes.get("offered_for") or ""), record_for(session, fp, at)):
+                    if target and not target.get("adapted"):
+                        settle(target, answers[-1] if answers else "changed the reply system")
+            return None
+        return "ask", ASK % clip(current, 240)
     record = record_for(session, fp, at)
     if not record:
         job = wait_for(session, fp, dry)
@@ -651,15 +766,15 @@ def check(transcript, turn, dry=False, session=None):
             return None
     if not dry:
         mark_seen(session, fp)
-    if answers or edited:
+    if edited:
         if not dry and not record.get("adapted"):
-            settle(record, answers[-1] if answers else "changed the reply system")
+            settle(record, "changed the reply system")
         return None
     wanted = WANTED % record["wanted"] if record.get("wanted") else ""
     kinds = ", ".join(record.get("kinds") or [])
-    if record.get("must") and not record.get("adapted"):
+    if record.get("must") and not record.get("adapted") and not offered:
         return "adapt", HOLD % (kinds, record.get("said") or "", wanted)
-    if record.get("read") == "context":
+    if record.get("read") == "context" and not offered:
         text = SEEN % (kinds, record.get("said") or "", wanted)
         history = [m for m in open_misses(record.get("kinds") or [], before=float(record.get("at") or 0))]
         if history:
@@ -741,7 +856,13 @@ def selftest():
     if not got or elsewhere.words_of(got[0]["messages"][0]) != "hi":
         wrong += 1
         print("WRONG: a cached conversation tree was not read")
-    print("reaction selftest: %d cases, %d wrong" % (len(CASES) + 7, wrong))
+    for text, want in (("Yes, ask me.", True), ("yeah", True), ("Go ahead", True), ("Sure, what would you change?", True),
+                       ("Okay so obviously this isn't what I asked for...", False), ("Now check the status board.", False),
+                       ("No, just fix it.", False)):
+        if bool(re.search(body.get("yes") or r"$^", clean(text), re.I)) != want:
+            wrong += 1
+            print("WRONG: %r read as %s to the offer" % (text, "no" if want else "yes"))
+    print("reaction selftest: %d cases, %d wrong" % (len(CASES) + 14, wrong))
     return wrong
 
 

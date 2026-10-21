@@ -23,6 +23,9 @@ import shape  # noqa: E402
 # The labelled lines, in the only order they may appear.
 LABELS = ("why", "what", "touched", "proof")
 
+# The one line a reply may carry after its last line (shape.py, reaction.py).
+OFFER, FOOTER, footer = shape.OFFER, shape.FOOTER, shape.footer
+
 
 def render(fields):
     """Fields -> the shaped reply text. Which of three forms is decided only by
@@ -32,6 +35,10 @@ def render(fields):
       plain  a one- or two-sentence answer to a question that changed nothing
       shape  a bold verdict line followed by the labelled lines
     """
+    if fields.get("offer"):
+        rest = dict(fields)
+        rest.pop("offer")
+        return render(rest) + "\n\n" + FOOTER
     if fields.get("form"):
         return str(fields["form"]).strip()
     if fields.get("plain"):
@@ -57,6 +64,9 @@ def validate(fields, body=None):
     checks the stop hook runs - so respond and the stop hook cannot disagree.
     """
     body = body or shape.rules()
+    if fields.get("offer"):
+        fields = dict(fields)
+        fields.pop("offer")
     text = render(fields)
     if not text.strip():
         return [("(empty)", "respond was given nothing to say")]
@@ -90,7 +100,7 @@ BULLET = re.compile(r"^-\s+\*\*(?P<label>Why|What|Touched|Proof):\*\*\s*(?P<valu
 # longer fence (````respond) lets a form carry a code block of its own. A line
 # that starts no key continues the one above it, and a form runs to the fence.
 FENCE = re.compile(r"(?ms)^(?P<fence>`{3,})respond[ \t]*\n(?P<body>.*?)^(?P=fence)[ \t]*$")
-KEY = re.compile(r"^\s*(verdict|answer|why|what|touched|proof|plain|form)\s*:[ \t]?(.*)$", re.I)
+KEY = re.compile(r"^\s*(verdict|answer|why|what|touched|proof|plain|form|offer)\s*:[ \t]?(.*)$", re.I)
 
 
 def block_fields(text):
@@ -136,6 +146,10 @@ def parse(text):
         return None
     if FENCE.search(text):
         return block_fields(text)
+    text, offered = footer(text)
+    if offered:
+        fields = parse(text)
+        return dict(fields, offer="yes") if fields else None
     lines = text.split("\n")
     head = HEAD.match(lines[0].strip())
     if head:
@@ -186,6 +200,8 @@ CASES = [
                              "answer": "It mostly works.", "proof": "Ran it."}, False),
     ("plain, three sentences", {"plain": "One thing is true. A second thing is also true. And a third thing."}, True),
     ("plain, a report verdict", {"plain": "**Yes.** One thing is true."}, False),
+    ("plain, with the offer", {"plain": "You asked for the email itself, and my reply gave subject lines instead.", "offer": "yes"}, True),
+    ("shape, with the offer", {"verdict": "Yes", "offer": "yes"}, True),
     ("empty", {}, False),
 ]
 

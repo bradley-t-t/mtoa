@@ -1,5 +1,5 @@
 {
-  "_": "Reactions: what in a message of the user's says the last reply missed. reaction.py reads this; edit it and run `reaction.py selftest`. A kind in `ask` that has happened before without the reply system being changed makes the turn ask an Adapt question; the rest only reach the turn as context. REACTION_OFF=1 stands it down for one run.",
+  "_": "Reactions: what in a message of the user's says the last reply missed. reaction.py reads this; edit it and run `reaction.py selftest`. A kind in `ask` that has happened before without the reply system being changed makes the reply end with the offer to ask how to improve it; the rest only reach the turn as context. REACTION_OFF=1 stands it down for one run. `yes` is what reads as a yes to that offer; anything else is read in context.",
   "cues": {
     "misread": "\\b(?:not|isn'?t|isnt|wasn'?t)\\s+(?:what|the thing)\\s+i(?:'m|\\s+am|\\s+was)?\\s+(?:asked|asking|ask|mean|meant|want|wanted|said|talking)\\b|\\bthat\\s+isn'?t\\s+an?\\s+answer\\b|\\banswer\\s+my\\s+question\\b|\\bdon'?t\\s+(?:even\\s+)?know\\s+what\\s+you\\s+mean\\b|\\bwhat\\s+(?:the\\s+fuck\\s+)?are\\s+you\\s+talking\\s+about\\b|\\bwtf\\s+are\\s+you\\s+talking\\s+about\\b|\\bsomething\\s+(?:entirely\\s+)?different\\s+than\\s+i\\b|\\bhas\\s+nothing\\s+to\\s+do\\s+with\\b|\\bi\\s+just\\s+said\\b|\\byou\\s+(?:misread|misunderstood)\\b",
     "unasked": "\\bi\\s+didn'?t\\s+(?:\\w+\\s+)?(?:tell|ask)\\s+you\\s+to\\b|\\ball\\s+i\\s+did\\s+was\\s+ask\\b|\\bi\\s+didn'?t\\s+ask\\s+for\\b|\\bi\\s+never\\s+(?:said|asked)\\b|\\b(?:compromises|changes)\\s+i\\s+didn'?t\\s+approve\\b",
@@ -23,5 +23,6 @@
   "judge_wait": 20,
   "sweep_hours": 1,
   "sweep_max": 40,
-  "sweep_timeout": 150
+  "sweep_timeout": 150,
+  "yes": "^\\W*(?:yes|yeah|yep|yup|sure|go ahead|go for it|do it|ask(?: me| away| it)?)\\b|\\bask me\\b|\\bwhat would you (?:change|improve)\\b"
 }

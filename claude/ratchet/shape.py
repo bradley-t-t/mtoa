@@ -260,7 +260,26 @@ def asides(text, body):
     return out
 
 
+# The one line a reply may carry after its last line: the offer to ask how the
+# reply could be better, on a turn whose message said the last one missed
+# (reaction.py). respond draws it from `offer: yes`; every check reads the reply
+# without it.
+OFFER = "Should I ask how to improve my reply?"
+FOOTER = "**%s**" % OFFER
+FOOTER_LINE = re.compile(r"\n*[ \t]*(?:\*\*)?%s(?:\*\*)?[ \t]*\Z" % re.escape(OFFER))
+
+
+def footer(text):
+    """(the reply without the offer, whether it ended with the offer)."""
+    text = text or ""
+    found = FOOTER_LINE.search(text.rstrip())
+    if not found:
+        return text, False
+    return text.rstrip()[:found.start()].rstrip(), True
+
+
 def problems(text, body=None):
+    text, _ = footer(text)
     # Both lists, every time: a hold that names only the layout gets a rewrite
     # that keeps the aside, and a second hold is a third copy on screen.
     body = body or rules()
@@ -472,6 +491,7 @@ def plain(text, body, changed=False):
     headings, tables or code blocks - a document goes in a Markdown file - no
     claim of work done, and nothing off the point. No length limit: the form
     follows the scenario, never the size."""
+    text, _ = footer(text)
     text = text.strip()
     out = []
     first = text.split("\n")[0].strip()
