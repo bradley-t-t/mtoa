@@ -1819,6 +1819,14 @@
   "intelligence",
   "ratchet/ratchet.py"
  ],
+ "claude/ratchet/reaction.json": [
+  "intelligence",
+  "ratchet/reaction.json"
+ ],
+ "claude/ratchet/reaction.py": [
+  "intelligence",
+  "ratchet/reaction.py"
+ ],
  "claude/ratchet/recall-corpus.json": [
   "intelligence",
   "ratchet/recall-corpus.json"

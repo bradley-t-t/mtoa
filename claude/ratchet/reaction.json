@@ -1,0 +1,16 @@
+{
+  "_": "Reactions: what in a message of the user's says the last reply missed. reaction.py reads this; edit it and run `reaction.py selftest`. A kind in `ask` that has happened before without the reply system being changed makes the turn ask an Adapt question; the rest only reach the turn as context. REACTION_OFF=1 stands it down for one run.",
+  "cues": {
+    "misread": "\\b(?:not|isn'?t|isnt|wasn'?t)\\s+(?:what|the thing)\\s+i(?:'m|\\s+am|\\s+was)?\\s+(?:asked|asking|ask|mean|meant|want|wanted|said|talking)\\b|\\bthat\\s+isn'?t\\s+an?\\s+answer\\b|\\banswer\\s+my\\s+question\\b|\\bdon'?t\\s+(?:even\\s+)?know\\s+what\\s+you\\s+mean\\b|\\bwhat\\s+(?:the\\s+fuck\\s+)?are\\s+you\\s+talking\\s+about\\b|\\bwtf\\s+are\\s+you\\s+talking\\s+about\\b|\\bsomething\\s+(?:entirely\\s+)?different\\s+than\\s+i\\b|\\bhas\\s+nothing\\s+to\\s+do\\s+with\\b|\\bi\\s+just\\s+said\\b|\\byou\\s+(?:misread|misunderstood)\\b",
+    "unasked": "\\bi\\s+didn'?t\\s+(?:\\w+\\s+)?(?:tell|ask)\\s+you\\s+to\\b|\\ball\\s+i\\s+did\\s+was\\s+ask\\b|\\bi\\s+didn'?t\\s+ask\\s+for\\b|\\bi\\s+never\\s+(?:said|asked)\\b|\\b(?:compromises|changes)\\s+i\\s+didn'?t\\s+approve\\b",
+    "left out": "\\bleft\\s+(?:\\w+\\s+)?out\\b|\\bnot\\s+a\\s+good\\s+(?:summary|answer|plan|reply)\\b|\\bcan'?t\\s+be\\s+the\\s+only\\b|\\byou\\s+(?:forgot|missed|skipped)\\b",
+    "again": "\\b(?:did|doing|done)\\s+it\\s+again\\b|\\bhere\\s+we\\s+are\\s+again\\b|\\b(?:off-base|wrong|broken)\\s+again\\b|\\bstill\\s+(?:repeating|happening|broken|doing|narrating|wrong)\\b|\\byou\\s+keep\\b|\\bkeeps?\\s+(?:happening|repeating|breaking)\\b|\\bsame\\s+(?:mistake|issue|problem)\\b",
+    "wrong": "\\b(?:not|isn'?t)\\s+(?:fixed|a\\s+solution|working|right)\\b|\\bdoesn'?t\\s+(?:work|sound\\s+like\\s+a\\s+solution)\\b|\\boff-base\\b|\\btry\\s+again\\b|\\bunacceptable\\b|\\bwrong\\s+already\\b|\\bthat'?s\\s+(?:wrong|false)\\b",
+    "frustration": "\\bfuck|\\bwtf\\b|\\bffs\\b|\\bdumbass\\b|\\bmoron\\b|\\bthis\\s+is\\s+(?:just\\s+)?a\\s+joke\\b|\\bwhat\\s+the\\s+hell\\b"
+  },
+  "ask": ["misread", "unasked", "left out", "re-asked", "held"],
+  "recur_days": 14,
+  "keep_days": 60,
+  "reask_overlap": 0.6,
+  "held_turn": 2
+}

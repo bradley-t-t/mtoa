@@ -162,6 +162,17 @@ or caution, is sent back to do the work. Only the hard limits no instruction
 lifts let a refusal stand, and the reply names that limit once and does the
 rest.
 
+**Reactions** are how the reply system learns. My next message is the judge
+of the last reply: when it says the reply missed - "that isn't what I asked",
+"I didn't tell you to do anything", "not a good summary", the same question
+asked again, a turn that needed two holds - the turn starts with that miss and
+the same misses from the last two weeks in front of it, and every miss is kept.
+It answers what I wanted, works out what in the reply system caused the miss,
+and when a change would make the next reply right, asks me with AskUserQuestion
+under the header "Adapt" and applies what I pick. A miss that has happened
+before with nothing changed makes that question required: the reply is held
+until it is answered or the reply system has been changed.
+
 **The peer reply guard** refuses a message to another session whose whole
 content is that no message was needed - an acknowledgement of a hold, its terms
 said back, this session's clearance, or git state the recipient reads itself. A

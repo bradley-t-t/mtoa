@@ -345,6 +345,23 @@ also runs. `REFUSAL_OFF=1` stands it down for one run.
 
 <br />
 
+## Reactions
+
+`reaction.py` turns the user's reaction to a reply into a record and, when it
+recurs, a question. The prompt hook reads each typed message for the cues in
+`reaction.json`, the same question asked again, or the last turn held twice or
+more; a hit is kept in `state/ratchet/misses.jsonl` and put in front of the
+turn with the same open misses from the last 14 days. A kind listed in `ask`
+that already has an open miss makes `adapt_hold` hold the reply until an
+AskUserQuestion under the header "Adapt" is answered or the reply system is
+edited; then every open miss of that kind is marked adapted.
+
+```
+reaction.py selftest
+```
+
+<br />
+
 ## The form follows the scenario
 
 The shape is for reporting work done. `talk_hold` holds a verdict report on a

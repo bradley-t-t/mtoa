@@ -1016,6 +1016,9 @@ def checks(verb, payload=None, reply=None):
     if not sidechain and doc_hold(cfg, payload, transcript, text, turn):
         return 0
 
+    if not sidechain and adapt_hold(cfg, payload, transcript, text, turn):
+        return 0
+
     if not sidechain and proof_hold(cfg, payload, transcript, text, turn):
         return 0
 
@@ -1224,6 +1227,28 @@ def doc_hold(cfg, payload, transcript, text, turn):
         return False
     emit(decision="block", reason=DOCUMENT % asked,
          systemMessage="shape: held a document request answered without the document")
+    return True
+
+
+def adapt_hold(cfg, payload, transcript, text, turn):
+    """Hold a reply on a turn whose user reacted to a miss that has happened
+    before, until an Adapt question has been answered (reaction.py)."""
+    try:
+        import reaction
+        import shape
+        if shape.command(transcript, turn):
+            return False
+        reason = reaction.check(transcript, turn, dry=bool(DRY))
+        if not reason:
+            return False
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if scenario_count(session, turn, "adapt") >= int(cfg["holds_per_turn"]):
+            return False
+        scenario_count(session, turn, "adapt", add=True)
+    except Exception as problem:
+        NOTES.append(("reaction: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
+        return False
+    emit(decision="block", reason=reason, systemMessage="reaction: a repeated miss with no Adapt question")
     return True
 
 
@@ -1597,6 +1622,14 @@ def prompt_context():
         if shape.skipped(payload.get("transcript_path") or "", body):
             return 0
         parts = [DECIDE]
+        try:
+            import reaction
+            session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+            missed = reaction.note(session, payload.get("transcript_path") or "", payload.get("prompt") or "")
+            if missed:
+                parts.insert(0, missed)
+        except Exception:
+            pass
         if not BOOL_ENV.get((os.environ.get("SHAPE_OFF") or "0").strip().lower(), False):
             parts.append(shape.reminder(body))
         emit(hookSpecificOutput={"hookEventName": "UserPromptSubmit",
@@ -2054,6 +2087,8 @@ def selftest():
     bad += scope.selftest()
     import gate
     bad += gate.selftest()
+    import reaction
+    bad += reaction.selftest()
     print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, 7 scenarios, %d wrong"
           % (len(body.get("caught") or []), len(body.get("banned") or []),
              len(body.get("standing") or []), len(body.get("clear") or []), bad))
