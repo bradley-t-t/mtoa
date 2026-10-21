@@ -10,7 +10,17 @@
   "proof_exempt": [
     "Yes",
     "No",
-    "Started"
+    "Started",
+    "Summarized",
+    "Summarised",
+    "Listed",
+    "Explained",
+    "Proposed",
+    "Drafted",
+    "Planned",
+    "Outlined",
+    "Answered",
+    "Compared"
   ],
   "proof_verdicts": "^(?:\\w+ed|Done|Built|Sent|Made|Set|Run|Rebuilt|Rewritten|Written|Undone|Live|Found|Shut down|Torn down)$",
   "bare": [

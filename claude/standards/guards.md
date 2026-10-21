@@ -81,6 +81,17 @@ a pattern says exactly what needs rewriting and there is nothing to judge.
 `EAR_OFF=1` stands it down for one run; `ear.py selftest` runs its cases, and
 `ratchet.py selftest` runs them too.
 
+An answer bigger than the shape goes in a file, never cut to fit. When I ask
+for a summary, a plan, a list or an explanation, or the answer holds more than
+the shape, the whole of it goes in a Markdown file sent with SendUserFile, and
+the reply is the shape pointing to it; the summary, answer and explanation
+verdicts need no Proof line. A long draft held only for its layout - not for an
+aside, unfinished work or a step handed to me - is kept as Markdown under
+`state/ratchet/replies/<session>/`, and the hold names the file. A reply later
+in the same turn that carries less than 60 percent of that draft's words, with
+no Markdown file sent, is held (`cut_hold`, its own count up to ratchet's cap); a
+bare Yes or No is let through. `ratchet.py selftest` replays it.
+
 A finished verdict needs a check, not a word. `ratchet/gate.py` reads the
 record `tools/proof.py` keeps and not the reply: Fixed, Done, Shipped, Built -
 any past tense that reports a change, and a Yes in a turn that edited files -

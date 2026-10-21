@@ -34,7 +34,7 @@ NOT_A_CHANGE = {
     "proposed", "found", "listed", "answered", "drafted", "explained", "designed",
     "planned", "asked", "reviewed", "measured", "counted", "compared", "summarized",
     "summarised", "investigated", "diagnosed", "traced", "searched", "read",
-    "recapped", "restated", "no", "started",
+    "recapped", "restated", "no", "started", "outlined",
 }
 HEAD = re.compile(r"^\s*(?:\*\*)?(?P<verdict>[A-Za-z][A-Za-z '\-]{0,40}?)[.!?](?:\*\*)?(?=\s|$)")
 PROOF_LINE = re.compile(r"(?mi)^\s*-\s+\*\*Proof:\*\*\s*(?P<value>.*)$")

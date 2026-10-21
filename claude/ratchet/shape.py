@@ -123,7 +123,7 @@ def layout(text, body):
         rest = head.group("rest") or ""
         if rest and sentences(rest) > int(body.get("verdict_sentences") or 1):
             out.append((lines[0], "%d sentences after the verdict - it takes one, and the "
-                                  "detail goes in the labelled lines or is dropped" % sentences(rest)))
+                                  "detail goes in the labelled lines, or whole in a Markdown file" % sentences(rest)))
         elif len(lines[0]) > int(body["verdict_line_max_chars"]):
             out.append((lines[0], "the verdict line runs past %d characters"
                                   % body["verdict_line_max_chars"]))
@@ -578,14 +578,14 @@ def count_hold(session, turn):
 HOLD = """Shape: that reply was out of shape, so it was kept off the screen and the user has not seen it. Write the reply again, in the shape at the top of this turn's message, short enough to read at a glance.
 
 %s
-Keep every fact that answers the request and drop the rest. Where a sentence you are dropping named work you can still do, do it before you send the reply rather than mentioning it."""
+Cut nothing that answers the request. When it does not fit the shape - a summary, a plan, a list, an explanation - the whole answer goes in a Markdown file sent with SendUserFile, and the reply is the shape: the verdict, one sentence pointing to the file, and the file under Touched. Leave out only what was never asked for. Where a sentence named work you can still do, do it before you send the reply rather than mentioning it."""
 
 
 # Read at the top of every message the person types, so the first draft is in
 # the shape. The hold runs after a reply is already on screen - a Stop hook
 # cannot take back text that has been shown - so a draft out of shape is seen
 # twice, once wrong and once fixed, and the only real cure is the first draft.
-REMINDER = """Every closing reply takes one of two forms, unless this message asks for another in so many words (a table, a draft, code, a long explanation).
+REMINDER = """Every closing reply takes one of two forms. When this message asks for another form - a summary, a plan, a table, a list, a draft, a long explanation - or the answer holds more than the shape, the whole answer goes in a Markdown file sent with SendUserFile, and the reply is the shape pointing to it: **Summarized.** The whole plan is in the attached file. Nothing that answers the question is ever cut to fit.
 
 1. A question that one or two sentences answer, in a turn that changes nothing: exactly that. One or two plain sentences, under %(plain)d words, no bold, no list - the answer itself and nothing beside it - written inside a respond block, which is what puts it on the screen as plain sentences:
 
@@ -621,7 +621,7 @@ Rules:
 - Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. No other label exists.
 - Why only when something was wrong, or the answer turns on a reason. What is what was done, or what the answer rests on. Touched names every file, branch, URL, setting or deletion that changed, with anything that cannot be undone first, and is left out when nothing changed. Proof is required on every finished verdict, and is what you ran, measured or saw - not what should be true.
 - Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer.
-- When the facts do not fit, drop the least important ones. A bare "Yes." or "No." is a whole reply.
+- When the facts do not fit, they go whole into a Markdown file sent with SendUserFile, never cut. A bare "Yes." or "No." is a whole reply.
 - Write no text until the work is finished. There are no progress notes: anything written mid-turn is kept off the screen, and so is any reply the stop checks would send back. A reminder to say what you are doing is answered by finishing the work."""
 
 

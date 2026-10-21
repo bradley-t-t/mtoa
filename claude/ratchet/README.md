@@ -345,6 +345,19 @@ also runs. `REFUSAL_OFF=1` stands it down for one run.
 
 <br />
 
+## Bigger than the shape goes in a file
+
+A summary, a plan, a list or an explanation that holds more than the shape is
+sent whole as a Markdown file, and the reply is the shape pointing to it. When
+`shape_hold` holds a draft of 60 words or more for its layout alone, `keep_draft`
+saves it under `state/ratchet/replies/<session>/` and the hold names the file.
+`cut_hold` then holds a reply in the same turn that carries less than 60 percent
+of the draft's words when no Markdown file went out through SendUserFile, up to
+ratchet's cap; a bare Yes or No is let through. `cut_test` in `ratchet.py
+selftest` runs the whole path through the real stop hook.
+
+<br />
+
 ## A check, not a word
 
 `gate.py` runs in the same Stop pass, right after the layout checks, and in the

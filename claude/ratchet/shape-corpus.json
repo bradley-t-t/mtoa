@@ -18,7 +18,8 @@
     "**Fixed.** The checkout page loads again.\n\n- **What:** I reverted the CSP header in [vercel.json](vercel.json:12) and redeployed.\n- **Proof:** The checkout page returned 200 and rendered with no console errors.",
     "**Fixed.** The right-hand rail no longer overlaps the clock.\n\n- **What:** I moved the rail below the clock in `deck.css`.\n- **Proof:** The installed deck shows the rail and the clock side by side.",
     "**Not fixed.** The cube still misses about one wake in five while Sunday is speaking.\n\n- **Why:** Echo cancellation drops out when the speaker volume is above 80.\n- **Proof:** Twenty wakes during speech, sixteen reached the brain.",
-    "**Not verified.** I changed the bar's width, and no check of the app could be run.\n\n- **What:** I fixed the bar to one width so its circle sits inside it.\n- **Touched:** `overlay/bar.css`."
+    "**Not verified.** I changed the bar's width, and no check of the app could be run.\n\n- **What:** I fixed the bar to one width so its circle sits inside it.\n- **Touched:** `overlay/bar.css`.",
+    "**Summarized.** The whole plan for Resourcing Humans is in the attached file.\n\n- **Touched:** `resourcing-humans-plan.md`, sent to you."
   ],
   "hold": [
     "The grindlewump won't florp because its snazzle is in backwards.",

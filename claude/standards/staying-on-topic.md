@@ -19,8 +19,8 @@ These rules cover how to reply to a request without drifting away from it.
 - Every reply is a bold verdict line and at most four labelled lines - Why, What, Touched, Proof - one line each, in that order, with Proof on every finished verdict. The shape is in `CLAUDE.md`, and ratchet refuses a reply that leaves it.
 - A question that one or two sentences answer, in a turn that changed nothing, gets one or two plain sentences instead, with no formatting and nothing beside the answer.
 - No headings, extra paragraphs, other labels or sign-offs around it.
-- If it doesn't fit the shape, you're answering more than was asked. Cut until it fits.
-- A form the user asks for in their own words, such as a table, a draft, code or a long explanation, is the one exception.
+- If it doesn't fit the shape, cut what was never asked for. What was asked and still doesn't fit goes whole into a Markdown file sent beside the reply, never cut.
+- A form the user asks for in their own words, such as a summary, a plan, a table, a draft or a long explanation, goes whole into that Markdown file, and the reply points to it.
 
 ## 4. Scope is what was asked, nothing more
 
