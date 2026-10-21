@@ -8,9 +8,19 @@
     "wrong": "\\b(?:not|isn'?t)\\s+(?:fixed|a\\s+solution|working|right)\\b|\\bdoesn'?t\\s+(?:work|sound\\s+like\\s+a\\s+solution)\\b|\\boff-base\\b|\\btry\\s+again\\b|\\bunacceptable\\b|\\bwrong\\s+already\\b|\\bthat'?s\\s+(?:wrong|false)\\b",
     "frustration": "\\bfuck|\\bwtf\\b|\\bffs\\b|\\bdumbass\\b|\\bmoron\\b|\\bthis\\s+is\\s+(?:just\\s+)?a\\s+joke\\b|\\bwhat\\s+the\\s+hell\\b"
   },
-  "ask": ["misread", "unasked", "left out", "re-asked", "held"],
+  "ask": [
+    "misread",
+    "unasked",
+    "left out",
+    "re-asked",
+    "held"
+  ],
   "recur_days": 14,
   "keep_days": 60,
   "reask_overlap": 0.6,
-  "held_turn": 2
+  "held_turn": 2,
+  "voice_log": "voice-assistant/data/speech.jsonl",
+  "judge_wait": 20,
+  "sweep_hours": 1,
+  "sweep_max": 40
 }

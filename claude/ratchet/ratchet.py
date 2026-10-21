@@ -1231,24 +1231,28 @@ def doc_hold(cfg, payload, transcript, text, turn):
 
 
 def adapt_hold(cfg, payload, transcript, text, turn):
-    """Hold a reply on a turn whose user reacted to a miss that has happened
-    before, until an Adapt question has been answered (reaction.py)."""
+    """Hold a reply on a turn whose user reacted to a miss (reaction.py): once,
+    to put a miss read in context in front of the turn, and until an Adapt
+    question has been answered when the same kind of miss has happened before."""
     try:
         import reaction
         import shape
         if shape.command(transcript, turn):
             return False
-        reason = reaction.check(transcript, turn, dry=bool(DRY))
-        if not reason:
-            return False
         session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
-        if scenario_count(session, turn, "adapt") >= int(cfg["holds_per_turn"]):
+        found = reaction.check(transcript, turn, dry=bool(DRY), session=session)
+        if not found:
             return False
-        scenario_count(session, turn, "adapt", add=True)
+        how, reason = found
+        limit = 1 if how == "context" else int(cfg["holds_per_turn"])
+        if scenario_count(session, turn, how) >= limit:
+            return False
+        scenario_count(session, turn, how, add=True)
     except Exception as problem:
         NOTES.append(("reaction: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
         return False
-    emit(decision="block", reason=reason, systemMessage="reaction: a repeated miss with no Adapt question")
+    emit(decision="block", reason=reason,
+         systemMessage="reaction: a miss read in context" if how == "context" else "reaction: a repeated miss with no Adapt question")
     return True
 
 
