@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Keeps one Slack message listing only what somebody has to act on.
 
-This is the channel that notifies, so it carries four things and nothing
+This is the channel that notifies, so it carries five things and nothing
 else: tickets an agent could not resolve, sites that are not answering,
-outreach mail the mail server is refusing in either direction, and claims an
-agent abandoned. Work in progress never appears here - an error being fixed is not
+outreach mail the mail server is refusing in either direction, claims an
+agent abandoned, and what the device guard found on a machine. Work in progress never appears here - an error being fixed is not
 something to be told about.
 
 When nothing needs him the message is deleted and none is posted, so an empty
@@ -26,6 +26,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE, "config.json")
 STATE_PATH = os.path.join(BASE, "state.json")
 MONITOR_DIR = os.path.join(os.path.expanduser("~"), "uptime-monitor")
+GUARD_DIR = os.path.join(os.path.expanduser("~"), "device-guard")
 USER_AGENT = "sunday-attention-board/1.0"
 RED = 0xE74C3C
 
@@ -222,6 +223,18 @@ def collect(now, state):
                 "sort": (1, site["name"]),
                 "text": "**%s** is not answering — down %s" % (site["name"], since(down_for)),
                 "group": "Down",
+            })
+
+    # A new way into one of the machines, or a protection that is off. The
+    # device guard keeps each one open until it clears or is accepted.
+    guard_state = read_json(os.path.join(GUARD_DIR, "state.json"), {})
+    for device, entry in sorted(guard_state.get("devices", {}).items()):
+        for key, finding in sorted(entry.get("findings", {}).items()):
+            items.append({
+                "key": "security:%s:%s" % (device, key),
+                "sort": (1, "security", device, key),
+                "text": "**%s**: %s" % (device, finding["text"]),
+                "group": "Security",
             })
 
     # Outbound mail goes wrong as a whole rather than one letter at a time: the
