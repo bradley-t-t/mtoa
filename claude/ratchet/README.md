@@ -348,16 +348,31 @@ also runs. `REFUSAL_OFF=1` stands it down for one run.
 ## Reactions
 
 `reaction.py` turns the user's reaction to a reply into a record and, when it
-recurs, a question. The prompt hook reads each typed message for the cues in
-`reaction.json`, the same question asked again, or the last turn held twice or
-more; a hit is kept in `state/ratchet/misses.jsonl` and put in front of the
-turn with the same open misses from the last 14 days. A kind listed in `ask`
-that already has an open miss makes `adapt_hold` hold the reply until an
-AskUserQuestion under the header "Adapt" is answered or the reply system is
-edited; then every open miss of that kind is marked adapted.
+recurs, a question. The prompt hook reads each typed message two ways. The cues
+in `reaction.json`, the same question asked again and a last turn held twice or
+more are caught at once and put in front of the turn. Everything else is read in
+context by a model in the background - `reaction.py judge`, through the same
+headless call as ratchet's other judges - and `adapt_hold` waits for that
+reading at display and stop time: a miss it finds holds the reply once with the
+miss and what the user wanted, and one that comes back after the reply was
+already drawn goes in front of the next turn instead.
+
+Every miss is kept in `~/.claude/notes/misses/<machine>.jsonl`, one file per
+machine so no two machines write the same file, and config-sync carries them
+everywhere; a write sends it on in the background. At most hourly
+(`sweep_hours`), the prompt hook starts `reaction.py sweep`, which reads the
+claude.ai chats the desktop app caches and the voice assistant's spoken log on
+the host (`elsewhere.py`, no dependencies: LevelDB, snappy and enough of the V8
+format), judges each new exchange the same two ways in batches, and keeps what
+missed in the same ledger. A kind listed in `ask` that already has an open miss
+anywhere makes `adapt_hold` hold the reply until an AskUserQuestion under the
+header "Adapt" is answered or the reply system is edited; then a settlement
+written beside the misses closes every open miss of that kind.
 
 ```
 reaction.py selftest
+reaction.py sweep [--read-only]
+elsewhere.py claude.ai | voice
 ```
 
 <br />

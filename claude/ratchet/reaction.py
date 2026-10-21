@@ -76,11 +76,16 @@ Answer what the user actually wanted. If this reply already does, send it again 
 WANTED = """
   What they wanted: %s"""
 
+LATE = """Read in context after that reply was already on screen, an earlier message of the user's said a reply missed - %s: "%s"%s
+Take it into account in this reply.
+
+"""
+
 JUDGE = """You read exchanges between a user and an AI assistant, to find each place where the user's message says the assistant's previous reply missed what they wanted.
 
 The reply missed when the user's message says it misread them or answered a different question (misread); did, built or proposed something they never asked for (unasked); left out or cut what they asked for (left out); was wrong, false or broken, or called something done that was not (wrong); repeated a mistake they had already corrected (again); or made them ask the same thing again (re-asked). Frustration aimed at the reply counts. A follow-up question, a new request, approval, thanks, or frustration aimed at something other than the reply does not.
 
-Answer with JSON only: a list with one object per exchange, in order - {"n": <number>, "missed": true or false, "kind": "misread", "unasked", "left out", "wrong", "again", "re-asked" or "none", "wanted": what the user actually wanted, in one sentence, or ""}.
+Answer with JSON only, on one line: a list with one object per exchange, in order. An exchange that did not miss is {"n": 1, "missed": false}. One that did is {"n": 2, "missed": true, "kind": "misread", "wanted": "<what the user actually wanted, in one sentence>"}, with kind one of misread, unasked, left out, wrong, again or re-asked.
 
 %s"""
 
@@ -262,7 +267,7 @@ def misses():
     return out
 
 
-def append(entry, body=None):
+def append(entry, body=None, send=True):
     """Add an entry to this machine's file, pruned to keep_days, then send it on."""
     body = body or rules()
     cutoff = time.time() - 86400 * int(body.get("keep_days") or 60)
@@ -284,7 +289,8 @@ def append(entry, body=None):
     spare = path.with_suffix(".tmp%d" % os.getpid())
     spare.write_text("".join(json.dumps(e) + "\n" for e in kept))
     os.replace(spare, path)
-    publish()
+    if send:
+        publish()
     return entry
 
 
@@ -347,13 +353,22 @@ def note(session, transcript, prompt):
         return None
     kinds = signals(prompt, said, holds, body)
     now = time.time()
+    late = "".join(LATE % (", ".join(j.get("kinds") or []), clip(j.get("said") or "", 240),
+                           WANTED % j["wanted"] if j.get("wanted") else "")
+                   for j in unseen(session, fingerprint(prompt)))
     if not kinds:
         path = job_path(session, fingerprint(prompt))
         path.parent.mkdir(parents=True, exist_ok=True)
+        for stale in path.parent.glob("*.json"):
+            try:
+                if now - stale.stat().st_mtime > 86400:
+                    stale.unlink()
+            except OSError:
+                pass
         path.write_text(json.dumps({"state": "pending", "at": now, "session": session, "fp": fingerprint(prompt),
                                     "said": prompt, "reply": reply, "earlier": said[-3:]}))
         detach([sys.executable, str(ROOT / "reaction.py"), "judge", str(path)])
-        return None
+        return late.strip() or None
     asked = [k for k in kinds if k in (body.get("ask") or [])]
     history = open_misses(asked or kinds, body, before=now)
     must = bool(asked and open_misses(asked, body, before=now))
@@ -364,12 +379,12 @@ def note(session, transcript, prompt):
         text += history_text(history)
     if must:
         text += MUST
-    return text
+    return (late + "\n\n" + text).strip() if late else text
 
 
 # --- reading in context ---------------------------------------------------------
 
-def ask_model(exchanges):
+def ask_model(exchanges, timeout=None):
     """One model call over up to a handful of exchanges: a verdict for each, or None."""
     sys.path.insert(0, str(ROOT))
     import ratchet
@@ -381,7 +396,9 @@ def ask_model(exchanges):
         earlier_text = "\n".join("  - " + clip(e, 300) for e in (x.get("earlier") or [])[-3:]) or "  (none)"
         blocks.append("Exchange %d\nThe user's earlier messages:\n%s\nThe assistant's reply:\n  %s\nThe user's next message:\n  %s"
                       % (n, earlier_text, clip(x.get("reply") or "", 1500), clip(x.get("said") or "", 800)))
-    cfg = ratchet.config()
+    cfg = dict(ratchet.config())
+    if timeout:
+        cfg["judge_timeout_seconds"] = timeout
     try:
         raw, code = ratchet.ask_claude(binary, JUDGE % "\n\n".join(blocks), cfg)
     except (subprocess.TimeoutExpired, OSError):
@@ -494,7 +511,7 @@ def sweep(read_only=False):
     judged = []
     for start in range(0, len(rest), 8):
         batch = [x for x, _ in rest[start:start + 8]]
-        answers = ask_model(batch)
+        answers = ask_model(batch, timeout=int(body.get("sweep_timeout") or 150))
         if answers is None:
             continue
         judged.extend((x, verdict_kinds(a, body), a) for x, a in zip(batch, answers))
@@ -506,28 +523,36 @@ def sweep(read_only=False):
         append({"at": x["at"], "session": x.get("session"), "fp": fingerprint(x["said"]), "key": x["key"],
                 "kinds": kinds, "source": x["source"], "read": "context" if answer else "cue",
                 "said": clip(x["said"], 240), "reply": clip(x["reply"], 240),
-                "wanted": clip(str((answer or {}).get("wanted") or ""), 240), "must": False}, body)
+                "wanted": clip(str((answer or {}).get("wanted") or ""), 240), "must": False}, body, send=False)
         kept += 1
     cutoff = time.time() - 86400 * days
     seen = {k: v for k, v in seen.items() if float(v or 0) >= cutoff}
     seen_file.parent.mkdir(parents=True, exist_ok=True)
     seen_file.write_text(json.dumps(seen))
+    # Hourly, whether or not anything was kept here: the sync is also what brings
+    # every other machine's misses to this one.
     publish()
     print(json.dumps({"read": {k: len(v) for k, v in found.items()}, "judged": len(cued) + len(judged), "kept": kept}))
     return 0
 
 
 def this_turn(transcript, turn):
-    """(the text this turn answers, the Adapt answers this turn, whether it edited the reply system)."""
+    """(the text this turn answers, when it was written, the Adapt answers this
+    turn, whether it edited the reply system)."""
     sys.path.insert(0, str(ROOT))
     import ratchet
-    current, seen, asks, answers, edited = "", turn is None, {}, [], False
+    import calendar
+    current, at, seen, asks, answers, edited = "", 0.0, turn is None, {}, [], False
     for row in ratchet.rows(transcript):
         if row.get("isSidechain"):
             continue
         if not seen:
             if row.get("uuid") == turn:
                 seen, current = True, "\n".join(ratchet.parts(row, "text"))
+                try:
+                    at = calendar.timegm(time.strptime(str(row.get("timestamp"))[:19], "%Y-%m-%dT%H:%M:%S"))
+                except (ValueError, OverflowError):
+                    at = 0.0
             continue
         for part in ratchet.parts(row, "tool_use"):
             given = part.get("input") or {}
@@ -542,12 +567,42 @@ def this_turn(transcript, turn):
             if part.get("tool_use_id") in asks:
                 content = part.get("content")
                 answers.append(content if isinstance(content, str) else json.dumps(content))
-    return current, answers, edited
+    return current, at, answers, edited
 
 
-def record_for(session, fp):
+def record_for(session, fp, since=0.0):
+    """This turn's own miss: its words, its session, kept no earlier than the turn began."""
     return next((m for m in reversed(misses())
-                 if m.get("fp") == fp and (not session or not m.get("session") or m.get("session") == session)), None)
+                 if m.get("fp") == fp and (not session or not m.get("session") or m.get("session") == session)
+                 and float(m.get("at") or 0) >= since - 120), None)
+
+
+def mark_seen(session, fp):
+    path = job_path(session, fp)
+    try:
+        job = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return
+    if not job.get("seen"):
+        job["seen"] = True
+        spare = path.with_suffix(".tmp%d" % os.getpid())
+        spare.write_text(json.dumps(job))
+        os.replace(spare, path)
+
+
+def unseen(session, fp):
+    """Misses read in context for this session's earlier messages whose turn never
+    saw them - the reply was already on screen before the reading came back."""
+    out = []
+    for path in sorted(jobs().glob("%s.*.json" % re.sub(r"[^A-Za-z0-9_-]", "_", session or "anon"))):
+        try:
+            job = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue
+        if job.get("state") == "done" and job.get("missed") and not job.get("seen") and job.get("fp") != fp:
+            out.append(job)
+            mark_seen(session, job.get("fp"))
+    return out
 
 
 def wait_for(session, fp, dry):
@@ -581,19 +636,21 @@ def check(transcript, turn, dry=False, session=None):
     for a repeat that needs the Adapt question."""
     if off():
         return None
-    current, answers, edited = this_turn(transcript, turn)
+    current, at, answers, edited = this_turn(transcript, turn)
     if not current:
         return None
     session = session or Path(transcript).stem
     fp = fingerprint(current)
-    record = record_for(session, fp)
+    record = record_for(session, fp, at)
     if not record:
         job = wait_for(session, fp, dry)
         if not job or not job.get("missed"):
             return None
-        record = record_for(session, fp)
+        record = record_for(session, fp, at)
         if not record:
             return None
+    if not dry:
+        mark_seen(session, fp)
     if answers or edited:
         if not dry and not record.get("adapted"):
             settle(record, answers[-1] if answers else "changed the reply system")

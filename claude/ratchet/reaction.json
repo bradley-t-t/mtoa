@@ -22,5 +22,6 @@
   "voice_log": "voice-assistant/data/speech.jsonl",
   "judge_wait": 20,
   "sweep_hours": 1,
-  "sweep_max": 40
+  "sweep_max": 40,
+  "sweep_timeout": 150
 }

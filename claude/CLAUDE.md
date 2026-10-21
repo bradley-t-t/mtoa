@@ -163,15 +163,18 @@ lifts let a refusal stand, and the reply names that limit once and does the
 rest.
 
 **Reactions** are how the reply system learns. My next message is the judge
-of the last reply: when it says the reply missed - "that isn't what I asked",
-"I didn't tell you to do anything", "not a good summary", the same question
-asked again, a turn that needed two holds - the turn starts with that miss and
-the same misses from the last two weeks in front of it, and every miss is kept.
-It answers what I wanted, works out what in the reply system caused the miss,
-and when a change would make the next reply right, asks me with AskUserQuestion
-under the header "Adapt" and applies what I pick. A miss that has happened
-before with nothing changed makes that question required: the reply is held
-until it is answered or the reply system has been changed.
+of the last reply: when it says the reply missed - in any words, read in
+context by a model alongside the turn, as well as at once for "that isn't what
+I asked", "I didn't tell you to do anything", the same question asked again or
+a turn that needed two holds - the turn has that miss and the same misses from
+the last two weeks in front of it. Every miss is kept in `notes/misses/`, one
+file per machine, which the sync carries everywhere, and my claude.ai chats and
+Sunday's spoken conversation are read for misses into the same record hourly.
+The turn answers what I wanted, works out what in the reply system caused the
+miss, and when a change would make the next reply right, asks me with
+AskUserQuestion under the header "Adapt" and applies what I pick. A miss that
+has happened before anywhere with nothing changed makes that question required:
+the reply is held until it is answered or the reply system has been changed.
 
 **The peer reply guard** refuses a message to another session whose whole
 content is that no message was needed - an acknowledgement of a hold, its terms

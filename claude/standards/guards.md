@@ -82,20 +82,28 @@ a pattern says exactly what needs rewriting and there is nothing to judge.
 `ratchet.py selftest` runs them too.
 
 Reactions teach the reply system (`ratchet/reaction.py`, word lists in
-`reaction.json`). `hook.py prompt` reads each message I type for a sign the last
-reply missed - a cue (misread, unasked, left out, again, wrong, frustration),
-the same question asked again, or the last turn held twice or more - keeps it in
-`state/ratchet/misses.jsonl` with the reply it answered, and puts the miss and
-the same open misses from the last 14 days in front of the turn. The turn
-answers me, finds what in the reply system caused it, and asks with
-AskUserQuestion under the header "Adapt" when a change would help. A misread,
-unasked, left-out, re-asked or held miss that already has an open one of its
-kind makes the question required: `adapt_hold` holds the reply until an Adapt
-question is answered or the turn has edited the reply system (`ratchet/`,
-`standards/`, `CLAUDE.md`, `settings.json`), and then every open miss of that
-kind is marked adapted, so the count starts again. `REACTION_OFF=1` stands it
-down for one run; `reaction.py selftest` runs its cases, as does `ratchet.py
-selftest`.
+`reaction.json`, the other places in `ratchet/elsewhere.py`). `hook.py prompt`
+reads each message I type for a sign the last reply missed two ways. A cue
+(misread, unasked, left out, again, wrong, frustration), the same question asked
+again, or the last turn held twice or more is caught at once, and the miss goes
+in front of the turn. Anything else is read in context by a model alongside the
+turn - the reply, my earlier messages and the new one, however it is worded -
+and a miss found that way holds the reply once with the miss and what I wanted
+in front of it; one read after the reply was already on screen goes in front of
+the next turn. Every miss is kept in `notes/misses/<machine>.jsonl`, one file
+per machine, which config-sync carries everywhere, so the history a turn sees is
+every machine's. At most hourly the prompt hook also starts a sweep of my
+claude.ai chats (the desktop app's cache) and Sunday's spoken conversation on
+the host, judged the same two ways into the same ledger. The turn answers me,
+finds what in the reply system caused the miss, and asks with AskUserQuestion
+under the header "Adapt" when a change would help. A misread, unasked,
+left-out, re-asked or held miss that already has an open one of its kind,
+anywhere, makes the question required: `adapt_hold` holds the reply until an
+Adapt question is answered or the turn has edited the reply system
+(`ratchet/`, `standards/`, `CLAUDE.md`, `settings.json`), and then a settlement
+written beside the misses closes every open miss of that kind, so the count
+starts again. `REACTION_OFF=1` stands it down for one run; `reaction.py
+selftest` runs its cases, as does `ratchet.py selftest`.
 
 The form follows the scenario, never the size. The shape is for reporting work
 done. A turn that called no tool is conversation: answered in normal paragraphs
