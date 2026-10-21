@@ -10,7 +10,9 @@ This reads the record `tools/proof.py` keeps, not the reply. A finished verdict
 stands only when that record holds, from this turn, one check that failed while
 the problem was there and passed after the change, run where the problem was
 seen, and the reply's Proof line carries the evidence line the tool printed,
-word for word. "Not fixed." and "Not verified." always pass. A Yes in a turn
+word for word. A check that passed in an earlier turn of the session counts the
+same when no file has been edited since it passed, so finished work is not sent
+back to "Not verified." because the user wrote again before the reply. "Not fixed." and "Not verified." always pass. A Yes in a turn
 that edited files is a finished claim too, since "is it done? Yes." is the same
 report.
 
@@ -45,7 +47,7 @@ WITHDRAWN = "**Not verified.** No recorded check proved this claim."
 
 HOLD = """Proof: that reply says "%s" with no recorded check behind it, so it was kept off the screen and the user has not seen it.
 
-A reply may say Fixed, Done, Shipped, Built or any other finished verdict only when ~/.claude/tools/proof.py recorded, this turn, a check that failed while the problem was there and passed after the change, run where the problem was seen. A test of your own code is not that check.
+A reply may say Fixed, Done, Shipped, Built or any other finished verdict only when ~/.claude/tools/proof.py recorded a check that failed while the problem was there and passed after the change, run where the problem was seen - this turn, or earlier in the session with no file edited since it passed. A test of your own code is not that check.
 
 Prove it: proof.py before --where <site|app|voice|chat|file|command> --says "<what the check shows while the problem is there>" --problem "<the user's own words>" -- '<check>' - recorded before the change, while the problem is there, so it fails - then make the change, run proof.py after <id>, and put the evidence line it prints into Proof word for word. Where only the user can see it, --ask, then a question card with the options Gone and Still there, then proof.py after <id> --asked.
 
@@ -118,14 +120,31 @@ def records(session):
     return out
 
 
-def passing(session, turn):
-    """The evidence line of every check that failed and then passed, the pass this turn."""
+def stamp(text):
+    """A record's local time, or None."""
+    from datetime import datetime
+    try:
+        return datetime.fromisoformat(str(text))
+    except (TypeError, ValueError):
+        return None
+
+
+def passing(session, turn, since=False):
+    """The evidence line of every check that failed and then passed, the pass this
+    turn. With `since`, passes from earlier turns too, when the pass came after
+    `since` - the last file edit, local time - or `since` is None, nothing edited."""
     found = records(session)
     befores = {r.get("id"): r for r in found if r.get("phase") == "before"}
     out = []
     for r in found:
-        if r.get("phase") != "after" or r.get("turn") != turn or int(r.get("exit") or 0) != 0:
+        if r.get("phase") != "after" or int(r.get("exit") or 0) != 0:
             continue
+        if r.get("turn") != turn:
+            if since is False:
+                continue
+            at = stamp(r.get("time"))
+            if since is not None and (at is None or at < since):
+                continue
         before = befores.get(r.get("id"))
         if not before or (not before.get("ask") and int(before.get("exit") or 0) == 0):
             continue
@@ -138,14 +157,19 @@ def squash(text):
     return " ".join(text.split()).lower()
 
 
-def problem(text, session, turn, changed):
+def problem(text, session, turn, changed, last_edit=False):
     """None when the reply may stand, else (kind, detail): "none" for a finished
-    claim with no fail-then-pass check this turn, "evidence" for one whose Proof
-    line does not carry the check's own evidence."""
+    claim with no fail-then-pass check behind it, "evidence" for one whose Proof
+    line does not carry the check's own evidence. A turn that edited nothing may
+    stand on a check from an earlier turn that passed after `last_edit`, the
+    session's last file edit in local time (None when it edited nothing; False
+    when unknown, which keeps the check to this turn)."""
     word = verdict(text)
     if not finished(word, changed):
         return None
     evidence = passing(session, turn)
+    if not evidence and not changed and last_edit is not False:
+        evidence = passing(session, turn, since=last_edit)
     if not evidence:
         return "none", word
     line = PROOF_LINE.search(text or "")
@@ -218,10 +242,15 @@ def selftest():
             ("question", "**Kokoro af_heart.** That voice is the one in use.", "x", "t1", False, None),
             ("talk opening Agreed", "Agreed. The realistic version is a one-click button.", "x", "t1", False, None),
             ("talk opening Noted", "Noted. I will keep it short.", "x", "t1", False, None),
+            ("earlier pass, nothing edited", reply % line, "s", "t9", False, None, None),
+            ("earlier pass, edited before it", reply % line, "s", "t9", False, None, stamp("2026-10-15T14:05:00")),
+            ("earlier pass, edited after it", reply % line, "s", "t9", False, "none", stamp("2026-10-15T14:30:00")),
+            ("earlier pass, this turn edited", reply % line, "s", "t9", True, "none", None),
+            ("earlier pass, no evidence", reply % "selftests 0 wrong", "s", "t9", False, "evidence", None),
         ]
-        for name, text, session, turn, changed, want in table:
+        for name, text, session, turn, changed, want, *since in table:
             cases += 1
-            got = problem(text, session, turn, changed)
+            got = problem(text, session, turn, changed, *since)
             got = got[0] if got else None
             if got != want:
                 wrong += 1

@@ -457,6 +457,25 @@ def changed_this_turn(transcript, turn):
     return False
 
 
+def last_edit(transcript):
+    """When the session last edited a file, in local time, or None when it never
+    did. A check that passed after this still stands for a later reply."""
+    import ratchet
+    from datetime import datetime
+    latest = None
+    for row in ratchet.rows(transcript):
+        if row.get("type") != "assistant" or row.get("isSidechain"):
+            continue
+        if not any(part.get("name") in EDIT_TOOLS for part in ratchet.parts(row, "tool_use")):
+            continue
+        try:
+            at = datetime.fromisoformat(str(row.get("timestamp")).replace("Z", "+00:00")).astimezone().replace(tzinfo=None)
+        except ValueError:
+            continue
+        latest = at if latest is None or at > latest else latest
+    return latest
+
+
 def talked(transcript, turn):
     """Whether this turn called no tool at all: conversation, not work. A verdict
     report has nothing to report on it."""
@@ -692,11 +711,11 @@ And when nothing was wrong, Why is left out:
 
 Rules:
 - The bold verdict is the past tense of what was asked - **Shipped.** **Fixed.** **Cleaned.** **Built.** **Done.** - or **Yes.** **No.**, the answer itself like **Kokoro af_heart.**, or **Started.** for work handed to a background agent. Never a clause: the "but", "with" or "except" goes in the plain sentence after it.
-- A finished verdict - Fixed, Done, Shipped, Built - needs proof from ~/.claude/tools/proof.py. Before changing anything, record a check where the problem was seen that fails now (proof.py before), rerun it after the change (proof.py after <id>), and copy the evidence line it prints into Proof word for word. A test of your own code is not proof.
+- A finished verdict - Fixed, Done, Shipped, Built - needs proof from ~/.claude/tools/proof.py. Before changing anything, record a check where the problem was seen that fails now (proof.py before), rerun it after the change (proof.py after <id>), and copy the evidence line it prints into Proof word for word. A check that passed earlier in this session still counts when no file has been edited since it passed. A test of your own code is not proof.
 - When it cannot be proven or finished, the verdict is **Not verified.** or **Not fixed.**, with what was done. That is an allowed answer; a Fixed no check backs never is. No "partly", "mostly" or "likely".
 - A turn never ends waiting on the user. When the work needs their approval, a decision, a credential or their own hands, ask with the AskUserQuestion tool inside the turn, get the answer, and finish - the reply reports what was done, never what they should approve or do.
 - After the verdict, one plain sentence under %(sentence)d words that answers what was asked.
-- Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. No other label exists.
+- Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. Running comes last, only when work was handed to a background agent this turn, and names what that agent is doing. No other label exists.
 - Why only when something was wrong, or the answer turns on a reason. What is what was done, or what the answer rests on. Touched names every file, branch, URL, setting or deletion that changed, with anything that cannot be undone first, and is left out when nothing changed. Proof is required on every finished verdict, and is what you ran, measured or saw - not what should be true.
 - Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer. The one exception is "**Should I ask how to improve my reply?**", drawn by `offer: yes` in the respond block on a turn whose message said the last reply missed.
 - Leave out nothing the user asked for. A bare "Yes." or "No." is a whole reply.

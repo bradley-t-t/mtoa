@@ -111,6 +111,7 @@ read, the one thing I see is the finished reply:
 - **What:** <what was done, or what the answer rests on>
 - **Touched:** <every file, branch, URL, setting or deletion that changed>
 - **Proof:** <what was run, measured or seen that proves it>
+- **Running:** <what a background agent was handed this turn - only then>
 ```
 
 The verdict is the past tense of what I asked for in bold - **Shipped.**,
@@ -119,14 +120,17 @@ or **Started.** for work handed to a background agent. The plain sentence after
 it is the answer; a "but" or "except" goes in that sentence, never in the bold.
 A finished verdict stands only on proof from `tools/proof.py`: a check run where
 I saw the problem, recorded failing before the change and passing after it, and
-its evidence line in Proof word for word. A test of your own code is not that
-check. When the work cannot be finished or proven, the verdict is **Not
+its evidence line in Proof word for word. A check that passed earlier in the
+session still counts when no file has been edited since it passed. A test of
+your own code is not that check. When the work cannot be finished or proven, the verdict is **Not
 verified.** or **Not fixed.** with what was done - an allowed answer, where a
 Fixed no check backs never is - and no "partly", "mostly" or "likely". A
 turn never ends waiting on me: what needs my approval, a decision, a credential
 or my hands is asked with AskUserQuestion inside the turn, and the reply reports
 what was done. The labelled lines run in that order, one line of at most two
-sentences each, and only those four. Why appears only when something was wrong
+sentences each, and only those five. Running comes last and only when work was
+handed to a background agent that turn: it names what the agent is doing, while
+the verdict reports the work that is finished. Why appears only when something was wrong
 or the answer turns on a reason. Touched names everything that changed, anything
 that cannot be undone first, and is left out when nothing did. Proof is required
 on every finished verdict. Nothing goes before the verdict or after the last

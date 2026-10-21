@@ -130,7 +130,10 @@ any past tense that reports a change, and a Yes in a turn that edited files -
 stands only when one check, run where the problem was seen (the live site, the
 app's screen, Sunday on the host, the chat, a file, a named command), failed
 before the change and passed after it in this turn, and the Proof line carries
-the evidence line the tool printed, word for word. A check that already passes
+the evidence line the tool printed, word for word. A check that passed in an
+earlier turn of the same session counts too, when no file has been edited since
+it passed: a reply that reports finished work after the user's next message is
+not sent back to "Not verified." for work nobody has touched. A check that already passes
 before the change never saw the problem and is refused; where only my eyes can
 tell, my report is the before and my answer to a Gone / Still there card the
 after. "Not fixed." and "Not verified." are allowed verdicts and are never sent
@@ -185,7 +188,10 @@ The labels are Why, What, Touched and Proof, because they answer what a reader
 asks of any reply rather than the steps of a repair: a release or a question has
 no cause, and Cause / Change / Check made a /ship reply invent one. Proof is
 required under every finished verdict (`proof_verdicts` - any past tense, Done,
-Built, Live), and Started, Yes and No are exempt.
+Built, Live), and Started, Yes and No are exempt. Running is a fifth, optional
+label that comes last: when a turn hands work to a background agent, the verdict
+reports what is finished and Running names what the agent is doing, so the
+handoff is said rather than squeezed into the verdict sentence.
 
 A turn never ends waiting on the user. A verdict like Waiting, Blocked or Your
 call, or a sentence that hands the user an approval, a decision or a step

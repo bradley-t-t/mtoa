@@ -16,7 +16,7 @@ These rules cover how to reply to a request without drifting away from it.
 
 ## 3. The reply shape, nothing more
 
-- The form follows the scenario, never the size. A report of work done is a bold verdict line and at most four labelled lines - Why, What, Touched, Proof - one line each, in that order, with Proof on every finished verdict. The shape is in `CLAUDE.md`, and ratchet refuses a report that leaves it.
+- The form follows the scenario, never the size. A report of work done is a bold verdict line and at most five labelled lines - Why, What, Touched, Proof, Running - one line each, in that order, with Proof on every finished verdict and Running only when work was handed to a background agent. The shape is in `CLAUDE.md`, and ratchet refuses a report that leaves it.
 - A conversation - a question, a remark, an idea, a turn that did no work - is answered in normal paragraphs, the way a person would, with no verdict and no labels.
 - A document the user asks for - a summary, a plan, a proposal, a table, a list, an explanation - is written whole in a Markdown file sent beside the reply, and the reply points to it. A request that sets its own length is answered in chat.
 - No headings, other labels or sign-offs around a report.

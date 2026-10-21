@@ -1373,7 +1373,8 @@ def proof_problem(payload, transcript, text, turn):
     if shape.skipped(transcript, shape.rules()):
         return None
     session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
-    return gate.problem(proof_view(text), session, turn, shape.changed_this_turn(transcript, turn))
+    return gate.problem(proof_view(text), session, turn, shape.changed_this_turn(transcript, turn),
+                        shape.last_edit(transcript))
 
 
 def proof_hold(cfg, payload, transcript, text, turn):
