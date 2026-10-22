@@ -387,6 +387,20 @@ elsewhere.py claude.ai | voice
 
 <br />
 
+## Work in flight
+
+A message that arrives mid-work is answered and the work carries on.
+`interrupted_work` finds the turn before the message ending on a tool call with
+no closing reply after it, and not stopped by the user (`[Request interrupted
+by user]`), not left on a question card or a plan, and not answered by a
+message that says stop (`inflight_stop` in `config.json`) or that the reactions
+read as unasked or misread. The prompt hook puts that work's last step in front
+of the turn; `inflight_hold` runs before the shown-reply release in the stop
+hook, so the answer stays on screen while a reply with no labelled lines is
+sent back to finish the work, at most twice per message.
+
+<br />
+
 ## Cards
 
 Nothing waits on the user's click. `hook.py card` (PreToolUse on

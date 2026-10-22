@@ -111,6 +111,16 @@ beside the misses that closes every open miss of that kind, so the count
 starts again. `REACTION_OFF=1` stands it down for one run; `reaction.py
 selftest` runs its cases, as does `ratchet.py selftest`.
 
+Work interrupted by a message carries on. When a typed message arrives while
+the turn before it ended on a tool call with no closing reply - it was still
+working - `hook.py prompt` puts that work's last step in front of the turn, and
+`inflight_hold` runs ahead of the shown-reply release in the stop hook: once
+the answer is on screen, a reply with no labelled lines is sent back to finish
+the work, at most twice per message. A message matching `inflight_stop` in
+`ratchet/config.json` (stop, wait, cancel, never mind), one the reactions read
+as unasked or misread, a turn left on AskUserQuestion or ExitPlanMode, and one
+the user interrupted are left alone.
+
 Cards are refused. `hook.py card` runs on PreToolUse for
 `mcp__ccd_session__start_session` and denies a session proposed
 (`own_initiative`) or offered (`offer`) as a card for me to click: work I asked

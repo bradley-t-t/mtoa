@@ -1,10 +1,11 @@
 {
-  "_": "Every key is overridable per-run: RATCHET_MODEL, RATCHET_HOLDS, RATCHET_JUDGE, RATCHET_TIMEOUT, RATCHET_JUDGE_REQUIRED, RATCHET_SUBAGENTS. RATCHET_OFF=1 stands the whole thing down. notices: \"failures\" shows an on-screen notice only when a check fails; \"all\" shows every hold and release.",
+  "_": "Every key is overridable per-run: RATCHET_MODEL, RATCHET_HOLDS, RATCHET_JUDGE, RATCHET_TIMEOUT, RATCHET_JUDGE_REQUIRED, RATCHET_SUBAGENTS. RATCHET_OFF=1 stands the whole thing down. notices: \"failures\" shows an on-screen notice only when a check fails; \"all\" shows every hold and release. inflight_stop is what, in a message that arrives mid-work, means stop rather than answer and carry on.",
   "model": "claude-haiku-4-5-20251001",
   "holds_per_turn": 3,
   "judge": true,
   "judge_timeout_seconds": 45,
   "judge_required": false,
   "subagents": true,
-  "notices": "failures"
+  "notices": "failures",
+  "inflight_stop": "^\\W*(?:stop|halt|pause|wait|hold on|hold off|cancel|never ?mind|forget it|leave it|drop it)\\b|\\b(?:stop (?:what you're doing|what you are doing|working|that|everything)|don'?t (?:continue|keep going|carry on|finish))\\b"
 }

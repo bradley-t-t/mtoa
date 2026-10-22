@@ -231,6 +231,12 @@ real finding behind the acknowledgement passes.
   and a separate session runs only when I asked for one in words, started at
   once. `hook.py card` refuses a session proposed or offered as a card, and a
   session with a card still open is held until it has dismissed it.
+- **A question mid-work does not stop the work.** A message that arrives while
+  a turn is still working - a quick question, a remark - gets its answer on
+  screen, and the work it interrupted carries on in the same turn to its
+  report. Only a message that says stop, or says the work was never asked for,
+  ends it. `hook.py prompt` puts the unfinished work in front of the turn, and
+  the stop hook sends a turn that answered and stopped back to it.
 - **Every SVG is transparent behind its drawing.** The ground belongs to whatever
   renders it. `~/.claude/tools/svg-guard.py scan | fix | check` is the sweep.
 - **UI labels are Title Case.** Menu items, buttons, tabs, column headings. Short

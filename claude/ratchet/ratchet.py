@@ -986,6 +986,11 @@ def checks(verb, payload=None, reply=None):
         # saved chat by code, never let through as written.
         return 0
 
+    if not sidechain and not DRY and inflight_hold(cfg, payload, transcript, text, turn):
+        # A question that arrived mid-work was answered and the answer is on
+        # screen; the turn goes back to the work instead of ending on it.
+        return 0
+
     if not sidechain and not DRY and was_shown(session, turn, text):
         # The display hook already drew this reply. Holding it now would leave it
         # on the screen and draw the rewrite under it - the double render that has
@@ -1238,6 +1243,108 @@ def doc_hold(cfg, payload, transcript, text, turn):
         return False
     emit(decision="block", reason=DOCUMENT % asked,
          systemMessage="shape: held a document request answered without the document")
+    return True
+
+
+# A message that arrives while the turn before it is still working - a quick
+# question, a remark - is answered, and the work it interrupted carries on. A
+# turn that answers and stops leaves that work sitting until the user says to go
+# on, which is a session stuck at the end of a reply.
+INFLIGHT = """Carry on: when this message arrived you were still in the middle of earlier work - the last step was "%s" - and that work never got its closing report. Your answer is already on screen; do not repeat it. Go back to that work now, in this turn, and finish it. The reply that ends this turn reports that work."""
+
+INFLIGHT_NOTE = """When this message arrived you were still in the middle of earlier work - the last step was "%s" - and that work never got its closing report. Answer this message, then carry on with that work in this same turn and finish it; a turn that answers and stops is sent back to the work."""
+
+STOPPED = re.compile(r"\[Request interrupted by user")
+WAITING = ("AskUserQuestion", "ExitPlanMode")
+INJECTED = re.compile(r"^\s*(?:<task-notification>|<local-command|<command-name>|Stop hook feedback|\[Request interrupted)")
+LABELLED = re.compile(r"(?m)^\s*-\s+\*\*(?:Why|What|Touched|Proof|Running):\*\*")
+
+
+def typed(row):
+    """A message the user typed (or the continuation of one after compaction),
+    not a notification, a hold's feedback or an interruption marker."""
+    return real_user_turn(row) and not INJECTED.match("\n".join(parts(row, "text")))
+
+
+def interrupted_work(transcript, turn=None, prompt=None):
+    """The last step of work the turn before this message was still doing when
+    the message arrived, or None: that turn ended on a tool call or a tool result
+    with no closing reply after it, and the user did not stop it.
+
+    The message is `turn` (the stop hook) or `prompt` (the prompt hook, where it
+    may not be written yet)."""
+    seen, current, message = [], None, None
+    for row in rows(transcript):
+        if row.get("isSidechain"):
+            continue
+        if typed(row):
+            text = "\n".join(parts(row, "text"))
+            if turn is not None and row.get("uuid") == turn:
+                message = (text, current)
+                break
+            seen.append((text, current))
+            current = {"step": None, "closed": True, "stopped": False}
+            continue
+        if current is None:
+            continue
+        if row.get("type") == "user" and STOPPED.search("\n".join(parts(row, "text"))):
+            current["stopped"] = True
+        if row.get("type") == "assistant":
+            tools = parts(row, "tool_use")
+            if tools:
+                given = tools[-1].get("input") or {}
+                current["step"] = str(given.get("description") or given.get("title") or tools[-1].get("name") or "")
+                # A turn left on a question card or a plan was waiting on the
+                # user, not working; the message is their answer.
+                current["closed"] = tools[-1].get("name") in WAITING
+            elif any(t.replace("\u200b", "").strip() for t in parts(row, "text")):
+                current["closed"] = True
+    if message is None and prompt is not None:
+        squash = lambda t: " ".join(str(t or "").split())
+        if seen and squash(seen[-1][0]) == squash(prompt):
+            message = seen[-1]
+        else:
+            message = (prompt, current)
+    if message is None:
+        return None
+    text, before = message
+    if before is None or before["closed"] or before["stopped"]:
+        return None
+    if re.search(config().get("inflight_stop") or r"$^", text or "", re.I):
+        return None
+    try:
+        # A message saying the work was never asked for, or was misread, is a
+        # correction, not a question on the side: the work does not carry on.
+        import reaction
+        kinds = set(reaction.signals(text or "", [], 0))
+        session = Path(transcript).stem
+        job = reaction.read_job(session, reaction.fingerprint(text or ""))
+        if job and job.get("missed"):
+            kinds |= set(job.get("kinds") or [])
+        if kinds & {"unasked", "misread"}:
+            return None
+    except Exception:
+        pass
+    return before["step"] or "the last tool call"
+
+
+def inflight_hold(cfg, payload, transcript, text, turn):
+    """Send a turn that answered a mid-work message and stopped back to the work.
+    Runs only once the answer is on screen, so the answer stays where it is."""
+    try:
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if not was_shown(session, turn, text) or LABELLED.search(text or ""):
+            return False
+        step = interrupted_work(transcript, turn)
+        if not step:
+            return False
+        if scenario_count(session, turn, "inflight") >= 2:
+            return False
+        scenario_count(session, turn, "inflight", add=True)
+    except Exception as problem:
+        NOTES.append(("inflight: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
+        return False
+    emit(decision="block", reason=INFLIGHT % step[:120], systemMessage="inflight: answered mid-work and stopped")
     return True
 
 
@@ -1731,6 +1838,14 @@ def prompt_context():
         if shape.skipped(payload.get("transcript_path") or "", body):
             return 0
         parts = [DECIDE]
+        try:
+            transcript = payload.get("transcript_path") or ""
+            step = interrupted_work(transcript, prompt=payload.get("prompt") or "") \
+                if transcript and Path(transcript).is_file() else None
+            if step:
+                parts.insert(0, INFLIGHT_NOTE % step[:120])
+        except Exception:
+            pass
         try:
             import reaction
             session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
