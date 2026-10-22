@@ -72,6 +72,15 @@
         ]
       },
       {
+        "matcher": "mcp__ccd_session__start_session",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$HOME/.claude/ratchet/hook.py\" ] || exit 0; exec \"$HOME/.claude/ratchet/hook.py\" card"
+          }
+        ]
+      },
+      {
         "matcher": "Bash|Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Glob|Task|Skill|WebFetch|WebSearch|mcp__ccd_session_mgmt__search_session_transcripts|mcp__ccd_session_mgmt__export_transcript",
         "hooks": [
           {

@@ -10,6 +10,7 @@ an error, so anything unexpected lets the stop through.
   hook.py subagent    SubagentStop
   hook.py say         PreToolUse on Bash (a Sunday announcement)
   hook.py ask         PreToolUse on AskUserQuestion (a yes asked for again)
+  hook.py card        PreToolUse on start_session (a session proposed as a card)
   hook.py guard       PreToolUse on the work tools (prose before the work is done)
   hook.py prompt      UserPromptSubmit (the reply shape, before the turn writes)
   hook.py display     MessageDisplay (text out of shape is kept off the screen)
@@ -31,6 +32,8 @@ if __name__ == "__main__":
             sys.exit(ratchet.pre_say() or 0)
         if verb == "ask":
             sys.exit(ratchet.pre_ask() or 0)
+        if verb == "card":
+            sys.exit(ratchet.pre_card() or 0)
         if verb == "guard":
             sys.exit(ratchet.pre_guard() or 0)
         if verb == "prompt":

@@ -1012,6 +1012,9 @@ def checks(verb, payload=None, reply=None):
             offered = False
         OFFERED[:] = [offered]
 
+    if not sidechain and card_hold(cfg, payload, transcript, text, turn):
+        return 0
+
     if not sidechain and shape_hold(cfg, payload, transcript, text, turn, blocked):
         return 0
 
@@ -1236,6 +1239,90 @@ def doc_hold(cfg, payload, transcript, text, turn):
     emit(decision="block", reason=DOCUMENT % asked,
          systemMessage="shape: held a document request answered without the document")
     return True
+
+
+# The user does not click. A session proposed as a card (own_initiative) waits
+# for a click to start, and an offered one (offer) waits for a click to choose
+# where it runs; either way the work the user asked for sits behind a button.
+CARD_DENY = """The user does not click cards, so a session is never proposed or offered for them to start. Work the user asked for in this conversation is done here, now - or, when they asked in words for it to run separately, started with initiation "user_asked", which runs at once. Work they did not ask for is left out entirely."""
+
+CARD_HOLD = """Cards: this session proposed %s as a card the user has to click to start, and the user does not click cards, so this reply was kept off the screen and the user has not seen it.
+
+Dismiss each with mcp__ccd_session__dismiss_task now. Then do the work the user asked for in this conversation here, in this turn; work they did not ask for is left out entirely."""
+
+PROPOSED = re.compile(r'Proposed "(?P<title>[^"]*)" \(task_id: (?P<task>task_[A-Za-z0-9]+)\)')
+
+
+def open_cards(transcript):
+    """[(task id, title)] for the cards this session proposed that are still open:
+    proposed within the week a card lives, and never dismissed or started since."""
+    calls, cards, done = {}, {}, set()
+    cutoff = time.time() - 7 * 86400
+    for row in rows(transcript):
+        if row.get("isSidechain"):
+            continue
+        for part in parts(row, "tool_use"):
+            name = part.get("name") or ""
+            given = part.get("input") or {}
+            if name.endswith("ccd_session__start_session"):
+                if given.get("proposal_id"):
+                    done.add(str(given["proposal_id"]))
+                else:
+                    calls[part.get("id")] = True
+            elif name.endswith("ccd_session__dismiss_task") and given.get("task_id"):
+                done.add(str(given["task_id"]))
+        for part in parts(row, "tool_result"):
+            if part.get("tool_use_id") not in calls:
+                continue
+            content = part.get("content")
+            found = PROPOSED.search(content if isinstance(content, str) else json.dumps(content, ensure_ascii=False))
+            if not found:
+                continue
+            try:
+                import calendar
+                at = calendar.timegm(time.strptime(str(row.get("timestamp"))[:19], "%Y-%m-%dT%H:%M:%S"))
+            except (ValueError, OverflowError):
+                at = time.time()
+            if at >= cutoff:
+                cards[found.group("task")] = found.group("title")
+    return [(task, title) for task, title in cards.items() if task not in done]
+
+
+def card_hold(cfg, payload, transcript, text, turn):
+    """Hold a reply while this session has a card open that waits on a click."""
+    try:
+        cards = open_cards(transcript)
+        if not cards:
+            return False
+        session = payload.get("session_id") or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+        if scenario_count(session, turn, "card") >= int(cfg["holds_per_turn"]):
+            return False
+        scenario_count(session, turn, "card", add=True)
+    except Exception as problem:
+        NOTES.append(("cards: the check failed (%s) - let through unchecked" % type(problem).__name__, True))
+        return False
+    named = ", ".join('"%s" (%s)' % (title, task) for task, title in cards)
+    emit(decision="block", reason=CARD_HOLD % named, systemMessage="cards: a session card waits on a click")
+    return True
+
+
+def pre_card():
+    """PreToolUse on start_session: refuse a session proposed or offered as a card."""
+    if BOOL_ENV.get((os.environ.get("RATCHET_OFF") or "0").strip().lower(), False):
+        return 0
+    try:
+        payload = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace") or "{}")
+    except ValueError:
+        return 0
+    given = payload.get("tool_input") or {}
+    if not str(payload.get("tool_name") or "").endswith("ccd_session__start_session"):
+        return 0
+    if given.get("proposal_id") or given.get("initiation") not in ("offer", "own_initiative"):
+        return 0
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                                             "permissionDecision": "deny",
+                                             "permissionDecisionReason": CARD_DENY}}))
+    return 0
 
 
 OFFERED = []
