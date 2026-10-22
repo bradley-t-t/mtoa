@@ -106,6 +106,10 @@ class Vault:
             if block.get("type") != "text":
                 continue
             text = block.get("text", "")
+            # The server answers a name it does not hold with this text rather
+            # than an error, and passed on it would stand in for the secret.
+            if text.startswith("not found:"):
+                raise RuntimeError("the vault holds no %s" % name)
             try:
                 payload = json.loads(text)
             except ValueError:

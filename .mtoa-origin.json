@@ -2227,6 +2227,10 @@
   "intelligence",
   "tools/usage.py"
  ],
+ "claude/tools/vault-put.py": [
+  "intelligence",
+  "tools/vault-put.py"
+ ],
  "claude/tools/version-badge.py": [
   "intelligence",
   "tools/version-badge.py"
