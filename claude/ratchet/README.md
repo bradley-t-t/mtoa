@@ -387,6 +387,19 @@ elsewhere.py claude.ai | voice
 
 <br />
 
+## Cards
+
+Nothing waits on the user's click. `hook.py card` (PreToolUse on
+`mcp__ccd_session__start_session`) denies a session proposed or offered as a
+card - `initiation` of `own_initiative` or `offer` - and lets through one the
+user asked for in words (`user_asked`) or a proposal started by `proposal_id`.
+`card_hold` runs first in the stop pipeline: `open_cards` reads the session's
+own proposals from the last seven days, and a reply is held, naming each task
+id, until every one has been dismissed with `mcp__ccd_session__dismiss_task` or
+started.
+
+<br />
+
 ## The form follows the scenario
 
 The shape is for reporting work done. `talk_hold` holds a verdict report on a

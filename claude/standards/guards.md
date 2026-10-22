@@ -111,6 +111,15 @@ beside the misses that closes every open miss of that kind, so the count
 starts again. `REACTION_OFF=1` stands it down for one run; `reaction.py
 selftest` runs its cases, as does `ratchet.py selftest`.
 
+Cards are refused. `hook.py card` runs on PreToolUse for
+`mcp__ccd_session__start_session` and denies a session proposed
+(`own_initiative`) or offered (`offer`) as a card for me to click: work I asked
+for is done in the session, and a separate one starts only as `user_asked`, or
+from a proposal by its `proposal_id`. `card_hold` runs first in the stop
+pipeline and holds a reply while the session has a card from the last week that
+it never dismissed or started, naming each task id, until it has called
+`mcp__ccd_session__dismiss_task` on it.
+
 The form follows the scenario, never the size. The shape is for reporting work
 done. A turn that called no tool is conversation: answered in normal paragraphs
 in a respond block, and a verdict report on it is held (`talk_hold`). A message

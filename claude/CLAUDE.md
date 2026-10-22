@@ -226,6 +226,11 @@ real finding behind the acknowledgement passes.
   The one thing that is never a roadblock to route around is my own approval:
   the writes that need a yes still need it, and the yes is asked for with
   AskUserQuestion inside the turn, never by ending the turn on it.
+- **Nothing waits on my click.** A session is never proposed or offered to me
+  as a card to start. Work I asked for is done in the session I asked it in,
+  and a separate session runs only when I asked for one in words, started at
+  once. `hook.py card` refuses a session proposed or offered as a card, and a
+  session with a card still open is held until it has dismissed it.
 - **Every SVG is transparent behind its drawing.** The ground belongs to whatever
   renders it. `~/.claude/tools/svg-guard.py scan | fix | check` is the sweep.
 - **UI labels are Title Case.** Menu items, buttons, tabs, column headings. Short

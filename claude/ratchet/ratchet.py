@@ -1275,7 +1275,9 @@ def open_cards(transcript):
             if part.get("tool_use_id") not in calls:
                 continue
             content = part.get("content")
-            found = PROPOSED.search(content if isinstance(content, str) else json.dumps(content, ensure_ascii=False))
+            if isinstance(content, list):
+                content = "\n".join(str(c.get("text") or "") for c in content if isinstance(c, dict))
+            found = PROPOSED.search(str(content or ""))
             if not found:
                 continue
             try:
