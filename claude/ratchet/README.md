@@ -379,6 +379,12 @@ it ends with it or the reply system is edited. An answered Adapt question or an
 edit writes a settlement beside the misses that closes every open miss of that
 kind.
 
+A reply written in a respond block as it should look, rather than as keys, is
+read the way a reply outside a block is (`respond.parse`), with any keys after
+it beside it. `render` draws nothing for fields with no verdict, plain or form,
+so a block holding only an offer is never drawn as a lone bold full stop; the
+display hook hides it and the stop hook holds it (`EMPTY`).
+
 ```
 reaction.py selftest
 reaction.py sweep [--read-only]

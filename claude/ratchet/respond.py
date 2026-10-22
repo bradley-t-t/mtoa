@@ -38,12 +38,18 @@ def render(fields):
     if fields.get("offer"):
         rest = dict(fields)
         rest.pop("offer")
-        return render(rest) + "\n\n" + FOOTER
+        body = render(rest)
+        # The offer follows a reply; on its own it is not one.
+        return body + "\n\n" + FOOTER if body else ""
     if fields.get("form"):
         return str(fields["form"]).strip()
     if fields.get("plain"):
         return str(fields["plain"]).strip()
     verdict = str(fields.get("verdict") or "").strip().rstrip(".").strip()
+    if not verdict:
+        # No verdict is no reply. Drawing the template around nothing put a lone
+        # bold full stop on screen.
+        return ""
     answer = str(fields.get("answer") or "").strip()
     head = "**%s.** %s" % (verdict, answer) if answer else "**%s.**" % verdict
     lines = []
@@ -110,7 +116,7 @@ def block_fields(text):
         pass
     if found is None:
         return None
-    fields, key = {}, None
+    fields, key, loose = {}, None, []
     for line in found.group("body").splitlines():
         hit = None if key == "form" else KEY.match(line)
         if hit:
@@ -118,7 +124,18 @@ def block_fields(text):
             fields[key] = hit.group(2).rstrip()
         elif key:
             fields[key] += "\n" + line
+        else:
+            loose.append(line)
     fields = {k: v.strip() for k, v in fields.items() if v.strip()}
+    text = "\n".join(loose).strip()
+    if text:
+        # A reply written in the block as it should look - a verdict line and
+        # its labelled lines, or plain sentences - rather than as keys is still
+        # the reply: read it the way a reply outside a block is read, and let
+        # any keys after it (an offer) stand beside it. Dropped, it left the
+        # block rendering to nothing.
+        written = parse(text) or {"plain": text}
+        fields = dict(written, **{k: v for k, v in fields.items() if k not in written})
     return fields or None
 
 
@@ -201,6 +218,7 @@ CASES = [
     ("plain, three sentences", {"plain": "One thing is true. A second thing is also true. And a third thing."}, True),
     ("plain, a report verdict", {"plain": "**Yes.** One thing is true."}, False),
     ("plain, with the offer", {"plain": "You asked for the email itself, and my reply gave subject lines instead.", "offer": "yes"}, True),
+    ("an offer with no reply", {"offer": "yes"}, False),
     ("shape, with the offer", {"verdict": "Yes", "offer": "yes"}, True),
     ("empty", {}, False),
 ]
@@ -255,6 +273,9 @@ def selftest():
         ("form carries its own code fence", "````respond\nform: Run this:\n```bash\nls\n```\n````",
          "Run this:\n```bash\nls\n```"),
         ("the last block is the reply", "```respond\nplain: first\n```\n```respond\nplain: %s\n```" % answer, answer),
+        ("a shaped reply written in the block", "```respond\n%s\noffer: yes\n```" % hand, hand + "\n\n" + FOOTER),
+        ("plain sentences written in the block", "```respond\n%s\n```" % answer, answer),
+        ("an offer alone draws nothing", "```respond\noffer: yes\n```", ""),
     ]
     for name, text, want in blocks:
         got = block(text)

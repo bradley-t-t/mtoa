@@ -228,7 +228,11 @@ waits on it before it reads the next one (probed headless: a hook that waited
 eight seconds for the following tool call held that call back for exactly as
 long), so when a line of prose is drawn nothing anywhere says whether a tool call
 follows it, and a line of narration and a one-line answer are the same bytes.
-The block is what marks the answer. Bare prose that ends a turn is held
+The block is what marks the answer. A reply written inside a block as it should
+look - a verdict line and its labelled lines, or plain sentences - is read as
+that reply, with any keys after it (an offer) beside it; a block that holds no
+reply draws nothing and is held (`EMPTY`), and the offer is never drawn alone.
+Bare prose that ends a turn is held
 (`shape.PROSE`) and comes back as a block - different text from the hidden draft,
 and drawn with a trailing zero-width space, because the desktop app (build
 2.37337+) drops a byte-identical resend as a duplicate; that drop is why the old

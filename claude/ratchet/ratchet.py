@@ -1006,6 +1006,13 @@ def checks(verb, payload=None, reply=None):
             rendered = respond.block(text)
         except Exception:
             rendered = None
+        if rendered is not None and not rendered.strip():
+            # The block holds no reply - an offer, or keys with nothing in them.
+            # Nothing is drawn for it, so the turn writes the reply.
+            if scenario_count(session, turn, "empty") < int(cfg["holds_per_turn"]):
+                scenario_count(session, turn, "empty", add=True)
+                emit(decision="block", reason=EMPTY, systemMessage="respond: a block with no reply in it")
+                return 0
         if rendered is not None:
             text, blocked = rendered, True
         # The offer to ask how to improve the reply is drawn after its last line
@@ -1348,6 +1355,9 @@ def inflight_hold(cfg, payload, transcript, text, turn):
     return True
 
 
+EMPTY = """Respond: the respond block holds no reply - nothing in it is a verdict, plain sentences or a form - so nothing was drawn and the user has not seen it. Write the reply in the block: the shape for work done, `plain:` for conversation. An offer goes after a reply, never in place of one."""
+
+
 # The user does not click. A session proposed as a card (own_initiative) waits
 # for a click to start, and an offered one (offer) waits for a click to choose
 # where it runs; either way the work the user asked for sits behind a button.
@@ -1686,7 +1696,8 @@ def render(text):
         import respond
         drawn = respond.block(text)
         if drawn is not None:
-            return drawn + HIDDEN
+            # A block that holds no reply draws nothing rather than its raw keys.
+            return drawn + HIDDEN if drawn.strip() else HIDDEN
         canonical, _ = respond.canonical(text)
         return canonical if canonical is not None else text
     except Exception:
