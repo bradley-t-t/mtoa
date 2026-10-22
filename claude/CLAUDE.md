@@ -111,12 +111,12 @@ read, the one thing I see is the finished reply:
 - **What:** <what was done, or what the answer rests on>
 - **Touched:** <every file, branch, URL, setting or deletion that changed>
 - **Proof:** <what was run, measured or seen that proves it>
-- **Running:** <what a background agent was handed this turn - only then>
+- **Running:** <what a background agent or job was left doing this turn - only then>
 ```
 
 The verdict is the past tense of what I asked for in bold - **Shipped.**,
 **Fixed.**, **Cleaned.**, **Done.** - or **Yes.**, **No.**, the answer itself,
-or **Started.** for work handed to a background agent. The plain sentence after
+or **Started.** for work handed to a background agent or job. The plain sentence after
 it is the answer; a "but" or "except" goes in that sentence, never in the bold.
 A finished verdict stands only on proof from `tools/proof.py`: a check run where
 I saw the problem, recorded failing before the change and passing after it, and
@@ -129,8 +129,12 @@ turn never ends waiting on me: what needs my approval, a decision, a credential
 or my hands is asked with AskUserQuestion inside the turn, and the reply reports
 what was done. The labelled lines run in that order, one line of at most two
 sentences each, and only those five. Running comes last and only when work was
-handed to a background agent that turn: it names what the agent is doing, while
-the verdict reports the work that is finished. Why appears only when something was wrong
+handed to a background agent or left to a job that turn: it names what is still
+going and when it should end, while the verdict reports the work that is
+finished. A turn never waits in the foreground on a long job - a run on the
+host, CI, a deploy - because its text stays off my screen until it ends: past
+ten minutes ratchet's guard refuses a foreground wait, and the turn hands the
+wait to a background command that wakes it, and reports now. Why appears only when something was wrong
 or the answer turns on a reason. Touched names everything that changed, anything
 that cannot be undone first, and is left out when nothing did. Proof is required
 on every finished verdict. Nothing goes before the verdict or after the last

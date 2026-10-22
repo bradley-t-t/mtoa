@@ -2155,6 +2155,13 @@ def pre_guard():
         emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                  "permissionDecisionReason": gate.DENY})
         return 0
+    import wait
+    if wait.waits(tool, given):
+        refused = wait.refuse(tool, given, list(rows(transcript)), real_user_turn)
+        if refused:
+            emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                     "permissionDecisionReason": refused})
+            return 0
     prose = pending_prose(transcript)
     if len(prose.split()) < 3:
         return 0
@@ -2347,6 +2354,8 @@ def selftest():
     bad += scope.selftest()
     import gate
     bad += gate.selftest()
+    import wait
+    bad += wait.selftest()
     import reaction
     bad += reaction.selftest()
     print("selftest: %d caught, %d banned, %d standing, %d clear, 1 transcript, 1 said, 7 scenarios, %d wrong"

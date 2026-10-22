@@ -208,9 +208,19 @@ asks of any reply rather than the steps of a repair: a release or a question has
 no cause, and Cause / Change / Check made a /ship reply invent one. Proof is
 required under every finished verdict (`proof_verdicts` - any past tense, Done,
 Built, Live), and Started, Yes and No are exempt. Running is a fifth, optional
-label that comes last: when a turn hands work to a background agent, the verdict
-reports what is finished and Running names what the agent is doing, so the
-handoff is said rather than squeezed into the verdict sentence.
+label that comes last: when a turn hands work to a background agent or leaves
+it to a job, the verdict reports what is finished and Running names what is
+still going, so the handoff is said rather than squeezed into the verdict
+sentence.
+
+A turn never waits in the foreground on a long job. Its text stays off the
+screen until it ends, so a turn polling a host run, CI or a deploy in
+foreground commands shows the user nothing for as long as the job takes - three
+hours on 2026-10-22. `ratchet/wait.py`, in the guard on every work tool, denies
+a foreground wait (a loop that sleeps, a checks or run watch, a long sleep)
+once the minutes the turn has run plus the most the wait can take pass ten. The
+denial tells the turn to start the wait as a background command, whose finish
+wakes the session, and to end now with what is finished and a Running line.
 
 A turn never ends waiting on the user. A verdict like Waiting, Blocked or Your
 call, or a sentence that hands the user an approval, a decision or a step

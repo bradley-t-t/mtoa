@@ -89,7 +89,16 @@ def user_said(transcript, quote):
         return False
     engine = ratchet()
     for row in engine.rows(transcript):
-        if row.get("isSidechain") or not engine.real_user_turn(row):
+        if row.get("isSidechain"):
+            continue
+        # A message sent while the turn was working arrives as a queued command
+        # rather than a user row, and it is the user's words all the same.
+        queued = row.get("attachment") if row.get("type") == "attachment" else None
+        if isinstance(queued, dict) and queued.get("type") == "queued_command":
+            if want in squash(str(queued.get("prompt") or "")):
+                return True
+            continue
+        if not engine.real_user_turn(row):
             continue
         if want in squash("\n".join(engine.parts(row, "text"))):
             return True

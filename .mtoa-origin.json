@@ -1879,6 +1879,10 @@
   "intelligence",
   "ratchet/unchecked.py"
  ],
+ "claude/ratchet/wait.py": [
+  "intelligence",
+  "ratchet/wait.py"
+ ],
  "claude/settings.json": [
   "intelligence",
   "settings.json"
