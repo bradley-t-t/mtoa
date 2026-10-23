@@ -14,6 +14,7 @@
 # marker in the prompt. A timer that starts a turn without it runs outside the
 # rule while looking identical to a run inside it, so the marker is stamped here
 # rather than written into a prompt file a future runner could copy without.
+# The output contract below is stamped in for the same reason.
 set -uo pipefail
 
 ID=error-monitor
@@ -53,9 +54,39 @@ if ! python3 "$HOME/.claude/tools/mtoa_config.py" render "$PROMPT" "$ID" > "$LOG
   exit 1
 fi
 
+# What the turn prints is a log, and the owner's reply system is not addressed
+# to it.
+#
+# ~/.claude/CLAUDE.md is loaded into every turn on this machine, a scheduled one
+# included, and the reply shape in it is written as the only thing that reaches
+# a screen: a bold verdict, the labelled lines, and nothing before the first or
+# after the last. A turn that reports in that shape has no line left to put
+# ROUTINE-STATUS on, and the run then reads exactly like a turn that died before
+# its last line. 2026-10-23T03:30Z ended that way - #922 diagnosed, three pull
+# requests merged, the fix verified live, the ticket closed, and a log holding
+# one verdict in a respond block and no status line.
+#
+# So the contract is stamped in front of the prompt rather than left to whichever
+# instruction the turn weighs heavier.
+OUTPUT_IS_A_LOG=$(cat <<'TXT'
+[WHAT YOU PRINT IS A LOG, NOT A REPLY TO A PERSON. Nobody is watching a screen
+at the other end of this turn. Your output goes to a log file, and a script
+reads its last line and nothing else. The reply shape in ~/.claude/CLAUDE.md -
+the bold verdict, the Why/What/Touched/Proof lines, the respond block, the rule
+that nothing follows the last line - is for a session a person is sitting in
+front of, and it does not govern this turn. Write plain prose, as much of it as
+the run is worth, and finish with the ROUTINE-STATUS line this prompt asks for
+as the very last thing you print. A report written in that shape ends the run
+with no status line, and a run with no status line is read here as a turn that
+died: on 2026-10-23T03:30Z this routine found a real defect, merged three pull
+requests, verified the fix live and closed its ticket, and reported none of it.]
+TXT
+)
+
 {
   printf '[SCHEDULED TASK %s] [THIS TURN IS KILLED AT %s. EVERY WORKER RETURNS BY %s.]\n\n' \
     "$ID" "$DEADLINE" "$RETURN_BY"
+  printf '%s\n\n' "$OUTPUT_IS_A_LOG"
   cat "$LOGS/$ID.prompt.body"
 } > "$LOGS/$ID.prompt"
 
@@ -85,6 +116,16 @@ MODEL=${ROUTINE_MODEL:-claude-opus-5}
 # taken for loud and is not. See the salvage below: print mode writes its log
 # when the turn ends, so a turn killed at the cap writes nothing at all.
 export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
+
+# The reply system stands down for this turn, because it is already half out of
+# it: shape.json skips the `sdk-` entrypoint a scheduled run carries, so neither
+# the prompt hook nor the display hook touches one - but the stop hook's respond
+# check reads no entrypoint at all, and on 2026-10-23T03:30Z it held this
+# routine's closing text and told it to rewrite the reply so the shape would
+# render. The rewrite is the respond block in that log. Nothing here is a limit
+# on what the turn may do; it is the shape of a reply to a person, and there is
+# no person at this end.
+export RATCHET_OFF=1
 
 timeout "$CAP" claude -p --model "$MODEL" --dangerously-skip-permissions \
   < "$LOGS/$ID.prompt" > "$LOG" 2>&1
