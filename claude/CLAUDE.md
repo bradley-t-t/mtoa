@@ -131,10 +131,13 @@ what was done. The labelled lines run in that order, one line of at most two
 sentences each, and only those five. Running comes last and only when work was
 handed to a background agent or left to a job that turn: it names what is still
 going and when it should end, while the verdict reports the work that is
-finished. A turn never waits in the foreground on a long job - a run on the
-host, CI, a deploy - because its text stays off my screen until it ends: past
-ten minutes ratchet's guard refuses a foreground wait, and the turn hands the
-wait to a background command that wakes it, and reports now. Why appears only when something was wrong
+finished. A turn never waits in the foreground on a job - a run on the host,
+CI, a deploy - for hours or for minutes, because its text stays off my screen
+until it ends: ratchet's guard refuses any foreground wait that can last past a
+minute, and the turn moves the wait to the background and reports now. What
+has to happen after the job is the job's to do, never a promise that the
+session will come back, since a session can end first; a Running line that
+promises it is held. Why appears only when something was wrong
 or the answer turns on a reason. Touched names everything that changed, anything
 that cannot be undone first, and is left out when nothing did. Proof is required
 on every finished verdict. Nothing goes before the verdict or after the last

@@ -2157,7 +2157,7 @@ def pre_guard():
         return 0
     import wait
     if wait.waits(tool, given):
-        refused = wait.refuse(tool, given, list(rows(transcript)), real_user_turn)
+        refused = wait.refuse(tool, given)
         if refused:
             emit(hookSpecificOutput={"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                      "permissionDecisionReason": refused})

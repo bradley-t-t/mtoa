@@ -213,14 +213,22 @@ it to a job, the verdict reports what is finished and Running names what is
 still going, so the handoff is said rather than squeezed into the verdict
 sentence.
 
-A turn never waits in the foreground on a long job. Its text stays off the
-screen until it ends, so a turn polling a host run, CI or a deploy in
-foreground commands shows the user nothing for as long as the job takes - three
-hours on 2026-10-22. `ratchet/wait.py`, in the guard on every work tool, denies
-a foreground wait (a loop that sleeps, a checks or run watch, a long sleep)
-once the minutes the turn has run plus the most the wait can take pass ten. The
-denial tells the turn to start the wait as a background command, whose finish
-wakes the session, and to end now with what is finished and a Running line.
+A turn never waits in the foreground on a job, for hours or for minutes. Its
+text stays off the screen until it ends, so a turn polling a host run, CI or a
+deploy in foreground commands shows the user nothing for as long as the wait
+lasts - three hours on 2026-10-22. `ratchet/wait.py`, in the guard on every
+work tool, denies any foreground wait (a loop that sleeps, a checks or run
+watch, a long sleep) that can last longer than a minute, by the call's own
+timeout or a `timeout N` in it. The denial tells the turn to start the wait in
+the background and end now with what is finished and a Running line naming the
+job.
+
+A Running line names a job that finishes on its own, and never promises what
+the session will do once it has. The session that wrote "When it does, I'll
+take out the side boards, release, and check the live company count" ended that
+night, and nothing did any of it. `shape.py` holds a Running line with a
+first-person promise in it (`PROMISE`): the step is done now, or handed to the
+job itself.
 
 A turn never ends waiting on the user. A verdict like Waiting, Blocked or Your
 call, or a sentence that hands the user an approval, a decision or a step

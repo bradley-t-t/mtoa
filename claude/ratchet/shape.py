@@ -239,6 +239,24 @@ def partial(text, body):
     return out
 
 
+# A Running line names a job that finishes on its own. A promise there of what
+# this session will do once the job ends is never kept when the session ends
+# first, which it can - on 2026-10-22 one ended overnight on "When it does, I'll
+# take out the side boards, release, and check the live company count".
+PROMISE = re.compile(r"\b(?:I['\u2019]ll|I will|I['\u2019]m going to|I am going to|I can then|then I|we['\u2019]ll|we will|I['\u2019]d)\b", re.I)
+DEFERRED = ("promises what this session will do after the job, and a session can end before the job "
+            "does, so nothing would do it. Do that step now if it can be done now; otherwise give it to "
+            "the job itself, a step the host or CI runs on its own, and name the job on the Running line")
+
+
+def deferred(text, body):
+    """A Running line that promises this session's own later work."""
+    for line in text.split("\n"):
+        if re.match(r"\s*[-*]\s*\*\*Running:\*\*", line) and PROMISE.search(line):
+            return [(line.strip(), "the Running line " + DEFERRED)]
+    return []
+
+
 def progress(text, body):
     """A verdict that says work is still going on, which no finished reply says."""
     head = VERDICT.match(text.strip().split("\n")[0])
@@ -285,6 +303,7 @@ def problems(text, body=None):
     body = body or rules()
     found = layout(text, body) + asides(text, body)
     found += partial(text, body)
+    found += deferred(text, body)
     found += [w for w in waiting(text, body) if w[0] not in [f[0] for f in found]]
     word = progress(text, body)
     if word:
@@ -715,7 +734,7 @@ Rules:
 - When it cannot be proven or finished, the verdict is **Not verified.** or **Not fixed.**, with what was done. That is an allowed answer; a Fixed no check backs never is. No "partly", "mostly" or "likely".
 - A turn never ends waiting on the user. When the work needs their approval, a decision, a credential or their own hands, ask with the AskUserQuestion tool inside the turn, get the answer, and finish - the reply reports what was done, never what they should approve or do.
 - After the verdict, one plain sentence under %(sentence)d words that answers what was asked.
-- Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. Running comes last, only when work was handed to a background agent or job this turn, and names what is still going and when it should end. No other label exists.
+- Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. Running comes last, only when work was handed to a background agent or job this turn, and names what is still going and when it should end - never what this session will do afterwards, since it can end first. No other label exists.
 - Why only when something was wrong, or the answer turns on a reason. What is what was done, or what the answer rests on. Touched names every file, branch, URL, setting or deletion that changed, with anything that cannot be undone first, and is left out when nothing changed. Proof is required on every finished verdict, and is what you ran, measured or saw - not what should be true.
 - Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer. The one exception is "**Should I ask how to improve my reply?**", drawn by `offer: yes` in the respond block on a turn whose message said the last reply missed.
 - Leave out nothing the user asked for. A bare "Yes." or "No." is a whole reply.
@@ -774,7 +793,7 @@ def quote(found):
 
 def unfinished(found):
     """Whether the hold is about work left undone rather than about the layout."""
-    return any(PARTIAL in why or WAITING in why for _, why in found)
+    return any(PARTIAL in why or WAITING in why or DEFERRED in why for _, why in found)
 
 
 def reason(found):

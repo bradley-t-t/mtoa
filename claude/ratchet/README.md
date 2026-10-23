@@ -236,7 +236,7 @@ python3 ~/.claude/ratchet/ear.py selftest
 | `tells.json` | The word list: `tells` go to the judge, `banned` is held on sight, `holds` stand a sentence down, `standing` takes that back for a subject approved in advance, `asks` is the second way into `standing`, `settled` cancels a tell in its own sentence. Edit here, then run `selftest` |
 | `corpus.json` | What the scan must catch, must cut, must hold as an approval already given, and must leave alone. `selftest` runs all four, then the transcript replay |
 | `config.json` | Model, cap, timeouts, switches |
-| `wait.py` | The foreground-wait guard: a wait past ten minutes of turn is sent to the background |
+| `wait.py` | The foreground-wait guard: any wait that can outlast a minute is sent to the background |
 
 <br />
 
@@ -408,17 +408,18 @@ sent back to finish the work, at most twice per message.
 
 ## Waiting on a job
 
-A turn never sits in the foreground waiting on a long job. `wait.py`, in
-`hook.py guard`, denies a Bash call that waits - a loop that sleeps until
-something is true, a checks or run watch, or a bare sleep of thirty seconds or
-more, each where a command starts and outside a heredoc - once the minutes
-since the message that began the turn, plus the call's own timeout, pass
-`BUDGET` (ten). Anything in the background (`run_in_background`, Monitor) is
-never touched, and neither is work that merely takes a while, such as a build.
-The denial sends the turn to start the wait in the background, whose finish
-wakes the session, and to end now with what is finished and a Running line
-naming the job. `python3 wait.py` runs its cases, and `ratchet.py selftest`
-runs them too.
+A turn never sits in the foreground waiting on a job, for hours or for
+minutes. `wait.py`, in `hook.py guard`, denies a Bash call that waits - a loop
+that sleeps until something is true, a checks or run watch, or a bare sleep
+past a minute, each where a command starts and outside a heredoc - whenever it
+can last longer than `LIMIT` (sixty seconds), by the call's own timeout or a
+`timeout N` in the command. Anything in the background (`run_in_background`,
+Monitor) is never touched, and neither is work that merely takes a while, such
+as a build. The denial sends the turn to start the wait in the background and
+end now with what is finished and a Running line naming the job. `shape.py`
+holds a Running line that promises the session's own later work (`PROMISE`),
+because a session can end before the job does. `python3 wait.py` runs its
+cases, and `ratchet.py selftest` runs them too.
 
 <br />
 
