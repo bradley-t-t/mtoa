@@ -39,10 +39,10 @@ Three stages, cheapest first.
 
 A question that one or two sentences answer, in a turn that edited nothing, is
 answered in exactly that: one or two plain sentences, no formatting, nothing
-off the point (`plain`). Plain prose is also what narration looks like, and
-nothing at display time says which it is, so a plain answer is written inside a
-respond block and only its render is shown; bare prose is kept off the screen
-and sent back to be written as a block (PROSE).
+off the point (`plain`), written as plain text. It used to go inside a respond
+block, but the saved chat - the phone, the web, a reopened session - showed that
+block as code, so a fenced reply is held (ratchet's FENCED) and bare prose that
+is a valid plain answer ends the turn as written.
 
 The same decision runs twice. The MessageDisplay hook sees each message before
 it is drawn and keeps one out of shape off the screen; the Stop hook then sends
@@ -280,7 +280,7 @@ def asides(text, body):
 
 # The one line a reply may carry after its last line: the offer to ask how the
 # reply could be better, on a turn whose message said the last one missed
-# (reaction.py). respond draws it from `offer: yes`; every check reads the reply
+# (reaction.py). It is written as the reply's last line; every check reads the reply
 # without it.
 OFFER = "Should I ask how to improve my reply?"
 FOOTER = "**%s**" % OFFER
@@ -692,7 +692,7 @@ def count_hold(session, turn):
 HOLD = """Shape: that reply was out of shape, so it was kept off the screen and the user has not seen it. Write the reply again, in the shape at the top of this turn's message, short enough to read at a glance.
 
 %s
-The shape is for reporting work done. If this turn was conversation, answer in normal paragraphs in a respond block instead; if the user asked for a document - a summary, a plan, an explanation - write it whole in a Markdown file, send it, and point to it. Leave out nothing the user asked for. Where a sentence named work you can still do, do it before you send the reply rather than mentioning it."""
+The shape is for reporting work done. If this turn was conversation, answer in normal paragraphs instead, written as plain text; if the user asked for a document - a summary, a plan, an explanation - write it whole in a Markdown file, send it, and point to it. Leave out nothing the user asked for. Where a sentence named work you can still do, do it before you send the reply rather than mentioning it."""
 
 
 # Read at the top of every message the person types, so the first draft is in
@@ -701,15 +701,13 @@ The shape is for reporting work done. If this turn was conversation, answer in n
 # twice, once wrong and once fixed, and the only real cure is the first draft.
 REMINDER = """Every closing reply takes the form its scenario calls for, never its size.
 
-1. Conversation - a question, a remark, an idea, anything that is talk rather than work done: answer the way a person would, in normal paragraphs, with no bold verdict and no labels, inside a respond block, which is what puts it on the screen. A yes-or-no question still gets "Yes." or "No.".
+Every reply is written as plain text, exactly as it should look - never inside a code block or a ```respond fence. The saved chat is what the phone, the web and a reopened session show, and a fenced reply shows there as a code block; a reply in a fence is held.
 
-```respond
-plain: Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain and example.com's DMARC policy rejects that.
-```
+1. Conversation - a question, a remark, an idea, anything that is talk rather than work done: answer the way a person would, in normal paragraphs, with no bold verdict and no labels. A yes-or-no question still gets "Yes." or "No.". For example:
 
-Prose outside a respond block or the shape below is never shown. A line of prose is drawn before anything says whether a tool call follows it, so narration and an answer are the same until the block marks which is which.
+Gmail has refused every message from you@example.com since Tuesday, because Resend signs with its own domain and example.com's DMARC policy rejects that.
 
-2. A document asked for - a summary, a plan, a proposal, an explanation, an outline, a comparison: write it whole in a Markdown file, nothing cut, send it with SendUserFile, and answer in a respond block with one sentence pointing to it. A request that sets its own length ("in two sentences") is answered in chat.
+2. A document asked for - a summary, a plan, a proposal, an explanation, an outline, a comparison: write it whole in a Markdown file, nothing cut, send it with SendUserFile, and answer with one plain sentence pointing to it. A request that sets its own length ("in two sentences") is answered in chat.
 
 3. Work that was done: the shape. It looks exactly like this:
 
@@ -736,7 +734,7 @@ Rules:
 - After the verdict, one plain sentence under %(sentence)d words that answers what was asked.
 - Then Why, What, Touched and Proof, in that order, one line each: at most two sentences, under %(line)d words. Running comes last, only when work was handed to a background agent or job this turn, and names what is still going and when it should end - never what this session will do afterwards, since it can end first. No other label exists.
 - Why only when something was wrong, or the answer turns on a reason. What is what was done, or what the answer rests on. Touched names every file, branch, URL, setting or deletion that changed, with anything that cannot be undone first, and is left out when nothing changed. Proof is required on every finished verdict, and is what you ran, measured or saw - not what should be true.
-- Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer. The one exception is "**Should I ask how to improve my reply?**", drawn by `offer: yes` in the respond block on a turn whose message said the last reply missed.
+- Nothing before the verdict and nothing after the last line: no aside, no note about what was kept, skipped, left or noticed, no step for the user to take, no offer. The one exception is "**Should I ask how to improve my reply?**", written as the reply's own last line on a turn whose message said the last reply missed.
 - Leave out nothing the user asked for. A bare "Yes." or "No." is a whole reply.
 - Write no text until the work is finished. There are no progress notes: anything written mid-turn is kept off the screen, and so is any reply the stop checks would send back. A reminder to say what you are doing is answered by finishing the work."""
 

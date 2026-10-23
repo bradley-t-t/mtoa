@@ -368,8 +368,7 @@ format), judges each new exchange the same two ways in batches, and keeps what
 missed in the same ledger.
 
 The reply never asks first. When a change would help, it ends with the offer -
-`offer: yes` in the respond block, which `respond.py` draws as
-"**Should I ask how to improve my reply?**" after the last line, and which
+"**Should I ask how to improve my reply?**" as its own last line, which
 `shape.footer` takes off before every other check reads the reply. The next
 message is read for a yes: the `yes` cue at once, anything else in context
 beside the miss reading. `hook.py ask` refuses an AskUserQuestion under the
@@ -380,11 +379,10 @@ it ends with it or the reply system is edited. An answered Adapt question or an
 edit writes a settlement beside the misses that closes every open miss of that
 kind.
 
-A reply written in a respond block as it should look, rather than as keys, is
-read the way a reply outside a block is (`respond.parse`), with any keys after
-it beside it. `render` draws nothing for fields with no verdict, plain or form,
-so a block holding only an offer is never drawn as a lone bold full stop; the
-display hook hides it and the stop hook holds it (`EMPTY`).
+Every reply is plain text, written as it should look. A reply in a ```respond
+fence is held (`FENCED`), because the saved chat - the phone, the web, a
+reopened session - shows it as a code block; past the hold cap it is drawn as
+its render. Bare prose that is a valid plain answer ends the turn as written.
 
 ```
 reaction.py selftest
@@ -439,8 +437,8 @@ started.
 ## The form follows the scenario
 
 The shape is for reporting work done. `talk_hold` holds a verdict report on a
-turn that called no tool - conversation is answered in normal paragraphs in a
-respond block, with no limit on length. `doc_hold` holds a reply to a message
+turn that called no tool - conversation is answered in normal paragraphs as
+plain text, with no limit on length. `doc_hold` holds a reply to a message
 that asks for a document (`document_cues` in `shape.json`, less anything
 `bounded_cues` finds) when no Markdown file went out through SendUserFile that
 turn; the one-sentence pointer is a plain answer, and the file written to be

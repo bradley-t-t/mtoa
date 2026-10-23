@@ -96,9 +96,8 @@ every machine's. At most hourly the prompt hook also starts a sweep of my
 claude.ai chats (the desktop app's cache) and Sunday's spoken conversation on
 the host, judged the same two ways into the same ledger. The turn answers me
 and finds what in the reply system caused the miss; when a change would help,
-the reply ends with "**Should I ask how to improve my reply?**" (`offer: yes`
-in the respond block, the one line allowed after a reply's last line) rather
-than asking. My next message is read for a yes the same two ways - the `yes`
+the reply ends with "**Should I ask how to improve my reply?**" as its own last
+line (the one line allowed after a reply's last line) rather than asking. My next message is read for a yes the same two ways - the `yes`
 cue at once, anything else in context - and only after a yes does the turn ask
 with AskUserQuestion under the header "Adapt": `hook.py ask` refuses an Adapt
 question without one, and `adapt_hold` holds a reply on a yes turn until the
@@ -132,7 +131,7 @@ it never dismissed or started, naming each task id, until it has called
 
 The form follows the scenario, never the size. The shape is for reporting work
 done. A turn that called no tool is conversation: answered in normal paragraphs
-in a respond block, and a verdict report on it is held (`talk_hold`). A message
+written as plain text, and a verdict report on it is held (`talk_hold`). A message
 of mine that asks for a document - `document_cues` in `shape.json`: a summary, a
 plan, a proposal, a table, a list, an explanation, unless `bounded_cues` finds
 I set its length - owes a Markdown file sent with SendUserFile this turn, and a
@@ -236,26 +235,16 @@ call, or a sentence that hands the user an approval, a decision or a step
 is held as unfinished, and every hold - shape and ratchet alike - points the
 turn at the AskUserQuestion tool: ask inside the turn, get the answer, finish.
 
-A question that one or two sentences answer gets a plain answer instead: at most
-two unformatted sentences and 320 characters, no claim of work done
-(`plain_claims`), no aside, and only in a turn that used no edit tool. A plain
-answer is written inside a respond block - ```respond, then `plain: ...`, then
-the fence - and the display hook draws its render (`respond.block`). Bare prose
-is never drawn. The CLI calls the display hook on a finished text block and
-waits on it before it reads the next one (probed headless: a hook that waited
-eight seconds for the following tool call held that call back for exactly as
-long), so when a line of prose is drawn nothing anywhere says whether a tool call
-follows it, and a line of narration and a one-line answer are the same bytes.
-The block is what marks the answer. A reply written inside a block as it should
-look - a verdict line and its labelled lines, or plain sentences - is read as
-that reply, with any keys after it (an offer) beside it; a block that holds no
-reply draws nothing and is held (`EMPTY`), and the offer is never drawn alone.
-Bare prose that ends a turn is held
-(`shape.PROSE`) and comes back as a block - different text from the hidden draft,
-and drawn with a trailing zero-width space, because the desktop app (build
-2.37337+) drops a byte-identical resend as a duplicate; that drop is why the old
-word-for-word resend made every short reply vanish. Replayed over every narration
-line in two long sessions, 153 of 153 were hidden.
+A conversational answer is plain text, written as it should look. Every reply
+is: the saved chat is what the phone, the web and a reopened session draw, and
+only the desktop's display hook ever rendered a ```respond block, so everywhere
+else a fenced reply showed as a code block. A reply written in a fence is now
+held (`FENCED`, up to the hold cap) and comes back as plain text, and bare prose
+that is a valid plain answer ends the turn as written (`SHOWN_PLAIN`). The cost
+is narration: the display hook is called on a finished text block before the
+next tool call exists, so a line of narration and a one-line answer are the same
+bytes there, and narration can be drawn. `pre_guard` still denies the tool call
+that follows a piece of prose, so the turn stops writing more of it.
 
 Three hooks share one decision (`shape.decide`) and one per-turn state, so the
 screen and the stop never disagree. `MessageDisplay` (`hook.py display`) runs

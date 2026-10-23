@@ -27,8 +27,8 @@ again every time.
   and keeps what missed in the same ledger.
 
   The reply never asks first. When a change would make the next reply right,
-  it ends with "**Should I ask how to improve my reply?**" (`offer: yes` in the
-  respond block). The next message is read for a yes the same two ways - the
+  it ends with "**Should I ask how to improve my reply?**" as its own last
+  line. The next message is read for a yes the same two ways - the
   `yes` cue at once, anything else in context - and only after one does the
   turn ask with AskUserQuestion under the header "Adapt": the question guard
   refuses an Adapt card without it, and the stop hook holds a yes turn that
@@ -54,7 +54,7 @@ SYSTEM = [HOME / ".claude" / p for p in ("ratchet", "standards", "CLAUDE.md", "s
 PASTED = re.compile(r"<pasted_content[^>]*>.*?</pasted_content[^>]*>", re.S)
 REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
 
-OFFERING = """End the reply with the offer, never the question: put `offer: yes` in the respond block, which draws "**Should I ask how to improve my reply?**" as its last line. Do not ask with AskUserQuestion now - an Adapt question is asked only on a later turn, after the user says or implies yes to that offer."""
+OFFERING = """End the reply with the offer, never the question: its own last line, written as plain text, is "**Should I ask how to improve my reply?**". Do not ask with AskUserQuestion now - an Adapt question is asked only on a later turn, after the user says or implies yes to that offer."""
 
 CONTEXT = """Your last reply may have missed. %s: "%s"%s
 
@@ -89,7 +89,7 @@ ASK = """Reaction: your last reply offered to ask how to improve it, and the use
 
 Ask now, with AskUserQuestion, header "Adapt": what in the reply system made the reply miss, with the concrete change as the options. Apply what is picked."""
 
-NOT_YET = """Reaction: an Adapt question is asked only after the user says or implies yes to "Should I ask how to improve my reply?" at the bottom of a reply, and this turn's message has not. End the reply with that offer instead: `offer: yes` in the respond block."""
+NOT_YET = """Reaction: an Adapt question is asked only after the user says or implies yes to "Should I ask how to improve my reply?" at the bottom of a reply, and this turn's message has not. End the reply with that offer instead, as its own last line: **Should I ask how to improve my reply?**"""
 
 WANTED = """
   What they wanted: %s"""

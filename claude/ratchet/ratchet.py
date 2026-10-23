@@ -1012,6 +1012,12 @@ def checks(verb, payload=None, reply=None):
             rendered = respond.block(text)
         except Exception:
             rendered = None
+        if rendered is not None and scenario_count(session, turn, "fenced") < int(cfg["holds_per_turn"]):
+            # A reply in a fence is a code block on every screen that reads the
+            # saved chat. Past the cap it is let through and drawn as its render.
+            scenario_count(session, turn, "fenced", add=True)
+            emit(decision="block", reason=FENCED, systemMessage="shape: held a reply written in a code block")
+            return 0
         if rendered is not None and not rendered.strip():
             # The block holds no reply - an offer, or keys with nothing in them.
             # Nothing is drawn for it, so the turn writes the reply.
@@ -1147,6 +1153,11 @@ def shape_hold(cfg, payload, transcript, text, turn, blocked=False):
             NOTES.append(("shape: out of shape on request - %s" % outcome[1], False))
         if outcome[0] == "capped":
             NOTES.append(("shape: let a reply through out of shape after %d holds" % outcome[1], False))
+        if outcome[0] == "plain" and not blocked and SHOWN_PLAIN:
+            # Bare prose is the plain answer, written as it should look. It used
+            # to be held and rewritten as a respond block, which the saved chat
+            # then carried as a code block to every screen but the desktop's.
+            return False
         if outcome[0] == "plain" and not blocked:
             # Bare prose. It never reaches the screen, and the rewrite is a
             # respond block - different text, so the app draws it rather than
@@ -1200,21 +1211,11 @@ TALK = """Shape: this turn did no work - no tool was called - so it is conversat
 
   "%s"
 
-Answer the way a person would, in normal paragraphs, inside a respond block, with no bold verdict and no labels:
-
-```respond
-plain: <the answer, in normal paragraphs>
-```
-
-A yes-or-no question still gets "Yes." or "No."."""
+Answer the way a person would, in normal paragraphs written as plain text - no code block, no bold verdict and no labels. A yes-or-no question still gets "Yes." or "No."."""
 
 DOCUMENT = """Shape: the user asked for a document - "%s" - and no Markdown file went to them this turn, so the reply was kept off the screen and the user has not seen it.
 
-Write the whole of it in a Markdown file, nothing cut, send it with SendUserFile, and reply in a respond block with one sentence pointing to it:
-
-```respond
-plain: The whole plan is in the attached file.
-```"""
+Write the whole of it in a Markdown file, nothing cut, send it with SendUserFile, and reply with one plain sentence pointing to it, such as: The whole plan is in the attached file."""
 
 
 def talk_hold(cfg, payload, transcript, text, turn):
@@ -1361,7 +1362,14 @@ def inflight_hold(cfg, payload, transcript, text, turn):
     return True
 
 
-EMPTY = """Respond: the respond block holds no reply - nothing in it is a verdict, plain sentences or a form - so nothing was drawn and the user has not seen it. Write the reply in the block: the shape for work done, `plain:` for conversation. An offer goes after a reply, never in place of one."""
+EMPTY = """Respond: that reply was a fenced block with no reply in it, so nothing was drawn and the user has not seen it. Write the reply as plain text, exactly as it should look: the shape for work done, normal paragraphs for conversation. An offer goes after a reply, never in place of one."""
+
+# The saved chat is what the phone, the web and a reopened session draw, and
+# only the desktop's own display hook ever rendered a respond block; everywhere
+# else the reply showed as a code block. A reply is written as it should look.
+FENCED = """Shape: that reply was written inside a code block (a ```respond fence), so it was kept off the screen and the user has not seen it. The saved chat is what the phone, the web and a reopened session show, and there a fenced reply is a code block.
+
+Write the same reply again as plain text, exactly as it should look - the shape for work done, normal paragraphs for conversation - with no fence and no `plain:` or `verdict:` keys. An offer is its own last line: **Should I ask how to improve my reply?**"""
 
 
 # The user does not click. A session proposed as a card (own_initiative) waits
@@ -1451,6 +1459,8 @@ def pre_card():
 
 
 OFFERED = []
+# Bare prose that is a valid plain answer ends the turn as written.
+SHOWN_PLAIN = True
 
 
 def adapt_hold(cfg, payload, transcript, text, turn):
@@ -2235,17 +2245,19 @@ def transcript_test():
 
 
 def scenario_test():
-    """The form follows the scenario. A remark answered in paragraphs passes; a
+    """The form follows the scenario. A remark answered in plain paragraphs passes,
+    and the same remark in a code block is held; a
     verdict report on a turn that called no tool is held; a summary asked for
     and answered without a Markdown file is held, and passes once one is sent.
 
     Runs the real stop hook in a child, with its state in a temporary folder."""
     import tempfile
     bad = 0
-    talk = ("```respond\nplain: Agreed. The realistic version is a one-click button, with nothing to set up.\n\n"
-            "Google caps an unreviewed app at 100 users, and Microsoft has no cap.\n```")
+    talk = ("Agreed. The realistic version is a one-click button, with nothing to set up.\n\n"
+            "Google caps an unreviewed app at 100 users, and Microsoft has no cap.")
+    fenced = "```respond\nplain: %s\n```" % talk
     report = "**Yes.** The realistic version is a one-click button.\n\n- **What:** Google caps it at 100 users."
-    pointer = "```respond\nplain: The whole plan is in the attached file.\n```"
+    pointer = "The whole plan is in the attached file."
     with tempfile.TemporaryDirectory() as tmp:
         plan = Path(tmp) / "plan.md"
         plan.write_text("# Plan\n")
@@ -2277,7 +2289,8 @@ def scenario_test():
                 {"type": "tool_use", "id": "s1", "name": "SendUserFile", "input": {"files": [str(plan)]}},
                 text(pointer)], "passed"),
             ("a summary bounded to sentences", "In English, summarize the difference in 1-3 sentences.",
-             [text("```respond\nplain: One runs on code and the other on a model.\n```")], "passed"),
+             [text("One runs on code and the other on a model.")], "passed"),
+            ("a remark answered in a code block", "Seems like a lot of work for people", [text(fenced)], "held"),
             ("implementing a plan is work", "Implement the plan", [
                 {"type": "tool_use", "id": "e1", "name": "Edit", "input": {"file_path": "/tmp/x"}},
                 text("**Not verified.** The plan is in, and nothing ran to check it.\n\n- **Touched:** x.")], "passed"),

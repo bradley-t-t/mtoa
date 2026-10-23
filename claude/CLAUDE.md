@@ -155,10 +155,10 @@ with a verdict report is sent back. A document I ask for - a summary, a plan, a
 proposal, a table, a list, an explanation - is written whole in a Markdown file
 sent with SendUserFile, with one sentence in chat pointing to it, unless I set
 its length myself ("in two sentences"). Nothing I asked for is ever cut to make
-a reply fit. Prose is drawn before anything says whether a tool call follows
-it, so it looks exactly like narration; a conversational answer is written
-inside a ```respond block and shown as written, and prose outside a block or
-the shape never reaches my screen.
+a reply fit. Every reply is written as plain text, exactly as it should look,
+and never inside a code block: the saved chat is what my phone, the web and a
+reopened session show, and a fenced reply shows there as a code block, so
+ratchet holds one.
 
 **Ratchet** refuses a stop whose closing prose names work the turn could have
 done itself. One user message buys three holds at most. A hold is answered by
