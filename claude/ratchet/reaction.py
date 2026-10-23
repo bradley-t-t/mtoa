@@ -107,7 +107,7 @@ The reply:
 The user's next message:
   %s
 
-Does the user's message say or imply that the assistant should ask how to improve its reply? A plain yes, "go ahead", "ask", or asking what it would change count. Ignoring the offer, moving on to something else, or no does not.
+Does the user's message say or imply that the assistant should ask how to improve its reply? A plain yes, "go ahead", "ask", or asking what it would change count. Ignoring the offer, moving on to something else, or no does not. Nor does a yes that answers the reply itself - agreeing with what it said - and goes on to a question or request of the user's own: that answers the reply, not the offer. When in doubt, it does not count.
 
 Answer with JSON only, on one line: {"ask": true} or {"ask": false}."""
 
@@ -864,11 +864,13 @@ def selftest():
         print("WRONG: a cached conversation tree was not read")
     for text, want in (("Yes, ask me.", True), ("yeah", True), ("Go ahead", True), ("Sure, what would you change?", True),
                        ("Okay so obviously this isn't what I asked for...", False), ("Now check the status board.", False),
-                       ("No, just fix it.", False)):
+                       ("No, just fix it.", False),
+                       ("Yes so how will it work? I do not want any entra or none of that bullshit", False),
+                       ("I didnt ask you to ask me a question, I asked a question", False)):
         if bool(re.search(body.get("yes") or r"$^", clean(text), re.I)) != want:
             wrong += 1
             print("WRONG: %r read as %s to the offer" % (text, "no" if want else "yes"))
-    print("reaction selftest: %d cases, %d wrong" % (len(CASES) + 14, wrong))
+    print("reaction selftest: %d cases, %d wrong" % (len(CASES) + 16, wrong))
     return wrong
 
 

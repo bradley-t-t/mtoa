@@ -54,7 +54,7 @@ def _scan(transcript):
             parts = [p for p in content if isinstance(p, dict)]
         else:
             parts = []
-        if kind == "user" and not row.get("isMeta"):
+        if kind == "user" and not row.get("isMeta") and not row.get("isCompactSummary"):
             txt = " ".join(p.get("text", "") for p in parts
                            if p.get("type") == "text").strip()
             if txt:               # a real user message starts a fresh turn

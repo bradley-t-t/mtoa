@@ -45,7 +45,7 @@ def ran_usage(rows):
             continue
         kind = row.get("type")
         content = (row.get("message") or {}).get("content")
-        if kind == "user" and not row.get("isMeta"):
+        if kind == "user" and not row.get("isMeta") and not row.get("isCompactSummary"):
             if isinstance(content, str) and content.strip():
                 ran = False
             elif isinstance(content, list) and any(

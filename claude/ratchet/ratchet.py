@@ -628,8 +628,14 @@ def parts(row, kind):
 
 
 def real_user_turn(row):
-    """A user row that is a person talking, not a tool result coming back."""
-    if row.get("type") != "user" or row.get("isMeta"):
+    """A user row that is a person talking, not a tool result coming back.
+
+    The summary written when a session's context is compacted is a user row
+    with text, but nobody said it. Read as a message, it took the place of the
+    one the turn was answering: the stop hook told the turn to ask the Adapt
+    question the user had said yes to, and the question guard, keyed on the
+    summary, refused it."""
+    if row.get("type") != "user" or row.get("isMeta") or row.get("isCompactSummary"):
         return False
     content = (row.get("message") or {}).get("content")
     if isinstance(content, str):
@@ -2186,6 +2192,9 @@ LOOP = [
     {"type": "user", "isMeta": True, "message": {"content":
         "Stop hook feedback:\nRatchet: this turn is ending while its own closing text "
         "names work it did not do."}},
+    {"type": "user", "uuid": "c1", "isCompactSummary": True, "isVisibleInTranscriptOnly": True,
+     "message": {"content": "This session is being continued from a previous conversation that ran "
+                            "out of context. The summary below covers the earlier portion."}},
     {"type": "assistant", "message": {"content": [
         {"type": "text", "text": "The parser reads both forms now."}]}},
 ]

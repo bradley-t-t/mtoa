@@ -243,7 +243,8 @@ def canvas_shown(command, transcript=None):
         if row.get("isSidechain"):
             continue
         if row.get("type") == "user" and any(p.get("type") == "text" and p.get("text", "").strip()
-                                             for p in _content(row)) and not row.get("isMeta"):
+                                             for p in _content(row)) and not row.get("isMeta") \
+                and not row.get("isCompactSummary"):
             calls, found = {}, ""      # a person spoke: a new turn starts
         for part in _content(row):
             if part.get("type") == "tool_use" and part.get("name") == "Bash":
@@ -341,7 +342,8 @@ def done_this_turn(transcript):
         if row.get("isSidechain"):
             continue
         if row.get("type") == "user" and any(p.get("type") == "text" and p.get("text", "").strip()
-                                             for p in _content(row)) and not row.get("isMeta"):
+                                             for p in _content(row)) and not row.get("isMeta") \
+                and not row.get("isCompactSummary"):
             calls, lines = {}, []      # a person spoke: a new turn starts
         for part in _content(row):
             if part.get("type") == "tool_use":
