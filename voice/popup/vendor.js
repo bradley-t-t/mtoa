@@ -21,8 +21,3 @@ for (const [from, to] of files) {
   fs.copyFileSync(nm(from), out(to));
   console.log(`${to}  ${fs.statSync(out(to)).size} bytes`);
 }
-for (const lic of ["markdown-it", "dompurify", "chart.js", "@highlightjs/cdn-assets", "@fontsource-variable/jetbrains-mono",
-  "@fontsource-variable/orbitron", "@fontsource/rajdhani"]) {
-  const src = ["LICENSE", "LICENSE.md", "LICENSE.txt"].map((f) => nm(path.join(lic, f))).find((f) => fs.existsSync(f));
-  if (src) fs.copyFileSync(src, out(`LICENSE.${lic.replace(/[@/]/g, "_")}`));
-}

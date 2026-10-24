@@ -104,5 +104,4 @@ npx skills add coreyhaines31/marketingskills
 
 ## License
 
-MIT. The pieces that come from elsewhere keep their own licenses; see
-[`THIRD_PARTY.md`](THIRD_PARTY.md).
+MIT.

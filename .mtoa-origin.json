@@ -19,10 +19,6 @@
   "intelligence",
   "mtoa-public/README.md"
  ],
- "THIRD_PARTY.md": [
-  "intelligence",
-  "mtoa-public/THIRD_PARTY.md"
- ],
  "bin/mtoa": [
   "intelligence",
   "mtoa-public/bin/mtoa"
@@ -67,10 +63,6 @@
   "intelligence",
   "checklists/design/bin/design_fixes.py"
  ],
- "claude/checklists/design/canvas-fonts/ArsenalSC-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/ArsenalSC-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/ArsenalSC-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/ArsenalSC-Regular.ttf"
@@ -79,17 +71,9 @@
   "intelligence",
   "checklists/design/canvas-fonts/BigShoulders-Bold.ttf"
  ],
- "claude/checklists/design/canvas-fonts/BigShoulders-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/BigShoulders-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/BigShoulders-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/BigShoulders-Regular.ttf"
- ],
- "claude/checklists/design/canvas-fonts/Boldonse-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Boldonse-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/Boldonse-Regular.ttf": [
   "intelligence",
@@ -98,10 +82,6 @@
  "claude/checklists/design/canvas-fonts/BricolageGrotesque-Bold.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/BricolageGrotesque-Bold.ttf"
- ],
- "claude/checklists/design/canvas-fonts/BricolageGrotesque-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/BricolageGrotesque-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/BricolageGrotesque-Regular.ttf": [
   "intelligence",
@@ -115,25 +95,13 @@
   "intelligence",
   "checklists/design/canvas-fonts/CrimsonPro-Italic.ttf"
  ],
- "claude/checklists/design/canvas-fonts/CrimsonPro-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/CrimsonPro-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/CrimsonPro-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/CrimsonPro-Regular.ttf"
  ],
- "claude/checklists/design/canvas-fonts/DMMono-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/DMMono-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/DMMono-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/DMMono-Regular.ttf"
- ],
- "claude/checklists/design/canvas-fonts/EricaOne-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/EricaOne-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/EricaOne-Regular.ttf": [
   "intelligence",
@@ -143,17 +111,9 @@
   "intelligence",
   "checklists/design/canvas-fonts/GeistMono-Bold.ttf"
  ],
- "claude/checklists/design/canvas-fonts/GeistMono-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/GeistMono-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/GeistMono-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/GeistMono-Regular.ttf"
- ],
- "claude/checklists/design/canvas-fonts/Gloock-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Gloock-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/Gloock-Regular.ttf": [
   "intelligence",
@@ -162,10 +122,6 @@
  "claude/checklists/design/canvas-fonts/IBMPlexMono-Bold.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/IBMPlexMono-Bold.ttf"
- ],
- "claude/checklists/design/canvas-fonts/IBMPlexMono-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/IBMPlexMono-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/IBMPlexMono-Regular.ttf": [
   "intelligence",
@@ -199,10 +155,6 @@
   "intelligence",
   "checklists/design/canvas-fonts/InstrumentSans-Italic.ttf"
  ],
- "claude/checklists/design/canvas-fonts/InstrumentSans-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/InstrumentSans-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/InstrumentSans-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/InstrumentSans-Regular.ttf"
@@ -215,10 +167,6 @@
   "intelligence",
   "checklists/design/canvas-fonts/InstrumentSerif-Regular.ttf"
  ],
- "claude/checklists/design/canvas-fonts/Italiana-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Italiana-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/Italiana-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/Italiana-Regular.ttf"
@@ -226,10 +174,6 @@
  "claude/checklists/design/canvas-fonts/JetBrainsMono-Bold.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/JetBrainsMono-Bold.ttf"
- ],
- "claude/checklists/design/canvas-fonts/JetBrainsMono-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/JetBrainsMono-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/JetBrainsMono-Regular.ttf": [
   "intelligence",
@@ -242,14 +186,6 @@
  "claude/checklists/design/canvas-fonts/Jura-Medium.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/Jura-Medium.ttf"
- ],
- "claude/checklists/design/canvas-fonts/Jura-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Jura-OFL.txt"
- ],
- "claude/checklists/design/canvas-fonts/LibreBaskerville-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/LibreBaskerville-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/LibreBaskerville-Regular.ttf": [
   "intelligence",
@@ -267,10 +203,6 @@
   "intelligence",
   "checklists/design/canvas-fonts/Lora-Italic.ttf"
  ],
- "claude/checklists/design/canvas-fonts/Lora-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Lora-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/Lora-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/Lora-Regular.ttf"
@@ -279,17 +211,9 @@
   "intelligence",
   "checklists/design/canvas-fonts/NationalPark-Bold.ttf"
  ],
- "claude/checklists/design/canvas-fonts/NationalPark-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/NationalPark-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/NationalPark-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/NationalPark-Regular.ttf"
- ],
- "claude/checklists/design/canvas-fonts/NothingYouCouldDo-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/NothingYouCouldDo-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/NothingYouCouldDo-Regular.ttf": [
   "intelligence",
@@ -299,10 +223,6 @@
   "intelligence",
   "checklists/design/canvas-fonts/Outfit-Bold.ttf"
  ],
- "claude/checklists/design/canvas-fonts/Outfit-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Outfit-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/Outfit-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/Outfit-Regular.ttf"
@@ -310,14 +230,6 @@
  "claude/checklists/design/canvas-fonts/PixelifySans-Medium.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/PixelifySans-Medium.ttf"
- ],
- "claude/checklists/design/canvas-fonts/PixelifySans-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/PixelifySans-OFL.txt"
- ],
- "claude/checklists/design/canvas-fonts/PoiretOne-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/PoiretOne-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/PoiretOne-Regular.ttf": [
   "intelligence",
@@ -327,17 +239,9 @@
   "intelligence",
   "checklists/design/canvas-fonts/RedHatMono-Bold.ttf"
  ],
- "claude/checklists/design/canvas-fonts/RedHatMono-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/RedHatMono-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/RedHatMono-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/RedHatMono-Regular.ttf"
- ],
- "claude/checklists/design/canvas-fonts/Silkscreen-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Silkscreen-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/Silkscreen-Regular.ttf": [
   "intelligence",
@@ -347,17 +251,9 @@
   "intelligence",
   "checklists/design/canvas-fonts/SmoochSans-Medium.ttf"
  ],
- "claude/checklists/design/canvas-fonts/SmoochSans-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/SmoochSans-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/Tektur-Medium.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/Tektur-Medium.ttf"
- ],
- "claude/checklists/design/canvas-fonts/Tektur-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/Tektur-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/Tektur-Regular.ttf": [
   "intelligence",
@@ -375,17 +271,9 @@
   "intelligence",
   "checklists/design/canvas-fonts/WorkSans-Italic.ttf"
  ],
- "claude/checklists/design/canvas-fonts/WorkSans-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/WorkSans-OFL.txt"
- ],
  "claude/checklists/design/canvas-fonts/WorkSans-Regular.ttf": [
   "intelligence",
   "checklists/design/canvas-fonts/WorkSans-Regular.ttf"
- ],
- "claude/checklists/design/canvas-fonts/YoungSerif-OFL.txt": [
-  "intelligence",
-  "checklists/design/canvas-fonts/YoungSerif-OFL.txt"
  ],
  "claude/checklists/design/canvas-fonts/YoungSerif-Regular.ttf": [
   "intelligence",
@@ -678,10 +566,6 @@
  "claude/checklists/design/references/code/tailwind-utilities.md": [
   "intelligence",
   "checklists/design/references/code/tailwind-utilities.md"
- ],
- "claude/checklists/design/references/hallmark/LICENSE": [
-  "intelligence",
-  "checklists/design/references/hallmark/LICENSE"
  ],
  "claude/checklists/design/references/hallmark/SKILL.md": [
   "intelligence",
@@ -1915,10 +1799,6 @@
   "intelligence",
   "skills/e/SKILL.md"
  ],
- "claude/skills/humanizer/LICENSE": [
-  "intelligence",
-  "skills/humanizer/LICENSE"
- ],
  "claude/skills/humanizer/SKILL.md": [
   "intelligence",
   "skills/humanizer/SKILL.md"
@@ -2014,10 +1894,6 @@
  "claude/tools/_lib.py": [
   "intelligence",
   "tools/_lib.py"
- ],
- "claude/tools/ai-writing/LICENSE": [
-  "intelligence",
-  "tools/ai-writing/LICENSE"
  ],
  "claude/tools/ai-writing/VENDOR.md": [
   "intelligence",
@@ -2666,34 +2542,6 @@
  "voice/popup/vendor.js": [
   "voice",
   "popup/vendor.js"
- ],
- "voice/popup/vendor/LICENSE._fontsource-variable_jetbrains-mono": [
-  "voice",
-  "popup/vendor/LICENSE._fontsource-variable_jetbrains-mono"
- ],
- "voice/popup/vendor/LICENSE._fontsource-variable_orbitron": [
-  "voice",
-  "popup/vendor/LICENSE._fontsource-variable_orbitron"
- ],
- "voice/popup/vendor/LICENSE._fontsource_rajdhani": [
-  "voice",
-  "popup/vendor/LICENSE._fontsource_rajdhani"
- ],
- "voice/popup/vendor/LICENSE._highlightjs_cdn-assets": [
-  "voice",
-  "popup/vendor/LICENSE._highlightjs_cdn-assets"
- ],
- "voice/popup/vendor/LICENSE.chart.js": [
-  "voice",
-  "popup/vendor/LICENSE.chart.js"
- ],
- "voice/popup/vendor/LICENSE.dompurify": [
-  "voice",
-  "popup/vendor/LICENSE.dompurify"
- ],
- "voice/popup/vendor/LICENSE.markdown-it": [
-  "voice",
-  "popup/vendor/LICENSE.markdown-it"
  ],
  "voice/popup/vendor/chart.umd.min.js": [
   "voice",
